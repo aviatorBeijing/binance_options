@@ -13,12 +13,17 @@ def on_message(ws, message):
     df = pd.DataFrame.from_records([ msg ] )
     #print( df[ fds ] )
 
+    avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
-    rows = df[['s','c', 'bo','ao', 'spread']].to_records(index=False)
+    
+    df['spd%'] = df['spread']/avg
+    df['spd%'] = df['spd%'].apply(lambda v: f"{(v*100):.1f}%")
+    
+    rows = df[['s','c', 'bo','ao', 'spread','spd%']].to_records(index=False)
     for row in rows:
         row = list(row)
         sym = row[0]; is_updating = False
-        val = ','.join(row[1:len(row)-1] )
+        val = ','.join(row[1:len(row)-2] )
         if sym not in dedups:
             dedups[ sym ] = val
             is_updating = True
@@ -27,7 +32,7 @@ def on_message(ws, message):
                 dedups[sym] = val
                 is_updating = True 
         if is_updating:
-            print( sym, 'trade|bid|ask|spread', row[1:] )
+            print( sym, 'trade|bid|ask|spread|spd%', row[1:] )
 
 def on_error(ws, error):
     print(error)
