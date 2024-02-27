@@ -15,7 +15,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     #assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
-    print(f'-- order volumes  (L): {vol}-contract, (R): {vol}-contract')
+    print(f'-- order volumes  (P): {vol}-contract, (C): {vol}-contract')
     recs = []
     
 
