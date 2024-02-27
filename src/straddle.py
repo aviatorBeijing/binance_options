@@ -18,6 +18,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
+        gains *= vol
         premium = (lask + rask)*vol
         fee = premium * fee_rate
         profits = gains - premium - fee
