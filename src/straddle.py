@@ -17,7 +17,6 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     
     premium = (lask + rask)*vol
     fee = premium * fee_rate
-    print(f'-- total costs  premium: ${premium:,.2f}, fee: ${fee:,.2f}')
 
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
@@ -25,6 +24,8 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         gains *= vol
         profits = gains - premium - fee
         recs += [ (stock, gains, profits )]
+    
+    print(f'-- total costs  premium: ${premium:,.2f}, fee: ${fee:,.2f}')
     df = pd.DataFrame.from_records( recs, columns=['spot','gain', 'profit'])
 
     for col in ['profit']:
