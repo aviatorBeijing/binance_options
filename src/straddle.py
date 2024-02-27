@@ -40,11 +40,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     print(f'-- total costs  premium: ${premium:,.2f}, fee: ${fee:,.2f}')
     
 
-@click.command()
-@click.option('--left', help="left leg contract name")
-@click.option('--right')
-@click.option('--vol', default=1.0, help="planned order volume, 1=1BTC contract")
-def main(left,right, vol):
+def _main(left,right, vol):
     ldata = None;rdata = None
     print("-- Contracts --")
     with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
@@ -62,6 +58,13 @@ def main(left,right, vol):
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
     calc_straddle( ldata,rdata, strike_left,strike_right,vol)
+
+@click.command()
+@click.option('--left', help="left leg contract name")
+@click.option('--right')
+@click.option('--vol', default=1.0, help="planned order volume, 1=1BTC contract")
+def main(left,right, vol):
+    _main(left, right, vol)
 
 
 if __name__ == '__main__':
