@@ -90,7 +90,7 @@ def _multiprocess_main(left,right,vol):
 @click.command()
 @click.option('--left', help="left leg contract name")
 @click.option('--right')
-@click.option('--size', default=1.0, help="planned order size, 1=1BTC contract")
+@click.option('--size', default=1.0, help="1, 0.1, ... Contract size, 1=1BTC contract")
 def main(left,right, size):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
