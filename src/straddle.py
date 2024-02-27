@@ -5,10 +5,16 @@ import click
 from butils import DATADIR
 
 def _v(v): return float(v)
-def calc_straddle( ldata,rdata):
+def calc_straddle( ldata,rdata, strike_left,strike_right):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
-    print(type(lbid))
+    assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
+    for stock in range(50000,60000,1000): # at expiration
+        gains = max(strike_left - stock,0)
+        gains += max( stock - strike_right, 0)
+        cost = lask + rask
+        profits = gains - cost 
+        print(stock, cost, gains, profits )
     
 
 @click.command()
@@ -24,12 +30,15 @@ def main(left,right, use_best):
         rdata = json.loads(fh.read())
         print( rdata )
     
+    strike_left = float(left.split("-")[-2])
+    strike_right= float(right.split("-")[-2])
+
     if not ldata:
         raise Exception(f'*** {left.upper()} contract is not found in cached dir: {DATADIR}')
     if not rdata: 
         raise Exception(f'*** {right.upper()} contract is not found in cached dir: {DATADIR}')
     
-    calc_straddle( ldata,rdata)
+    calc_straddle( ldata,rdata, strike_left,strike_right)
 
 
 if __name__ == '__main__':
