@@ -4,10 +4,7 @@ import time,os
 import rel,json
 import pandas as pd
 
-DATADIR=os.getenv('USER_HOME','/home/ubuntu')+'/data/binance/options'
-if not os.path.exists( DATADIR):
-    os.makedirs( DATADIR )
-print('-- data dir:', DATADIR)
+from butils import DATADIR
 
 def _maturity( symbol ):
     ds = symbol.split('-')[1]
