@@ -16,4 +16,5 @@ python btc_straddle.py --left BTC-240308-50000-P --right BTC-240308-60000-C --si
 Notes:
 ```
 Make sure you are using OTM options, both call & put for straddle. Otherwise, meaningless.
+Ref: https://www.fidelity.com/learning-center/investment-products/options/options-strategy-guide/long-strangle
 ```
