@@ -15,15 +15,17 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     print(f'-- strikes (L): ${strike_left}, (R): ${strike_right}')
     recs = []
     
+    premium = (lask + rask)*vol
+    fee = premium * fee_rate
+    print('-- premium: {premium:,.2f}, fee: {fee:,.2f}')
+
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
         gains *= vol
-        premium = (lask + rask)*vol
-        fee = premium * fee_rate
         profits = gains - premium - fee
-        recs += [ (stock, premium, fee, gains, profits )]
-    df = pd.DataFrame.from_records( recs, columns=['spot','premium','fee','gain', 'profit'])
+        recs += [ (stock, gains, profits )]
+    df = pd.DataFrame.from_records( recs, columns=['spot','gain', 'profit'])
 
     for col in ['premium','profit','fee']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
