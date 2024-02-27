@@ -19,9 +19,8 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     
 
     premium = (lask + rask)*vol
-    adhoc = ex.fetch_ticker('BTC/USDT')
-    print(adhoc)
-    fee = vol * 56000 * fee_rate # Binance calc the fee from contract nominal $value.
+    adhoc = ex.fetch_ticker('BTC/USDT')['bid']
+    fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
 
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
