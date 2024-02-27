@@ -1,8 +1,11 @@
 import datetime,os
 import pandas as pd
 import requests 
+import click
 
-def main():
+@click.command()
+@click.option('--price')
+def main(price):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
     if resp:
@@ -30,7 +33,7 @@ def main():
 
         print('-- saved: ', fn)
 
-        rcs = df[df.symbol.str.contains('57000')].symbol.values 
+        rcs = df[df.symbol.str.contains(price)].symbol.values 
         print(','.join( rcs ))
 
 
