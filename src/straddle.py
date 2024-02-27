@@ -34,7 +34,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     df['return'] = df['return'].apply(lambda v: f"{(v*100):.2f}%")
     print( tabulate(df, headers="keys"))
     
-    print(f'-- order size: {vol}-contract')
+    print(f'-- order size: {vol} contract')
     print(f'-- total costs  premium: ${premium:,.2f}, fee: ${fee:,.2f}')
     
 
