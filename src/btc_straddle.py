@@ -59,10 +59,10 @@ def _main(left,right, vol):
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
             ldata = json.loads(fh.read())
-            print( '\t',left, ldata )
+            print( '\t',left )#, ldata )
         with open(f"{DATADIR}/{right.upper()}.json", 'r') as fh:
             rdata = json.loads(fh.read())
-            print( '\t',right, rdata )
+            print( '\t',right )#, rdata )
     except FileNotFoundError as  e:
         print('*** waiting for data ...')
         time.sleep(5)
