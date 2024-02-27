@@ -2,8 +2,11 @@ import os,datetime,json
 import pandas as pd 
 import click,time
 from tabulate import tabulate
+import ccxt
 
 from butils import DATADIR
+
+ex = ccxt.binance()
 
 def _v(v): return float(v)
 def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
@@ -14,8 +17,11 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     print(f'-- order volumes  (L): {vol}-contract, (R): {vol}-contract')
     recs = []
     
+
     premium = (lask + rask)*vol
-    fee = vol * 56000 * fee_rate
+    adhoc = ex.fetch_ticker('BTC/USDT')
+    print(adhoc)
+    fee = vol * 56000 * fee_rate # Binance calc the fee from contract nominal $value.
 
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
