@@ -25,12 +25,13 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         profits = gains - premium - fee
         recs += [ (stock, gains, profits )]
     
-    print(f'-- total costs  premium: ${premium:,.2f}, fee: ${fee:,.2f}')
     df = pd.DataFrame.from_records( recs, columns=['spot','gain', 'profit'])
 
     for col in ['profit']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
     print( tabulate(df, headers="keys"))
+    
+    print(f'-- total costs  premium: ${premium:,.2f}, fee: ${fee:,.2f}')
     
 
 @click.command()
