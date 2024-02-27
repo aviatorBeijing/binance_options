@@ -5,7 +5,8 @@ import click
 
 @click.command()
 @click.option('--price')
-def main(price):
+@click.option('--contract', help="call or put")
+def main(price,contract):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
     if resp:
@@ -33,7 +34,7 @@ def main(price):
 
         print('-- saved: ', fn)
 
-        rcs = df[df.symbol.str.contains(price)].symbol.values 
+        rcs = df[ (df.symbol.str.contains(price)) & (df.symbol.str.endswith( f"-{contract[0].upper()}" ) ) ].symbol.values 
         print(','.join( rcs ))
 
 
