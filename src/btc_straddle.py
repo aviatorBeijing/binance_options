@@ -31,7 +31,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         profits = gains - premium - fee
         recs += [ (stock, gains, profits )]
     
-    df = pd.DataFrame.from_records( recs, columns=['spot','gain', 'net profit @ expiry'])
+    df = pd.DataFrame.from_records( recs, columns=[spot_symbol,'gain', 'net profit @ expiry'])
     cost = premium + fee
     df['return'] = ( df['net profit @ expiry']) / cost
 
