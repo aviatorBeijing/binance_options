@@ -5,7 +5,7 @@
 python -m pip install -r requirements.txt
 ```
 
-Example:
+Example (Long straddle):
 
 ```
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
