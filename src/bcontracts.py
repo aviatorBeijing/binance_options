@@ -22,7 +22,7 @@ def main(price):
 
         df.drop(['filters','contractId','unit','id'], axis=1, inplace=True)
         df = df.sort_values(['expiryDate','symbol','strikePrice'], ascending=True)
-        print(df)
+        #print(df)
 
         fn = os.getenv('USER_HOME','/Users/junma')
         fn += '/tmp/options_symbols.csv'
