@@ -6,6 +6,8 @@ import pandas as pd
 
 from butils import DATADIR
 
+DEBUG = False 
+
 def _maturity( symbol ):
     ds = symbol.split('-')[1]
     t = datetime.datetime.strptime( '20'+ds, '%Y%m%d')
@@ -46,7 +48,8 @@ def on_message(ws, message):
         if old_v < vo:
             max_volatility.symbol = df['s'].values[0]
             max_volatility.vol = vo
-            print( '-- new max vol:', max_volatility)
+            if DEBUG:
+                print( '-- new max vol:', max_volatility)
     else:
         max_volatility = MaxVolatility(df['s'].values[0], vo)
 
@@ -64,8 +67,8 @@ def on_message(ws, message):
                 is_updating = True 
         if is_updating:
             m = _maturity( sym )
-            #BTC-240927-60000-C ['5645', '4005', '6415', 2410.0]
-            print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
+            if DEBUG:
+                print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
             with open(f"{DATADIR}/{sym}.json", 'w') as fh:
                 data = {
                         "last_trade": df.iloc[0].c,
