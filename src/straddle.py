@@ -7,7 +7,7 @@ from butils import DATADIR
 
 def _v(v): return float(v)
 def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
-    fee = 5/10000 # Binance: taker 5/10000, maker 2/10000
+    fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
@@ -18,12 +18,13 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
-        cost = lask + rask
-        profits = gains - cost 
-        recs += [ (stock, cost, gains, profits )]
-    df = pd.DataFrame.from_records( recs, columns=['spot','cost', 'gain', 'profit'])
+        premium = (lask + rask)*vol
+        fee = premium * fee_rate
+        profits = gains - premium - fee
+        recs += [ (stock, premium, fee, gains, profits )]
+    df = pd.DataFrame.from_records( recs, columns=['spot','premium', 'gain', 'profit'])
 
-    for col in ['cost','profit']:
+    for col in ['premium','profit','fee']:
         df[col] = df[col].apply(lambda e: f"${e:,.0f}")
     print( tabulate(df, headers="keys"))
     
