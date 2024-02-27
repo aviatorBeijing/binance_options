@@ -60,6 +60,10 @@ def _main(left,right, vol):
         print('*** waiting for data ...')
         time.sleep(5)
         return 
+    except json.JSONDecodeError as  je:
+        print('*** json data conflict, wait ...')
+        time.sleep(5)
+        return 
     
     if not ldata:
         raise Exception(f'*** {left.upper()} contract is not found in cached dir: {DATADIR}')
