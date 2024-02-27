@@ -12,7 +12,6 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
     print(f'-- order volumes  (L): {vol}-contract, (R): {vol}-contract')
-    print(f'-- strikes (L): ${strike_left}, (R): ${strike_right}')
     recs = []
     
     premium = (lask + rask)*vol
