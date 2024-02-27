@@ -39,6 +39,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
     df['return'] = df['return'].apply(lambda v: f"{(v*100):.2f}%")
     df['dp'] = df['dp'].apply(lambda v: f"{(v*100):.1f}%")
+    df.set_index(['dp'],inplace=True,drop=True)
     print( tabulate(df, headers="keys"))
     
     print(f'-- spot: ${adhoc:,.2f} @ {ts} (UTC+8)')
