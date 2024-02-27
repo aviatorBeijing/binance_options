@@ -9,6 +9,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
+    print(f'-- strikes (L): ${strike_left}, (R): ${strike_right}')
     for stock in range(50000,60000,1000): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
