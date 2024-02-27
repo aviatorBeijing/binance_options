@@ -1,6 +1,6 @@
 import os,datetime,json
 import pandas as pd 
-import click,sys
+import click,time
 from tabulate import tabulate
 
 from butils import DATADIR
@@ -65,7 +65,7 @@ from ws_bcontract import _main as ws_connector
 def _multiprocess_main(left,right,vol):
     while True:
         _main(left,right,vol)
-        sys.sleep(5)
+        time.sleep(5)
 
 @click.command()
 @click.option('--left', help="left leg contract name")
