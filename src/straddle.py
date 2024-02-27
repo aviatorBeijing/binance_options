@@ -22,7 +22,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         fee = premium * fee_rate
         profits = gains - premium - fee
         recs += [ (stock, premium, fee, gains, profits )]
-    df = pd.DataFrame.from_records( recs, columns=['spot','premium', 'gain', 'profit'])
+    df = pd.DataFrame.from_records( recs, columns=['spot','premium','fee','gain', 'profit'])
 
     for col in ['premium','profit','fee']:
         df[col] = df[col].apply(lambda e: f"${e:,.0f}")
