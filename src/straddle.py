@@ -48,19 +48,18 @@ def main(left,right, vol):
     ldata = None;rdata = None
     with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
         ldata = json.loads(fh.read())
-        print( ldata )
+        print( left, ldata )
     with open(f"{DATADIR}/{right.upper()}.json", 'r') as fh:
         rdata = json.loads(fh.read())
-        print( rdata )
+        print( right, rdata )
     
-    strike_left = float(left.split("-")[-2])
-    strike_right= float(right.split("-")[-2])
-
     if not ldata:
         raise Exception(f'*** {left.upper()} contract is not found in cached dir: {DATADIR}')
     if not rdata: 
         raise Exception(f'*** {right.upper()} contract is not found in cached dir: {DATADIR}')
     
+    strike_left = float(left.split("-")[-2])
+    strike_right= float(right.split("-")[-2])
     calc_straddle( ldata,rdata, strike_left,strike_right,vol)
 
 
