@@ -6,6 +6,7 @@ import ccxt
 
 from butils import DATADIR
 
+spot_symbol = 'BTC/USDT'
 ex = ccxt.binance()
 
 def _v(v): return float(v)
@@ -19,7 +20,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     
 
     premium = (lask + rask)*vol
-    adhoc = ex.fetch_ticker('BTC/USDT')['bid']
+    adhoc = ex.fetch_ticker(spot_symbol)['bid']
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
 
