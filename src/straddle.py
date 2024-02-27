@@ -20,7 +20,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right):
         recs += [ (stock, cost, gains, profits )]
     df = pd.DataFrame.from_records( recs, columns=['spot','cost', 'gain', 'profit'])
 
-    df.cost = df.cost.apply(lambda e: f"${e:,.2f}")
+    df.cost = df.cost.apply(lambda e: f"${e:,.0f}")
     print( tabulate(df, headers="keys"))
     
 
