@@ -1,4 +1,4 @@
 #!/bin/bash
-
+$PYTHON --version
 RICS=$1
-python ws_bcontract.py --channel=ticker --rics $RICS
+$PYTHON ws_bcontract.py --channel=ticker --rics $RICS
