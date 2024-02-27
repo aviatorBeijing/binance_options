@@ -68,7 +68,8 @@ def _multiprocess_main(left,right,vol):
             _main(left,right,vol)
             time.sleep(5)
         except KeyboardInterrupt as e:
-            pass
+            print("-- Exiting --")
+            break
 
 @click.command()
 @click.option('--left', help="left leg contract name")
