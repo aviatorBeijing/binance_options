@@ -26,11 +26,11 @@ def main():
         df.to_csv( fn , index=False)
         
         symbols = df[df.symbol.str.contains('BTC')].symbol.values
-        print(','.join(symbols))
+        # print(','.join(symbols))
 
         print('-- saved: ', fn)
 
-        rcs = df[df.symbol.str.contains('56000')].symbol.values 
+        rcs = df[df.symbol.str.contains('57000')].symbol.values 
         print(','.join( rcs ))
 
 

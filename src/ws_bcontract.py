@@ -1,6 +1,5 @@
 import datetime,click
 import websocket
-import _thread
 import time,os
 import rel,json
 import pandas as pd
