@@ -64,8 +64,11 @@ from ws_bcontract import _main as ws_connector
 
 def _multiprocess_main(left,right,vol):
     while True:
-        _main(left,right,vol)
-        time.sleep(5)
+        try:
+            _main(left,right,vol)
+            time.sleep(5)
+        except KeyboardInterrupt as e:
+            pass
 
 @click.command()
 @click.option('--left', help="left leg contract name")
