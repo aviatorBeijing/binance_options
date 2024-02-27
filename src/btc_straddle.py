@@ -29,11 +29,12 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         gains += max( stock - strike_right, 0)
         gains *= vol
         profits = gains - premium - fee
-        recs += [ ( stock, gains, profits, (stock-adhoc)/adhoc )]
+        recs += [ ( stock, gains, profits )]
     
-    df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry', 'spot_gain'])
+    df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
     cost = premium + fee
     df['return'] = ( df['net profit @ expiry']) / cost
+    df['spot_gain'] = (df[f"{spot_symbol} @ expiry"] - adhoc)/adhoc
 
     for col in ['net profit @ expiry']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
