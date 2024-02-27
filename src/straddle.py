@@ -27,7 +27,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     
     df = pd.DataFrame.from_records( recs, columns=['spot','gain', 'profit'])
     cost = premium + fee
-    df['return'] = ( df.profit - cost) / cost
+    df['return'] = ( df.profit) / cost
 
     for col in ['profit']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
