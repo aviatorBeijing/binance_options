@@ -1,6 +1,6 @@
 import os,datetime,json
 import pandas as pd 
-import click
+import click,tabulate
 
 from butils import DATADIR
 
@@ -18,7 +18,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right):
         profits = gains - cost 
         recs += [ (stock, cost, gains, profits )]
     df = pd.DataFrame.from_records( recs, columns=['spot','cost', 'gain', 'profit'])
-    print(df)
+    print( tabulate(df, headers="keys"))
     
 
 @click.command()
