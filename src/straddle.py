@@ -62,6 +62,11 @@ def _main(left,right, vol):
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
 
+def _multiprocess_main(left,right,vol):
+    while True:
+        _main(left,right,vol)
+        sys.sleep(5)
+
 @click.command()
 @click.option('--left', help="left leg contract name")
 @click.option('--right')
@@ -69,7 +74,7 @@ from ws_bcontract import _main as ws_connector
 def main(left,right, vol):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    calc = Process( target=_main, args=(left,right,vol,) )
+    calc = Process( target=_multiprocess_main, args=(left,right,vol,) )
     conn.start()
     calc.start()
     
