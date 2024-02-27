@@ -1,6 +1,6 @@
 import os,datetime,json
 import pandas as pd 
-import click
+import click,sys
 from tabulate import tabulate
 
 from butils import DATADIR
@@ -59,12 +59,19 @@ def _main(left,right, vol):
     strike_right= float(right.split("-")[-2])
     calc_straddle( ldata,rdata, strike_left,strike_right,vol)
 
+from ws_bcontract import _main as ws_connector
+
 @click.command()
 @click.option('--left', help="left leg contract name")
 @click.option('--right')
 @click.option('--vol', default=1.0, help="planned order volume, 1=1BTC contract")
 def main(left,right, vol):
-    _main(left, right, vol)
+
+    ws_connector(f"{left},{right}", "ticker")
+    
+    while True:
+        _main(left, right, vol)
+        sys.sleep(5)
 
 
 if __name__ == '__main__':
