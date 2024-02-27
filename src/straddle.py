@@ -59,6 +59,7 @@ def _main(left,right, vol):
     strike_right= float(right.split("-")[-2])
     calc_straddle( ldata,rdata, strike_left,strike_right,vol)
 
+from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
 
 @click.command()
@@ -67,11 +68,13 @@ from ws_bcontract import _main as ws_connector
 @click.option('--vol', default=1.0, help="planned order volume, 1=1BTC contract")
 def main(left,right, vol):
 
-    ws_connector(f"{left},{right}", "ticker")
+    conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
+    calc = Process( target=_main, args=(left,right,vol,) )
+    conn.start()
+    calc.start()
     
-    while True:
-        _main(left, right, vol)
-        sys.sleep(5)
+    conn.join()
+    calc.join()
 
 
 if __name__ == '__main__':
