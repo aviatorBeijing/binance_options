@@ -46,12 +46,13 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
 @click.option('--vol', default=1.0, help="planned order volume, 1=1BTC contract")
 def main(left,right, vol):
     ldata = None;rdata = None
+    print("-- Contracts --")
     with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
         ldata = json.loads(fh.read())
-        print( left, ldata )
+        print( '\t',left, ldata )
     with open(f"{DATADIR}/{right.upper()}.json", 'r') as fh:
         rdata = json.loads(fh.read())
-        print( right, rdata )
+        print( '\t',right, rdata )
     
     if not ldata:
         raise Exception(f'*** {left.upper()} contract is not found in cached dir: {DATADIR}')
