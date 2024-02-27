@@ -10,12 +10,15 @@ def calc_straddle( ldata,rdata, strike_left,strike_right):
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
     print(f'-- strikes (L): ${strike_left}, (R): ${strike_right}')
+    recs = []
     for stock in range(40000,70000,1000): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
         cost = lask + rask
         profits = gains - cost 
-        print(stock, cost, gains, profits )
+        recs += [ (stock, cost, gains, profits )]
+    df = pd.DataFrame.from_records( recs, columns=['spot','cost', 'gain', 'profit'])
+    print(df)
     
 
 @click.command()
