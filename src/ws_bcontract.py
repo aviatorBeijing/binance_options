@@ -34,6 +34,7 @@ def on_message(ws, message):
     global max_volatility
     msg = json.loads( message )
     fds = ['s','c', 'mp', 'bo','ao','bq','aq', 'b','a','d','g','t','vo','V','A'] #for 'ticker'
+    #print( len(msg), msg)
     df = pd.DataFrame.from_records([ msg ] )
     #print( df[ fds ] )
 
@@ -49,7 +50,7 @@ def on_message(ws, message):
         if old_v < vo:
             max_volatility.symbol = df['s'].values[0]
             max_volatility.vol = vo
-            print( max_volatility)
+            print( '-- new max vol:', max_volatility)
     else:
         max_volatility = MaxVolatility(df['s'].values[0], vo)
 
@@ -79,7 +80,7 @@ def on_message(ws, message):
                 json.dump(data, fh)
 
 def on_error(ws, error):
-    print(error)
+    print('error:', error)
 
 def on_close(ws, close_status_code, close_msg):
     print("### closed ###")

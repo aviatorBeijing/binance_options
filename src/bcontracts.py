@@ -30,7 +30,7 @@ def main():
 
         print('-- saved: ', fn)
 
-        rcs = df[df.symbol.str.contains('45000')].symbol.values 
+        rcs = df[df.symbol.str.contains('56000')].symbol.values 
         print(','.join( rcs ))
 
 
