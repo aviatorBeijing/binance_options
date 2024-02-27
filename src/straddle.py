@@ -1,6 +1,7 @@
 import os,datetime,json
 import pandas as pd 
-import click,tabulate
+import click
+from tabulate import tabulate
 
 from butils import DATADIR
 
