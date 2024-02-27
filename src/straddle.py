@@ -20,6 +20,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
 
     premium = (lask + rask)*vol
     adhoc = ex.fetch_ticker('BTC/USDT')['bid']
+    ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
 
     for stock in range(40000,70000,1000): # at expiration
@@ -38,7 +39,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     df['return'] = df['return'].apply(lambda v: f"{(v*100):.2f}%")
     print( tabulate(df, headers="keys"))
     
-    print(f'-- spot: ${adhoc:,.2f}')
+    print(f'-- spot: ${adhoc:,.2f} @ {ts} (UTC+8)')
     print(f'-- (assumed) fee_rate: {(fee_rate*100):.2f}%')
     
     print(f'-- order size: {vol} contract  (call&put each)')
