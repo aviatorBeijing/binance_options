@@ -29,17 +29,17 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
         gains += max( stock - strike_right, 0)
         gains *= vol
         profits = gains - premium - fee
-        recs += [ ( (stock-adhoc)/adhoc,stock, gains, profits )]
+        recs += [ ( stock, gains, profits, (stock-adhoc)/adhoc )]
     
-    df = pd.DataFrame.from_records( recs, columns=[ "dp", f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
+    df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry', 'spot_gain'])
     cost = premium + fee
     df['return'] = ( df['net profit @ expiry']) / cost
 
     for col in ['net profit @ expiry']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
     df['return'] = df['return'].apply(lambda v: f"{(v*100):.2f}%")
-    df['dp'] = df['dp'].apply(lambda v: f"{(v*100):.1f}%")
-    df.set_index(['dp'],inplace=True,drop=True)
+    df['spot_gain'] = df['spot_gain'].apply(lambda v: f"{(v*100):.1f}%")
+    #df.set_index(['spot_gain'],inplace=True,drop=True)
     print( tabulate(df, headers="keys"))
     
     print(f'-- spot: ${adhoc:,.2f} @ {ts} (UTC+8)')
