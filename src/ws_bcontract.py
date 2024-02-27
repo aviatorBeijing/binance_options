@@ -86,11 +86,7 @@ def on_open(ws):
 
 endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
 
-@click.command()
-@click.option('--rics')
-@click.option('--channel', default="trade")
-def main(rics, channel):
-    print('-- channel:', channel)
+def _main(rics:str, channel):
     rics = rics.split(',')
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )
     websocket.enableTrace(False) #True)
@@ -104,6 +100,13 @@ def main(rics, channel):
         ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
     rel.signal(2, rel.abort)  # Keyboard Interrupt
     rel.dispatch()
+
+@click.command()
+@click.option('--rics')
+@click.option('--channel', default="trade")
+def main(rics, channel):
+    print('-- channel:', channel)
+    _main(rics, channel)
 
 if __name__ == '__main__':
     main()
