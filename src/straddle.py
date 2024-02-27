@@ -32,7 +32,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
 @click.command()
 @click.option('--left', help="left leg contract name")
 @click.option('--right')
-@click.option('--vol', default=1, help="planned order volume, 1=1BTC contract")
+@click.option('--vol', default=1.0, help="planned order volume, 1=1BTC contract")
 def main(left,right, vol):
     ldata = None;rdata = None
     with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
