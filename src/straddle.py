@@ -6,9 +6,8 @@ from butils import DATADIR
 
 def _v(v): return float(v)
 def calc_straddle( ldata,rdata):
-    lbid,lask,l_bvol, l_avol = ldata['bid'],ldata['ask'],ldata['bidv'],ldata['askv']
-    rbid,rask,r_bvol, r_avol = rdata['bid'],rdata['ask'],rdata['bidv'],rdata['askv']
-    for v in [lbid,lask,l_bvol,l_avol, rbid,rask,r_bvol,r_avol]: v = _v(v)
+    lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
+    rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     print(type(lbid))
     
 
