@@ -55,7 +55,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
 
 def _main(left,right, vol):
     ldata = None;rdata = None
-    print("-- Contracts ", '-'*10)
+    print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
             ldata = json.loads(fh.read())
