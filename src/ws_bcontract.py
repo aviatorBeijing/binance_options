@@ -38,7 +38,9 @@ def on_message(ws, message):
 
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
-        
+    
+    df['delta'] = df.d.apply(float)
+
     df['spd%'] = df['spread']/avg
     df['spd%'] = df['spd%'].apply(lambda v: f"{(v*100):.1f}%")
     
@@ -53,7 +55,7 @@ def on_message(ws, message):
     else:
         max_volatility = MaxVolatility(df['s'].values[0], vo)
 
-    rows = df[['s','c', 'bo','ao', 'spread','spd%', 'd']].to_records(index=False)
+    rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta']].to_records(index=False)
     for row in rows:
         row = list(row)
         sym = row[0]; is_updating = False
