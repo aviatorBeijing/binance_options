@@ -23,7 +23,7 @@ def _find_breakeven(df):
 
 def _v(v): return float(v)
 def calc_straddle( ldata,rdata, strike_left,strike_right, vol, 
-                    taker_order=True, spot_symbol = 'BTC/USDT'):
+                    taker_order=True, spot_symbol="BTC/USDT"):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     #assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
@@ -87,8 +87,9 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')
     
 
-def _main(left,right, vol, is_taker=True, spot_symbol = 'BTC/USDT'):
+def _main(left,right, vol, is_taker=True):
     ldata = None;rdata = None
+    spot_symbol = left.split('-')[0]+'/USDT'
     print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
@@ -134,11 +135,10 @@ def _multiprocess_main(left,right,vol,spot_symbol):
 @click.option('--left', help="left leg (OTM put option) contract name")
 @click.option('--right', help="right leg (OTM call option)")
 @click.option('--size', default=1.0, help="1, 0.1, ... Contract size, 1=1BTC contract")
-@click.option('--spot_symbol', default="BTC/USDT")
-def main(left,right, size,spot_symbol):
+def main(left,right, size):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(left,right,size,spot_symbol) )
+    calc = Process( target=_multiprocess_main, args=(left,right,size) )
     conn.start()
     calc.start()
     
