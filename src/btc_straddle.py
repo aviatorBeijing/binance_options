@@ -90,9 +90,10 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
 def _main(left,right, vol, is_taker=True):
     ldata = None;rdata = None
     spot_symbol = left.split('-')[0]+'/USDT'
-    funding_rate = get_binance_funding_rate( spot_symbol)
+    annual, funding_rate = get_binance_funding_rate( spot_symbol)
 
-    print(f'-- annualized funding_rate (perpetual): {(funding_rate*100):.2f}%')
+    print(f'-- annualized funding_rate (perpetual): {(funding_rate*10000):.2f}%%')
+    print(f'-- annualized funding_rate (perpetual): {(annual*100):.2f}%')
     print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
