@@ -9,6 +9,8 @@ from butils import DATADIR,get_binance_next_funding_rate
 
 ex = ccxt.binance()
 
+DEBUG = os.getenv("BINANCE_DEBUG", None)
+
 def _find_breakeven(df):
     col = 'net profit @ expiry'
     df['next_neg'] = (df[col]<0).shift(-1) # shift up
@@ -19,7 +21,8 @@ def _find_breakeven(df):
     df['break_even'] = False; df.loc[ df.prev_pos & df.next_neg, 'break_even'] = True 
     df.loc[df.prev_neg & df.next_pos, 'break_even'] = True 
     df.drop(['next_neg','next_pos','prev_neg','prev_pos','is_pos'], inplace=True, axis=1)
-    df = df[df.break_even]
+    if not DEBUG:
+        df = df[df.break_even]
     return df    
 
 def _v(v): return float(v)
