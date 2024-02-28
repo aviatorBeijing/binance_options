@@ -1,6 +1,8 @@
 import os,datetime
 import ccxt
 
+DEBUG = os.getenv("BINANCE_DEBUG", None)
+
 DATADIR=os.getenv('USER_HOME','/home/ubuntu')+'/data/binance/options'
 if not os.path.exists( DATADIR):
     try:

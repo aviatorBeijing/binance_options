@@ -5,11 +5,9 @@ from tabulate import tabulate
 import ccxt
 import numpy  as np
 
-from butils import DATADIR,get_binance_next_funding_rate
+from butils import DATADIR,get_binance_next_funding_rate,DEBUG
 
 ex = ccxt.binance()
-
-DEBUG = os.getenv("BINANCE_DEBUG", None)
 
 def _find_breakeven(df):
     col = 'net profit @ expiry'
