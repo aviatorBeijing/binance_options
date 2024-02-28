@@ -5,7 +5,7 @@ from tabulate import tabulate
 import ccxt
 import numpy  as np
 
-from butils import DATADIR,get_binance_next_funding_rate,DEBUG
+from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 
 ex = ccxt.binance()
 
