@@ -15,6 +15,11 @@ python strategy/straddle.py --left BTC-240301-56000-P --right BTC-240301-58000-C
 python strategy/straddle.py --left BNB-240301-385-P --right BNB-240301-400-C --size=1
 ```
 
+Debug mode:
+```
+export BINANCE_DEBUG=1
+```
+
 Notes:
 ```
 Only support BTC,BNB, and DOGE contracts, for now.
