@@ -93,7 +93,7 @@ def _main(left,right, vol, is_taker=True):
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
 
     print(f'-- funding_rate (perpetual): {(funding_rate*10000):.2f}%%, {(annual*100):.2f}%, {ts}')
-    print("-"*10, ' Strangel Contracts ', '-'*10)
+    print("-"*10, ' Straddle Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
             ldata = json.loads(fh.read())
