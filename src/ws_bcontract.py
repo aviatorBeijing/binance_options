@@ -56,7 +56,6 @@ def on_message(ws, message):
         max_volatility = MaxVolatility(df['s'].values[0], vo)
     
     rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta']].to_records(index=False)
-    print(rows)
     for row in rows:
         row = list(row)
         sym = row[0]; is_updating = False
@@ -80,7 +79,9 @@ def on_message(ws, message):
                         "bidv": df.iloc[0].bq,
                         "askv": df.iloc[0].aq,
                         "delta": df.iloc[0].delta}
+                print( data )
                 json.dump(data, fh)
+                print('***')
 
 def on_error(ws, error):
     print('error:', error)
