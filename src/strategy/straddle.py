@@ -125,7 +125,11 @@ def _main(left,right, vol, is_taker=True):
     
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
-    calc_straddle( ldata,rdata, strike_left,strike_right,vol, taker_order=is_taker, spot_symbol = spot_symbol)
+    calc_straddle(  ldata,rdata, 
+                    strike_left,strike_right,
+                    vol, 
+                    taker_order=is_taker, 
+                    spot_symbol = spot_symbol)
 
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
