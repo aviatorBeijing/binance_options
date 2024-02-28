@@ -39,7 +39,8 @@ def on_message(ws, message):
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
     
-    df['delta'] = df['d'].astype(float)*1.0
+    df['delta'] = df['d'].astype(float)
+    df['theta'] = df['t']
 
     df['spd%'] = df['spread']/avg
     df['spd%'] = df['spd%'].apply(lambda v: f"{(v*100):.1f}%")
@@ -69,7 +70,7 @@ def on_message(ws, message):
                 is_updating = True 
         if is_updating:
             m = _maturity( sym )
-            if True: #DEBUG:
+            if DEBUG:
                 print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
             with open(f"{DATADIR}/{sym}.json", 'w') as fh:
                 data = {
