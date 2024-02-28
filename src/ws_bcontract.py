@@ -68,10 +68,10 @@ def on_message(ws, message):
                 dedups[sym] = val
                 is_updating = True 
         if is_updating:
+            print( row )
             m = _maturity( sym )
             if DEBUG:
                 print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
-            print(df)
             with open(f"{DATADIR}/{sym}.json", 'w') as fh:
                 data = {
                         "last_trade": df.iloc[0].c,
