@@ -11,8 +11,8 @@ Example (Long straddle):
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
 
 cd src
-python btc_straddle.py --left BTC-240301-56000-P --right BTC-240301-58000-C --size=0.1 --spot_symbol BTC/USDT
-python btc_straddle.py --left BNB-240301-385-P --right BNB-240301-400-C --size=1 --spot_symbol BNB/USDT
+python btc_straddle.py --left BTC-240301-56000-P --right BTC-240301-58000-C --size=0.1
+python btc_straddle.py --left BNB-240301-385-P --right BNB-240301-400-C --size=1
 ```
 
 Notes:
