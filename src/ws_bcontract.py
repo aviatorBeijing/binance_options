@@ -58,6 +58,7 @@ def on_message(ws, message):
     rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta']].to_records(index=False)
     for row in rows:
         row = list(row)
+        print( "###", row )
         sym = row[0]; is_updating = False
         val = ','.join(row[1:len(row)-2] )
         if sym not in dedups:
@@ -68,7 +69,6 @@ def on_message(ws, message):
                 dedups[sym] = val
                 is_updating = True 
         if is_updating:
-            print( row )
             m = _maturity( sym )
             if DEBUG:
                 print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
