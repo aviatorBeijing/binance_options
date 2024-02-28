@@ -38,11 +38,12 @@ def on_message(ws, message):
 
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
-    df['delta'] = df['d'].astype(float)
-    df['theta'] = df['t'].astype(float)
-    df['gamma'] = df['g'].astype(float)
-    df['vega'] = df['v'].astype(float)
-    df['impliedvol'] = df['vo'].astype(float)
+    
+    df['delta'] = df['d'].astype(float)*1.0
+    df['theta'] = df['t'].astype(float)*1.0
+    df['gamma'] = df['g'].astype(float)*1.0
+    df['vega'] = df['v'].astype(float)*1.0
+    df['impliedvol'] = df['vo'].astype(float)*1.0
     
     df['spd%'] = df['spread']/avg
     df['spd%'] = df['spd%'].apply(lambda v: f"{(v*100):.1f}%")
