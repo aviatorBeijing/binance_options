@@ -6,11 +6,11 @@ import ccxt
 
 from butils import DATADIR
 
-spot_symbol = 'BTC/USDT'
 ex = ccxt.binance()
 
 def _v(v): return float(v)
-def calc_straddle( ldata,rdata, strike_left,strike_right, vol, taker_order=True):
+def calc_straddle( ldata,rdata, strike_left,strike_right, vol, 
+                    taker_order=True, spot_symbol = 'BTC/USDT'):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     #assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
@@ -61,7 +61,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol, taker_order=True)
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')
     
 
-def _main(left,right, vol, is_taker=True):
+def _main(left,right, vol, is_taker=True, spot_symbol = 'BTC/USDT'):
     ldata = None;rdata = None
     print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
@@ -87,16 +87,16 @@ def _main(left,right, vol, is_taker=True):
     
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
-    calc_straddle( ldata,rdata, strike_left,strike_right,vol, taker_order=is_taker)
+    calc_straddle( ldata,rdata, strike_left,strike_right,vol, taker_order=is_taker, spot_symbol = spot_symbol)
 
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
 
-def _multiprocess_main(left,right,vol):
+def _multiprocess_main(left,right,vol,spot_symbol):
     while True:
         try:
             #print('*'*5, "[Taker order]")
-            _main(left,right,vol)
+            _main(left,right,vol,spot_symbol=spot_symbol)
             #print('*'*5, "[Maker order]")
             #_main(left,right,vol, is_taker=False)
             time.sleep(5)
@@ -108,10 +108,11 @@ def _multiprocess_main(left,right,vol):
 @click.option('--left', help="left leg (OTM put option) contract name")
 @click.option('--right', help="right leg (OTM call option)")
 @click.option('--size', default=1.0, help="1, 0.1, ... Contract size, 1=1BTC contract")
-def main(left,right, size):
+@click.option('--spot_symbol', default="BTC/USDT")
+def main(left,right, size,spot_symbol):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(left,right,size,) )
+    calc = Process( target=_multiprocess_main, args=(left,right,size,spot_symbol) )
     conn.start()
     calc.start()
     
