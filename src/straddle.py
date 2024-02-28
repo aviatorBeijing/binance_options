@@ -33,8 +33,8 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     if taker_order:
         fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
         premium = (lask + rask)*vol
-        print(f'  -- buy Put @ {lask:,.2f} (delta= {float(ldata["delta"]):.4f} )')
-        print(f'  -- buy Call @ {rask:,.2f} (delta= {float(rdata["delta"]):.4f} )')
+        print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.4f} )')
+        print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.4f} )')
     else: # maker order (usually hard to fill & sliperage is large.)
         fee_rate = 2/10000
         r = 1 + 5/1000 # A 0.5% higher than current bid price, to enhance chance of getting filled in time.
