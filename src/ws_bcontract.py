@@ -55,7 +55,7 @@ def on_message(ws, message):
     else:
         max_volatility = MaxVolatility(df['s'].values[0], vo)
 
-    rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta']].to_records(index=False)
+    rows = df[['s','c', 'bo','ao', 'spread','spd%']].to_records(index=False)
     for row in rows:
         row = list(row)
         sym = row[0]; is_updating = False
