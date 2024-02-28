@@ -93,10 +93,10 @@ from ws_bcontract import _main as ws_connector
 def _multiprocess_main(left,right,vol):
     while True:
         try:
-            print('*'*5, "[Taker order]")
+            #print('*'*5, "[Taker order]")
             _main(left,right,vol)
-            print('*'*5, "[Maker order]")
-            _main(left,right,vol, is_taker=False)
+            #print('*'*5, "[Maker order]")
+            #_main(left,right,vol, is_taker=False)
             time.sleep(5)
         except KeyboardInterrupt as e:
             print("-- Exiting --")
