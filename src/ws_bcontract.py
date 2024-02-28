@@ -96,7 +96,8 @@ def on_close(ws, close_status_code, close_msg):
     print("### closed ###")
 
 def on_open(ws):
-    print("Opened connection")
+    if DEBUG:
+        print("Opened connection")
 
 endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
 
