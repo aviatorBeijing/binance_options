@@ -119,11 +119,11 @@ def _main(left,right, vol, is_taker=True):
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
 
-def _multiprocess_main(left,right,vol,spot_symbol):
+def _multiprocess_main(left,right,vol):
     while True:
         try:
             #print('*'*5, "[Taker order]")
-            _main(left,right,vol,spot_symbol=spot_symbol)
+            _main(left,right,vol)
             #print('*'*5, "[Maker order]")
             #_main(left,right,vol, is_taker=False)
             time.sleep(5)
