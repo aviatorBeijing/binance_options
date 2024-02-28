@@ -69,7 +69,7 @@ def on_message(ws, message):
                 is_updating = True 
         if is_updating:
             m = _maturity( sym )
-            if DEBUG:
+            if True: #DEBUG:
                 print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
             with open(f"{DATADIR}/{sym}.json", 'w') as fh:
                 data = {
