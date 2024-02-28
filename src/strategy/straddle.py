@@ -98,9 +98,9 @@ def _main(left,right, vol, is_taker=True):
     rstrike = right.split('-')[2]
     strategy = 'Straddle' if lstrike == rstrike else "Strangle"
 
-    print('*'*90)
+    print('*'*75)
     print(f'-- funding_rate (perpetual): {(funding_rate*10000):.2f}%%, {(annual*100):.2f}%, {ts}')
-    print('*'*90)
+    print('*'*75)
     print("-"*10, f' {strategy} Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
