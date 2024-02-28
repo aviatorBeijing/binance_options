@@ -39,7 +39,7 @@ def on_message(ws, message):
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
     
-    df['delta'] = df.d.apply(lambda v: f"{v}")
+    df['delta'] = 0.
 
     df['spd%'] = df['spread']/avg
     df['spd%'] = df['spd%'].apply(lambda v: f"{(v*100):.1f}%")
