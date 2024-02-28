@@ -32,10 +32,16 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
     fee *= 2 # put & call
 
-    low = adhoc*0.8;high=adhoc*1.3
-    low = int(low/1000)*1000
-    high = int(high/1000)*1000
-    for stock in range(low,high,1000): # at expiration
+    low = adhoc*0.8
+    high=adhoc*1.3
+    if spot_symbol == 'BTC/USDT':
+        low = int(low/1000)*1000
+        high = int(high/1000)*1000
+        step = 1000
+    elif spot_symbol == 'DOGE/USDT':
+        step = 0.001
+
+    for stock in range(low,high,step): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
         gains *= vol
