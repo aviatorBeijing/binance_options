@@ -82,7 +82,12 @@ def on_message(ws, message):
                         "ask": df.iloc[0].ao,
                         "bidv": df.iloc[0].bq,
                         "askv": df.iloc[0].aq,
-                        "delta": df.iloc[0].delta}
+                        "delta": df.iloc[0].delta,
+                        "gamma": df.iloc[0].gamma,
+                        "theta": df.iloc[0].theta,
+                        "vega": df.iloc[0].vega,
+                        "impvol": df.iloc[0].impvol
+                        }
                 json.dump(data, fh)
                 
 
