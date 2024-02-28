@@ -94,8 +94,12 @@ def _main(left,right, vol, is_taker=True):
     spot_symbol = left.split('-')[0]+'/USDT'
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
 
+    lstrike = left.split('-')[2]
+    rstrike = right.split('-')[2]
+    strategy = 'Straddle' if lstrike == rstrike else "Strangle"
+
     print(f'-- funding_rate (perpetual): {(funding_rate*10000):.2f}%%, {(annual*100):.2f}%, {ts}')
-    print("-"*10, ' Straddle Contracts ', '-'*10)
+    print(f"-"*10, ' {strategy} Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
             ldata = json.loads(fh.read())
