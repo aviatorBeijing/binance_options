@@ -5,7 +5,7 @@ from tabulate import tabulate
 import ccxt
 import numpy  as np
 
-from butils import DATADIR
+from butils import DATADIR,get_binance_funding_rate
 
 ex = ccxt.binance()
 
@@ -90,6 +90,9 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
 def _main(left,right, vol, is_taker=True):
     ldata = None;rdata = None
     spot_symbol = left.split('-')[0]+'/USDT'
+    funding_rate = get_binance_funding_rate( spot_symbol)
+
+    print(f'-- funding_rate (perpetual): {(funding_rate*10000):.1f}%%')
     print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
