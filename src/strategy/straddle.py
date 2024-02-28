@@ -155,7 +155,7 @@ def _multiprocess_main(left,right,vol,user_premium):
 @click.option('--left', help="left leg (OTM put option) contract name")
 @click.option('--right', help="right leg (OTM call option)")
 @click.option('--size', default=1.0, help="1, 0.1, ... contract size, 1=1BTC contract")
-@click.option('--user_premium', default=0, help="a fixed float value, for an existing positions.")
+@click.option('--user_premium', default=0., help="a fixed float value, for an existing positions.")
 def main(left,right, size,user_premium):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
