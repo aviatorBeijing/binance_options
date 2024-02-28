@@ -27,5 +27,5 @@ def get_binance_funding_rate(spot_symbol)->float:
   'time': '1709090146000'}
   '''
     rt = float(r[0]['lastFundingRate'])
-    annual = (1+rt)**(365*3) # Every 8 hours
+    annual = (1+rt)**(365*3)-1 # Every 8 hours
     return annual, rt
