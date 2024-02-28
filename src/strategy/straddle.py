@@ -25,7 +25,8 @@ def _find_breakeven(df):
 
 def _v(v): return float(v)
 def calc_straddle( ldata,rdata, strike_left,strike_right, vol, 
-                    taker_order=True, spot_symbol="BTC/USDT"):
+                    taker_order=True, spot_symbol="BTC/USDT",
+                    user_premium=0):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     #assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
@@ -34,13 +35,16 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     
     if taker_order:
         fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
-        premium = (lask + rask)*vol
+        premium = (lask + rask)*vol # Assume place instant "taker" orders
         print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; iv: {(float(ldata["impvol"])*100):.1f}% )')
         print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; iv: {(float(rdata["impvol"])*100):.1f}% )')
     else: # maker order (usually hard to fill & sliperage is large.)
         fee_rate = 2/10000
         r = 1 + 5/1000 # A 0.5% higher than current bid price, to enhance chance of getting filled in time.
         premium = (lbid*r + rbid*r)*vol
+    
+    if user_premium>0: # In case of existing positions, the premium has already been paid.
+        premium = user_premium
 
     adhoc = ex.fetch_ticker(spot_symbol)['bid']
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
@@ -89,7 +93,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')
     
 
-def _main(left,right, vol, is_taker=True):
+def _main(left,right, vol, is_taker=True, user_premium=0):
     ldata = None;rdata = None
     spot_symbol = left.split('-')[0]+'/USDT'
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
@@ -129,16 +133,17 @@ def _main(left,right, vol, is_taker=True):
                     strike_left,strike_right,
                     vol, 
                     taker_order=is_taker, 
-                    spot_symbol = spot_symbol)
+                    spot_symbol = spot_symbol,
+                    user_premium=user_premium )
 
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
 
-def _multiprocess_main(left,right,vol):
+def _multiprocess_main(left,right,vol,user_premium):
     while True:
         try:
             #print('*'*5, "[Taker order]")
-            _main(left,right,vol)
+            _main(left,right,vol,user_premium=user_premium)
             #print('*'*5, "[Maker order]")
             #_main(left,right,vol, is_taker=False)
             time.sleep(5)
@@ -149,11 +154,12 @@ def _multiprocess_main(left,right,vol):
 @click.command()
 @click.option('--left', help="left leg (OTM put option) contract name")
 @click.option('--right', help="right leg (OTM call option)")
-@click.option('--size', default=1.0, help="1, 0.1, ... Contract size, 1=1BTC contract")
-def main(left,right, size):
+@click.option('--size', default=1.0, help="1, 0.1, ... contract size, 1=1BTC contract")
+@click.option('--user_premium', default=0, help="a fixed float value, for an existing positions.")
+def main(left,right, size,user_premium):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(left,right,size) )
+    calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
     conn.start()
     calc.start()
     
