@@ -10,19 +10,25 @@ spot_symbol = 'BTC/USDT'
 ex = ccxt.binance()
 
 def _v(v): return float(v)
-def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
-    fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
+def calc_straddle( ldata,rdata, strike_left,strike_right, vol, taker_order=True):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
     #assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
     print(f'-- order volumes  (P): {vol}-contract, (C): {vol}-contract')
     recs = []
     
+    if taker_order:
+        fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
+        premium = (lask + rask)*vol
+    else: # maker order (usually hard to fill & sliperage is large.)
+        fee_rate = 2/10000
+        r = 1 + 5/1000 # A 0.5% higher than current bid price, to enhance chance of getting filled in time.
+        premium = (lbid*r + rbid*r)*vol
 
-    premium = (lask + rask)*vol
     adhoc = ex.fetch_ticker(spot_symbol)['bid']
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
+    fee *= 2 # put & call
 
     low = adhoc*0.9;high=adhoc*1.15
     low = int(low/1000)*1000
@@ -53,7 +59,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol):
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')
     
 
-def _main(left,right, vol):
+def _main(left,right, vol, is_taker=True):
     ldata = None;rdata = None
     print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
@@ -79,7 +85,7 @@ def _main(left,right, vol):
     
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
-    calc_straddle( ldata,rdata, strike_left,strike_right,vol)
+    calc_straddle( ldata,rdata, strike_left,strike_right,vol, taker_order=is_taker)
 
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
@@ -87,7 +93,10 @@ from ws_bcontract import _main as ws_connector
 def _multiprocess_main(left,right,vol):
     while True:
         try:
+            print('*'*5, "[Taker order]")
             _main(left,right,vol)
+            print('*'*5, "[Maker order]")
+            _main(left,right,vol, is_taker=False)
             time.sleep(5)
         except KeyboardInterrupt as e:
             print("-- Exiting --")
