@@ -58,9 +58,8 @@ def on_message(ws, message):
     rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta']].to_records(index=False)
     for row in rows:
         row = list(row)
-        print( "###", row )
         sym = row[0]; is_updating = False
-        val = ','.join(row[1:len(row)-2] )
+        val = ','.join(row[1:len(row)-3] )
         if sym not in dedups:
             dedups[ sym ] = val
             is_updating = True
