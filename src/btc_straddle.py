@@ -15,8 +15,8 @@ def _find_breakeven(df):
     df['prev_neg'] = (df[col]<0).shift(1) # shift down
     df['next_pos'] = (df[col]>0).shift(-1) # shift up
     df['prev_pos'] = (df[col]>0).shift(1) # shift down
-    df['break_even'] = False; df.loc[ df.prev_pos & df.next_neg, 'break_even'] = True 
-    df.loc[df.prev_neg & df.next_pos, 'break_even'] = True 
+    df['break_even'] = False; df.loc[ df.prev_pos & df.next_neg & df[col]>0, 'break_even'] = True 
+    df.loc[df.prev_neg & df.next_pos  & df[col]>0, 'break_even'] = True 
     df.drop(['next_neg','next_pos','prev_neg','prev_pos'], inplace=True, axis=1)
     return df    
 
