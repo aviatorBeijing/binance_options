@@ -71,6 +71,7 @@ def on_message(ws, message):
             m = _maturity( sym )
             if DEBUG:
                 print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
+            print(df)
             with open(f"{DATADIR}/{sym}.json", 'w') as fh:
                 data = {
                         "last_trade": df.iloc[0].c,
@@ -79,9 +80,8 @@ def on_message(ws, message):
                         "bidv": df.iloc[0].bq,
                         "askv": df.iloc[0].aq,
                         "delta": df.iloc[0].delta}
-                print( data )
                 json.dump(data, fh)
-                print('***')
+                
 
 def on_error(ws, error):
     print('error:', error)
