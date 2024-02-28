@@ -39,7 +39,7 @@ def on_message(ws, message):
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
     
-    df['delta'] = df['d'].astype(float)
+    df['delta'] = df['d']
     df['gamma'] = df['g']
     df['theta'] = df['t']
     df['vega']  = df['v']
