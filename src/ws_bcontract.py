@@ -77,7 +77,8 @@ def on_message(ws, message):
                         "bid": df.iloc[0].bo,
                         "ask": df.iloc[0].ao,
                         "bidv": df.iloc[0].bq,
-                        "askv": df.iloc[0].aq}
+                        "askv": df.iloc[0].aq,
+                        "delta": df.iloc[0].delta}
                 json.dump(data, fh)
 
 def on_error(ws, error):
