@@ -40,6 +40,8 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
         step = 1000
     elif spot_symbol == 'DOGE/USDT':
         step = 0.001
+    else:
+        raise Exception(f"Unsupported spot symbol: {spot_symbol}.")
 
     for stock in range(low,high,step): # at expiration
         gains = max(strike_left - stock,0)
