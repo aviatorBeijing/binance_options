@@ -30,7 +30,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol, taker_order=True)
     fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
     fee *= 2 # put & call
 
-    low = adhoc*0.9;high=adhoc*1.15
+    low = adhoc*0.8;high=adhoc*1.3
     low = int(low/1000)*1000
     high = int(high/1000)*1000
     for stock in range(low,high,1000): # at expiration
