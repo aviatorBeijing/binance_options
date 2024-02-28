@@ -104,6 +104,8 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
 
     print('*'*75)
     print(f'-- funding_rate (perpetual): {(funding_rate*10000):.2f}%%, {(annual*100):.2f}%, {ts}')
+    if user_premium>0:
+        print(f'-- exiting position premium: ${user_premium}, size: {vol} contract(s)')
     print('*'*75)
     print("-"*10, f' {strategy} Contracts ', '-'*10)
     try:
