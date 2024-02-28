@@ -92,7 +92,7 @@ def _main(left,right, vol, is_taker=True):
     spot_symbol = left.split('-')[0]+'/USDT'
     funding_rate = get_binance_funding_rate( spot_symbol)
 
-    print(f'-- funding_rate (perpetual): {(funding_rate*10000):.1f}%%')
+    print(f'-- funding_rate (perpetual): {(funding_rate*10000):.2f}%%')
     print("-"*10, ' Strangel Contracts ', '-'*10)
     try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
