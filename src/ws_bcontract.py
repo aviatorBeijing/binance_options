@@ -59,7 +59,7 @@ def on_message(ws, message):
     for row in rows:
         row = list(row)
         sym = row[0]; is_updating = False
-        val = ','.join(row[1:len(row)-3] )
+        val = ','.join(row[1:4] )
         if sym not in dedups:
             dedups[ sym ] = val
             is_updating = True
