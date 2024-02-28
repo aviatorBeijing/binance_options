@@ -3,6 +3,7 @@ import pandas as pd
 import click,time
 from tabulate import tabulate
 import ccxt
+import numpy  as np
 
 from butils import DATADIR
 
@@ -43,7 +44,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     else:
         raise Exception(f"Unsupported spot symbol: {spot_symbol}.")
 
-    for stock in range(low,high,step): # at expiration
+    for stock in np.arange(low,high,step): # at expiration
         gains = max(strike_left - stock,0)
         gains += max( stock - strike_right, 0)
         gains *= vol
