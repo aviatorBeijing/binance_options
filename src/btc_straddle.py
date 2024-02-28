@@ -9,6 +9,17 @@ from butils import DATADIR
 
 ex = ccxt.binance()
 
+def _find_breakeven(df):
+    col = 'net profit @ expiry'
+    df['next_neg'] = (df[col]<0).shift(-1) # shift up
+    df['prev_neg'] = (df[col]<0).shift(1) # shift down
+    df['next_pos'] = (df[col]>0).shift(-1) # shift up
+    df['prev_pos'] = (df[col]>0).shift(1) # shift down
+    df['break_even'] = False; df[ df.prev_pos & df.next_neg ] = True 
+    df[df.prev_neg & df.next_pos] = True 
+    df.drop(['next_neg','next_pos','prev_neg','prev_pos'], inplace=True, axis=1)
+    return df    
+
 def _v(v): return float(v)
 def calc_straddle( ldata,rdata, strike_left,strike_right, vol, 
                     taker_order=True, spot_symbol = 'BTC/USDT'):
@@ -56,6 +67,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
         recs += [ ( stock, gains, profits )]
     
     df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
+    df = _find_breakeven( df )
     cost = premium + fee
     df['stradle_return'] = ( df['net profit @ expiry']) / cost
     df['spot_return'] = (df[f"{spot_symbol} @ expiry"] - adhoc)/adhoc
