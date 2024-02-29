@@ -10,6 +10,15 @@ if not os.path.exists( DATADIR):
     except Exception as e:
         print('*** Make sure set the "USER_HOME" directory for temporary data storage!')
 
+FUNDINGDIR=os.getenv('USER_HOME','/home/ubuntu')+'/data/binance/funding'
+if not os.path.exists( FUNDINGDIR): os.makedirs( FUNDINGDIR )
+INDICESDIR=os.getenv('USER_HOME','/home/ubuntu')+'/data/binance/indices'
+if not os.path.exists( INDICESDIR): os.makedirs( INDICESDIR )
+
+def bjnow():
+    t = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
+    return t.astimezone().isoformat()
+
 ex_binance = ccxt.binance({'enableRateLimit': True})
 ex_bmex = ccxt.bitmex({'enableRateLimit': True})
 ex_bybit = ccxt.bybit({'enableRateLimit': True})
@@ -50,6 +59,16 @@ def get_binance_index(contract)->tuple:
     spot_symbol = contract.split('-')[0]+'/USDT'
     symbol = spot_symbol.replace('/','').replace('-','')    
     
+    cached_files =  os.listdir(INDICESDIR)
+    fd = list(filter(lambda s: s.startswith(symbol), cached_files))
+    if len(fd) == 1:
+        fd = fd[0]
+        v,t = float(fd.split('_')[1:])
+        cachedt = datetime.datetime.fromisoformat( t )
+        if (bjnow() - cachedt).seconds < 10: # less than 10 sec
+            return float(v)
+
+
     resp = ex_binance.fapiPublicGetPremiumIndex()
     r = list(filter(lambda e: symbol == e['symbol'],resp ) )
     assert len(r)==1, f"Funding rate of related perpetual not found: {spot_symbol}"
@@ -64,4 +83,7 @@ def get_binance_index(contract)->tuple:
     'time': '1709090146000'}
     '''
     v = r[0]['indexPrice']
+    caching = f"{INDICESDIR}/{symbol}_{v}_{bjnow()}"
+    with open(caching, 'w') as fh: pass 
+
     return float(v)
