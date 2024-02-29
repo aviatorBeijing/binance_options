@@ -14,14 +14,13 @@ def _main( contracts,sz ):
     calls = list(set(calls))
 
     recs = []
-    for p in tqdm(puts):
-        for c in tqdm(calls):
-            if c.split('-')[1] != p.split('-')[1]: # Match the expiry
-                continue 
-            print('--', p, c)
-            with redirect_stdout(io.StringIO()) as f:
-                resp = calc_straddle(p,c,vol=sz)
-            recs += [resp]
+    for p, c in tqdm(list(zip(puts, calls)) ):
+        if c.split('-')[1] != p.split('-')[1]: # Match the expiry
+            continue 
+        print('--', p, c)
+        with redirect_stdout(io.StringIO()) as f:
+            resp = calc_straddle(p,c,vol=sz)
+        recs += [resp]
     df = pd.DataFrame.from_records( recs )
     
     df['x'] = df.be_returns.apply(lambda e: len(e))
