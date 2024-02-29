@@ -56,15 +56,18 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     if spot_symbol == 'BTC/USDT':
         low = int(low/1000)*1000
         high = int(high/1000)*1000
-        step = 1000
+        if not DEBUG: step = 100
+        else: step = 1000
     elif spot_symbol == 'ETH/USDT':
         low = int(low/100)*100
         high = int(high/100)*100
-        step = 10
+        if not DEBUG: step = 10
+        else: step = 100
     elif spot_symbol == 'BNB/USDT':
         low = int(low/10)*10
         high = int(high/10)*10
-        step = 5
+        if not DEBUG: step = 1
+        else: step = 5
     elif spot_symbol == 'DOGE/USDT':
         step = 0.001
     else:
