@@ -66,9 +66,7 @@ def get_binance_index(contract)->tuple:
     if len(fd) == 1:
         fd = fd[0]
         with open(f"{INDICESDIR}/{fd}", 'r') as fh:
-            t,v = fh.read().split('\n')
-            
-            print('***', t, v)
+            t = fh.read();print('***', t)
             cachedt = datetime.datetime.fromisoformat( t )
             if (bjnow() - cachedt).seconds < 10: # less than 10 sec
                 return float(v)
