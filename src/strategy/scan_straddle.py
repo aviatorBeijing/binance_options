@@ -1,7 +1,8 @@
 import datetime,os,io
 import click 
 import pandas as pd
-
+from contextlib import redirect_stdout 
+        
 from strategy.straddle import _main as calc_straddle 
 
 def _main( contracts,sz ):
@@ -12,7 +13,8 @@ def _main( contracts,sz ):
     recs = []
     for p in puts:
         for c in calls:
-            resp = calc_straddle(p,c,vol=sz)
+            with redirect_stdout(io.StringIO()) as f:
+                resp = calc_straddle(p,c,vol=sz)
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
 
@@ -33,9 +35,7 @@ def main(contracts, data, sz):
         from ws_bcontract import _main as ws_connector
         ws_connector( contracts,'ticker')
     else:
-        from contextlib import redirect_stdout 
-        with redirect_stdout(io.StringIO()) as f:
-            df = _main(contracts,sz)
+        df = _main(contracts,sz)
         #print(df.columns)
         df.drop(['is_taker','be_prices','be_returns','paid_premium','straddle_returns'], inplace=True, axis=1)
         print( df )
