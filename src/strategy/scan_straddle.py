@@ -1,4 +1,4 @@
-import datetime,os 
+import datetime,os,io
 import click 
 import pandas as pd
 
@@ -22,10 +22,7 @@ def _main( contracts,sz ):
     df['spot_up_r'] = df.be_returns.apply(lambda e: f"{(e[3]*100):.1f}%")
     df['straddle_down_r'] = df.straddle_returns.apply(lambda e: f"{(e[0]*100):.1f}%")
     df['straddle_up_r'] = df.straddle_returns.apply(lambda e: f"{(e[3]*100):.1f}%")
-    
-    print(df.columns)
-    df.drop(['is_taker','be_prices','be_returns','paid_premium','straddle_returns'], inplace=True, axis=1)
-    print( df )
+    return df 
 
 @click.command()
 @click.option('--contracts')
@@ -36,7 +33,12 @@ def main(contracts, data, sz):
         from ws_bcontract import _main as ws_connector
         ws_connector( contracts,'ticker')
     else:
-        _main(contracts,sz)
+        from contextlib import redirect_stdout 
+        with redirect_stdout(io.StringIO()) as f:
+            df = _main(contracts,sz)
+        print(df.columns)
+        df.drop(['is_taker','be_prices','be_returns','paid_premium','straddle_returns'], inplace=True, axis=1)
+        print( df )
 
 
 if __name__ == '__main__':
