@@ -63,7 +63,7 @@ def get_binance_index(contract)->tuple:
     fd = list(filter(lambda s: s.startswith(symbol), cached_files))
     if len(fd) == 1:
         fd = fd[0]
-        v,t = float(fd.split('_')[1:])
+        v,t = fd.split('_')[1:]
         cachedt = datetime.datetime.fromisoformat( t )
         if (bjnow() - cachedt).seconds < 10: # less than 10 sec
             return float(v)
