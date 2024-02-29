@@ -60,7 +60,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     elif spot_symbol == 'ETH/USDT':
         low = int(low/100)*100
         high = int(high/100)*100
-        step = 100
+        step = 10
     elif spot_symbol == 'BNB/USDT':
         low = int(low/10)*10
         high = int(high/10)*10
