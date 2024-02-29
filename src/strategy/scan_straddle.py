@@ -21,7 +21,8 @@ def _main( contracts,sz ):
     df['low_r'] = df.be_ratios.apply(lambda e: f"{(e[0]*100):.1f}%")
     df['high_r'] = df.be_ratios.apply(lambda e: f"{(e[3]*100):.1f}%")
     
-    df.drop(['is_taker','be_prices','be_ratios'], inplace=True, axis=1)
+    print(df.columns)
+    df.drop(['is_taker','be_prices','be_ratios','paid_premium'], inplace=True, axis=1)
     print( df )
 
 @click.command()
