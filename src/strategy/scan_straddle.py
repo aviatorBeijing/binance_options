@@ -21,7 +21,7 @@ def _main( contracts,sz ):
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
     
-    df['x'] = df.be_returns.apply(lambda e: e[3] if e and len(e)>1 else e)
+    df['x'] = df.be_returns.apply(lambda e: e[3] if e and len(e)>3 else e)
     df = df.sort_values(['x'], ascending=True)
     df.drop(['x'],inplace=True,axis=1)
 
