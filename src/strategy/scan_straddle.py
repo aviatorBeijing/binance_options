@@ -19,7 +19,7 @@ def _main( contracts,sz ):
 
 @click.command()
 @click.option('--contracts')
-@click.option('--data', is_flag=True,defaut=False)
+@click.option('--data', is_flag=True,default=False)
 @click.option('--sz', default=1.)
 def main(contracts, data, sz):
     if data:
