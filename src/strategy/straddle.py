@@ -115,7 +115,6 @@ def calc_straddle( lcontract, rcontract,
     print( tabulate(df, headers="keys"))
     
     print(f'-- spot: ${adhoc:,.2f} @ {ts} (UTC+8)')
-    print(f'-- (assumed) fee_rate: {(fee_rate*100):.2f}%')
     
     print(f'-- order size: {vol} contract  (call&put each)')
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')

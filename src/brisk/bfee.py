@@ -4,6 +4,7 @@ import pandas as pd
 from butil.butils import get_binance_index
 
 def cunit(contract):
+    # https://www.binance.com/en/support/faq/binance-options-contract-specifications-cdee5d43b70d4d2386980d41786a8533
     sz = 0
     if contract.startswith( 'BTC-' ) or \
         contract.startswith( 'ETH-' ) or \
