@@ -17,7 +17,9 @@ if not os.path.exists( INDICESDIR): os.makedirs( INDICESDIR )
 
 def bjnow():
     t = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
-    return t.astimezone().isoformat()
+    return t.astimezone()
+def bjnow_str():
+    return bjnow().isoformat()
 
 ex_binance = ccxt.binance({'enableRateLimit': True})
 ex_bmex = ccxt.bitmex({'enableRateLimit': True})
@@ -83,7 +85,7 @@ def get_binance_index(contract)->tuple:
     'time': '1709090146000'}
     '''
     v = r[0]['indexPrice']
-    caching = f"{INDICESDIR}/{symbol}_{v}_{bjnow()}"
+    caching = f"{INDICESDIR}/{symbol}_{v}_{bjnow_str()}"
     with open(caching, 'w') as fh: pass 
 
     return float(v)
