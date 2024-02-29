@@ -6,6 +6,7 @@ import ccxt
 import numpy  as np
 
 from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
+from brisk.bfee import calc_fee
 
 ex = ccxt.binance()
 
@@ -52,7 +53,6 @@ def calc_straddle( lcontract, rcontract,
     
     adhoc = ex.fetch_ticker(spot_symbol)['bid'] # FIXME Binance calc the fee in a DIFFERENT way!
     
-    from brisk.bfee import calc_fee
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     
     #fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
