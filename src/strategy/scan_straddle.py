@@ -16,7 +16,8 @@ def _main( contracts,sz ):
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
 
-    df.drop(['is_taker'], inplace=True, axis=1)
+    df['break_even_low'] = df.be_prices.apply(lambda e: e[0])
+    df.drop(['is_taker','be_prices','be_ratios'], inplace=True, axis=1)
     print( df )
 
 @click.command()
