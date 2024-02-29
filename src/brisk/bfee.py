@@ -5,7 +5,9 @@ from butil.butils import get_binance_index
 
 def cunit(contract):
     sz = 0
-    if contract.startswith( 'BTC-' ):
+    if contract.startswith( 'BTC-' ) or \
+        contract.startswith( 'ETH-' ) or \
+            contract.startswith( 'BNB-' ):
         sz = 1
     elif contract.startswith( 'XRP-' ):
         sz = 100
