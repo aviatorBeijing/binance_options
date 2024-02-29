@@ -20,7 +20,8 @@ def _main( contracts,sz ):
                 resp = calc_straddle(p,c,vol=sz)
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
-
+    
+    df = df.sort_values(['be_returns'], ascending=True)
     df['break_even_low'] = df.be_prices.apply(lambda e: e[0])
     df['break_even_high'] = df.be_prices.apply(lambda e: e[3])
     df['spot_down_r'] = df.be_returns.apply(lambda e: f"{(e[0]*100):.1f}%")
