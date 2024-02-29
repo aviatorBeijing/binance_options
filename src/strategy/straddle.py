@@ -25,7 +25,7 @@ def _find_breakeven(df):
     return df    
 
 def _v(v): return float(v)
-def calc_straddle( lcontract, rcontract,
+def calc_straddle(  lcontract, rcontract,
                     ldata,rdata, strike_left,strike_right, vol, 
                     taker_order=True, spot_symbol="BTC/USDT",
                     user_premium=0):
@@ -35,6 +35,11 @@ def calc_straddle( lcontract, rcontract,
     print(f'-- order volumes  (P): {vol}-contract, (C): {vol}-contract')
     recs = []
     
+    resp = {
+            'left': lcontract, 'right': rcontract,
+            'is_taker': taker_order, 'paied_premium': user_premium,
+            }
+
     lfee = 0;rfee=0
     if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
                     #        but, if user already holds two positions, fee should be calculated
@@ -61,6 +66,10 @@ def calc_straddle( lcontract, rcontract,
     #fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
     #fee *= 2 # put & call
     fee = lfee + rfee
+    
+    resp['premium'] = premium
+    resp['spot'] = adhoc; resp['timestamp'] = ts 
+    resp['fee'] = fee 
 
     liquidation_gain = None # The instant liquidation value of positions
     if user_premium>0: # In case of existing positions, the premium has already been paid.
@@ -123,6 +132,8 @@ def calc_straddle( lcontract, rcontract,
     
     print(f'-- order size: {vol} contract  (call&put each)')
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')
+
+    return resp 
     
 
 def _main(left,right, vol, is_taker=True, user_premium=0):
@@ -163,13 +174,16 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
     
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
-    calc_straddle(  left, right,
+    resp = calc_straddle(  left, right,
                     ldata,rdata, 
                     strike_left,strike_right,
                     vol, 
                     taker_order=is_taker, 
                     spot_symbol = spot_symbol,
                     user_premium=user_premium )
+    resp['funding_rate'] = funding_rate
+    resp['funding_time'] = ts
+    return resp
 
 from multiprocessing import Process
 from ws_bcontract import _main as ws_connector
