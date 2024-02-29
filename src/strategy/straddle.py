@@ -43,13 +43,19 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
         r = 1 + 5/1000 # A 0.5% higher than current bid price, to enhance chance of getting filled in time.
         premium = (lbid*r + rbid*r)*vol
     
-    if user_premium>0: # In case of existing positions, the premium has already been paid.
-        premium = user_premium
-
-    adhoc = ex.fetch_ticker(spot_symbol)['bid']
+    adhoc = ex.fetch_ticker(spot_symbol)['bid'] # FIXME Binance calc the fee in a DIFFERENT way!
+    
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
     fee *= 2 # put & call
+
+    liquidation_gain = None # The instant liquidation value of positions
+    if user_premium>0: # In case of existing positions, the premium has already been paid.
+        premium = user_premium
+        liquidation_value = (lbid + rbid)*vol # instant sell on current  bid price
+        liquidation_gain = liquidation_value - user_premium
+        liquidation_gain -= fee
+        print('  -- liquidation gain of positions: ', f'${liquidation_gain:.2f}')
 
     low = adhoc*0.8
     high=adhoc*1.3
