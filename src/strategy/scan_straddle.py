@@ -5,6 +5,7 @@ import pandas as pd
 from contextlib import redirect_stdout 
         
 from strategy.straddle import _main as calc_straddle 
+from butil import DEBUG 
 
 def _main( contracts,sz ):
     contracts = contracts.split(',')
@@ -21,6 +22,7 @@ def _main( contracts,sz ):
     for p,c in tqdm(tmps):
         if c.split('-')[1] != p.split('-')[1]: # Match the expiry
             continue 
+        if DEBUG: print('--', p, c)
         with redirect_stdout(io.StringIO()) as f:
             resp = calc_straddle(p,c,vol=sz)
         recs += [resp]
