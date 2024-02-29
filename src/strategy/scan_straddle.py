@@ -36,7 +36,7 @@ def main(contracts, data, sz):
         from contextlib import redirect_stdout 
         with redirect_stdout(io.StringIO()) as f:
             df = _main(contracts,sz)
-        print(df.columns)
+        #print(df.columns)
         df.drop(['is_taker','be_prices','be_returns','paid_premium','straddle_returns'], inplace=True, axis=1)
         print( df )
 
