@@ -37,7 +37,7 @@ def calc_straddle(  lcontract, rcontract,
     
     resp = {
             'left': lcontract, 'right': rcontract,
-            'is_taker': taker_order, 'paied_premium': user_premium,
+            'is_taker': taker_order, 'paid_premium': user_premium,
             }
 
     lfee = 0;rfee=0
@@ -121,7 +121,7 @@ def calc_straddle(  lcontract, rcontract,
     df['spot_return'] = (df[f"{spot_symbol} @ expiry"] - adhoc)/adhoc
 
     #resp['breakeven'] = list(df[f"{spot_symbol} @ expiry"].values)
-    resp['break_even'] = list( map(lambda v: f"{v:.4f}", df['spot_return'].values) )
+    resp['break_even'] = list( map(lambda v: int(v*1e4)/1e4, df['spot_return'].values) )
 
     for col in ['net profit @ expiry']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
