@@ -24,14 +24,14 @@ def _main( contracts,sz ):
     df['x'] = df.be_returns.apply(lambda e: len(e))
     df = df[df.x>0]
     try:
-        df['x'] = df.be_returns.apply(lambda e: e[3])
+        df['x'] = df.be_returns.apply(lambda e: e[-1])
         df = df.sort_values(['x'], ascending=True)
         df.drop(['x'],inplace=True,axis=1)
     except Exception as e:
         df.to_csv(f'{os.getenv("USER_HOME")}/tmp/debug.csv')
 
     df['break_even_low'] = df.be_prices.apply(lambda e: e[0])
-    df['break_even_high'] = df.be_prices.apply(lambda e: e[3])
+    df['break_even_high'] = df.be_prices.apply(lambda e: e[-1])
     df['spot_down_r'] = df.be_returns.apply(lambda e: f"{(e[0]*100):.1f}%")
     df['spot_up_r'] = df.be_returns.apply(lambda e: f"{(e[3]*100):.1f}%")
     df['straddle_down_r'] = df.straddle_returns.apply(lambda e: f"{(e[0]*100):.1f}%")
