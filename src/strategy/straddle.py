@@ -59,7 +59,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
         print(f' '*10,'*'*20, ' Positions ', '*'*20)
         print(' '*15,f'bids (P): ${lbid:.2f}, (C): ${rbid:.2f}; cost: ${(user_premium+fee):.2f}')
         print(' '*15, 'liquidation gain: ', f'${liquidation_gain:.2f}, {rtn:.1f}%')
-        print(f' '*10,'*'*10, '           ', '*'*10)
+        print(f' '*10,'*'*50)
 
     low = adhoc*0.8
     high=adhoc*1.3
