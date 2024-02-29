@@ -24,7 +24,7 @@ def _main( contracts,sz ):
     df['straddle_r'] = df.straddle_returns.apply(lambda e: f"{(e[3]*100):.1f}%")
     
     print(df.columns)
-    df.drop(['is_taker','be_prices','be_ratios','paid_premium'], inplace=True, axis=1)
+    df.drop(['is_taker','be_prices','be_returns','paid_premium','straddle_returns'], inplace=True, axis=1)
     print( df )
 
 @click.command()
