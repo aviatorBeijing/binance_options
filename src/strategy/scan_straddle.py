@@ -15,6 +15,8 @@ def _main( contracts,sz ):
             resp = calc_straddle(p,c,vol=sz)
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
+
+    df.drop(['is_taker'], inplace=True, axis=1)
     print( df )
 
 @click.command()
