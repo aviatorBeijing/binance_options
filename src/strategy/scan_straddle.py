@@ -14,7 +14,11 @@ def _main( contracts,sz ):
     calls = list(set(calls))
 
     recs = []
-    for p, c in tqdm(list(zip(puts, calls)) ):
+    tmps = []
+    for p in puts:
+        for c in calls:
+            tmps += [(p,c)]
+    for p,c in tqdm(tmps):
         if c.split('-')[1] != p.split('-')[1]: # Match the expiry
             continue 
         print('--', p, c)
