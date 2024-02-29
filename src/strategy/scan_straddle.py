@@ -19,3 +19,6 @@ def main( contracts,sz ):
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
     print( df )
+
+if __name__ == '__main__':
+    main()
