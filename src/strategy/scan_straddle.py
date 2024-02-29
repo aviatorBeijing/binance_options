@@ -21,6 +21,8 @@ def _main( contracts,sz ):
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
     
+    df['x'] = df.be_returns.apply(lambda e: len(e))
+    df = df[df.x>0]
     try:
         df['x'] = df.be_returns.apply(lambda e: e[3])
         df = df.sort_values(['x'], ascending=True)
