@@ -1,5 +1,5 @@
 import datetime,os,io
-import click 
+import click,tqdm
 import pandas as pd
 from contextlib import redirect_stdout 
         
@@ -13,8 +13,8 @@ def _main( contracts,sz ):
     calls = list(set(calls))
 
     recs = []
-    for p in puts:
-        for c in calls:
+    for p in tqdm(puts):
+        for c in tqdm(calls):
             if c.split('-')[1] != p.split('-')[1]: # Match the expiry
                 continue 
             print('--', p, c)
