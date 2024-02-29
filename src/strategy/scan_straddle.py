@@ -50,7 +50,8 @@ def main(contracts, data, sz):
         df = _main(contracts,sz)
         #print(df.columns)
         df.drop(['is_taker','be_prices','be_returns','paid_premium','straddle_returns'], inplace=True, axis=1)
-        print( df )
+        import tabulate
+        print( tabulate.tabulate(df,headers="keys") )
 
 
 if __name__ == '__main__':
