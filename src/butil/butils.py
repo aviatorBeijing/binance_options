@@ -89,6 +89,6 @@ def get_binance_index(contract)->tuple:
     caching = f"{INDICESDIR}/{symbol}"
     with open(caching, 'w') as fh:
         fh.write(bjnow_str())
-        fh.writt(v)
+        fh.write(v)
 
     return float(v)
