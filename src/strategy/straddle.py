@@ -36,7 +36,10 @@ def calc_straddle( lcontract, rcontract,
     recs = []
     
     lfee = 0;rfee=0
-    if taker_order:
+    if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
+                    #        but, if user already holds two positions, fee should be calculated
+                    #        against the order prices, instead of market prices. When vol is large,
+                    #        the fee may  be significant!
         fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
         premium = (lask + rask)*vol # Assume place instant "taker" orders
         lfee = calc_fee(lask, vol, lcontract, is_taker=True)
@@ -61,10 +64,12 @@ def calc_straddle( lcontract, rcontract,
 
     liquidation_gain = None # The instant liquidation value of positions
     if user_premium>0: # In case of existing positions, the premium has already been paid.
+        # FIXME If specify the user_premium, the trading price of put&call should also be 
+        # provided, because they are needed when calc the fee.
         premium = user_premium
         liquidation_value = (lbid + rbid)*vol # instant sell on current  bid price
         liquidation_gain = liquidation_value - user_premium
-        liquidation_gain -= fee
+        liquidation_gain -= fee # FIXME: fee might not be accurate!
         rtn = liquidation_gain/(user_premium+fee)*100
         print(f' '*10,'$'*20, ' Positions ', '$'*20)
         print(' '*15,f'bids (P): ${lbid:.2f}, (C): ${rbid:.2f}; cost: ${(user_premium+fee):.2f}')
