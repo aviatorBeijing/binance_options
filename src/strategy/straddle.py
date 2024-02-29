@@ -68,8 +68,8 @@ def calc_straddle(  lcontract, rcontract,
     fee = lfee + rfee
     
     resp['premium'] = premium
-    resp['spot'] = adhoc#; resp['timestamp'] = ts 
     resp['fee'] = fee 
+    resp['spot'] = adhoc#; resp['timestamp'] = ts 
 
     liquidation_gain = None # The instant liquidation value of positions
     if user_premium>0: # In case of existing positions, the premium has already been paid.
