@@ -120,7 +120,7 @@ def calc_straddle(  lcontract, rcontract,
     df['stradle_return'] = ( df['net profit @ expiry']) / cost
     df['spot_return'] = (df[f"{spot_symbol} @ expiry"] - adhoc)/adhoc
 
-    resp['breakeven'] = df[f"{spot_symbol} @ expiry"].iloc[0]
+    resp['breakeven'] = list(df[f"{spot_symbol} @ expiry"].values)
 
     for col in ['net profit @ expiry']:
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
