@@ -38,6 +38,17 @@ def get_bmex_next_funding_rate(spot_symbol)->tuple:
 def get_binance_next_funding_rate(spot_symbol)->tuple:
     symbol = spot_symbol.replace('/','').replace('-','')    
     
+    # Cache
+    cached_files =  os.listdir(FUNDINGDIR)
+    fd = list(filter(lambda s: s.startswith(symbol), cached_files))
+    if len(fd) == 1:
+        fd = fd[0]
+        with open(f"{FUNDINGDIR}/{fd}", 'r') as fh:
+            t, annual,rt,ts = fh.read().split('\n')
+            cachedt = datetime.datetime.fromisoformat( t )
+            if (bjnow() - cachedt).seconds < 10: # less than 10 sec
+                return float(annual), float(rt), ts
+
     resp = ex_binance.fapiPublicGetPremiumIndex()
     r = list(filter(lambda e: symbol == e['symbol'],resp ) )
     assert len(r)==1, f"Funding rate of related perpetual not found: {spot_symbol}"
@@ -55,12 +66,19 @@ def get_binance_next_funding_rate(spot_symbol)->tuple:
     ts = datetime.datetime.fromtimestamp(int(ts)/1000).isoformat() # str
     rt = float(r[0]['lastFundingRate']) # Binance mis-interperated the "last*" as the "next*"
     annual = (1+rt)**(365*3)-1 # Every 8 hours
+
+    # Cache
+    caching = f"{FUNDINGDIR}/{symbol}"
+    with open(caching, 'w') as fh:
+        fh.write(f"{bjnow_str()}\n{annual}\n{rt}\n{ts}")
+
     return annual, rt, ts
 
 def get_binance_index(contract)->tuple:
     spot_symbol = contract.split('-')[0]+'/USDT'
     symbol = spot_symbol.replace('/','').replace('-','')    
     
+    # Cache
     cached_files =  os.listdir(INDICESDIR)
     fd = list(filter(lambda s: s.startswith(symbol), cached_files))
     if len(fd) == 1:
@@ -86,7 +104,10 @@ def get_binance_index(contract)->tuple:
     'time': '1709090146000'}
     '''
     v = r[0]['indexPrice']
+
+    # Cache
     caching = f"{INDICESDIR}/{symbol}"
     with open(caching, 'w') as fh:
         fh.write(f"{bjnow_str()}\n{v}")
+
     return float(v)
