@@ -56,10 +56,10 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
         liquidation_gain = liquidation_value - user_premium
         liquidation_gain -= fee
         rtn = liquidation_gain/(user_premium+fee)*100
-        print(f' '*10,'*'*20, ' Positions ', '*'*20)
+        print(f' '*10,'$'*20, ' Positions ', '$'*20)
         print(' '*15,f'bids (P): ${lbid:.2f}, (C): ${rbid:.2f}; cost: ${(user_premium+fee):.2f}')
         print(' '*15, 'liquidation gain: ', f'${liquidation_gain:.2f}, {rtn:.1f}%')
-        print(f' '*10,'*'*53)
+        print(f' '*10,'$'*53)
 
     low = adhoc*0.8
     high=adhoc*1.3
