@@ -1,5 +1,6 @@
 import datetime,os,io
-import click,tqdm
+import click
+from tqdm import tqdm
 import pandas as pd
 from contextlib import redirect_stdout 
         
