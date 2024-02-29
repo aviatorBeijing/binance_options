@@ -31,6 +31,9 @@ def calc_straddle(  lcontract, rcontract,
                     user_premium=0):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
     rbid,rask,r_bvol, r_avol = _v(rdata['bid']),_v(rdata['ask']),_v(rdata['bidv']),_v(rdata['askv'])
+    if lask ==0 or rask == 0:
+        return {}
+
     #assert lask<rask, "Left leg has to be less than right leg (offer price, a.k.a. ask price)"
     print(f'-- order volumes  (P): {vol}-contract, (C): {vol}-contract')
     recs = []
@@ -186,8 +189,10 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
                     taker_order=is_taker, 
                     spot_symbol = spot_symbol,
                     user_premium=user_premium )
-    resp['funding_rate'] = funding_rate
-    resp['funding_time'] = ts
+    if resp: #non-empty
+        resp['funding_rate'] = funding_rate
+        resp['funding_time'] = ts
+    else: pass # keep it empty
     return resp
 
 from multiprocessing import Process

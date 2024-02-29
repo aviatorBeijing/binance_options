@@ -25,7 +25,8 @@ def _main( contracts,sz ):
         if DEBUG: print('--', p, c)
         with redirect_stdout(io.StringIO()) as f:
             resp = calc_straddle(p,c,vol=sz)
-        recs += [resp]
+        if resp:
+            recs += [resp]
     df = pd.DataFrame.from_records( recs )
     
     df['x'] = df.be_returns.apply(lambda e: len(e))
