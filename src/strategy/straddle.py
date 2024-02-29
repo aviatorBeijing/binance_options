@@ -98,6 +98,7 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
         df[col] = df[col].apply(lambda e: f"${e:,.2f}")
     df['stradle_return'] = df['stradle_return'].apply(lambda v: f"{(v*100):.2f}%")
     df['spot_return'] = df['spot_return'].apply(lambda v: f"{(v*100):.1f}%")
+    df[f"{spot_symbol} @ expiry"] = df[f"{spot_symbol} @ expiry"].apply(lambda v: f"${v:,.2f}")
     #df.set_index(['spot_return'],inplace=True,drop=True)
     print( tabulate(df, headers="keys"))
     
