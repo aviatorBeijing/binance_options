@@ -24,7 +24,8 @@ def _find_breakeven(df):
     return df    
 
 def _v(v): return float(v)
-def calc_straddle( ldata,rdata, strike_left,strike_right, vol, 
+def calc_straddle( lcontract, rcontract,
+                    ldata,rdata, strike_left,strike_right, vol, 
                     taker_order=True, spot_symbol="BTC/USDT",
                     user_premium=0):
     lbid,lask,l_bvol, l_avol = _v(ldata['bid']),_v(ldata['ask']),_v(ldata['bidv']),_v(ldata['askv'])
@@ -33,21 +34,30 @@ def calc_straddle( ldata,rdata, strike_left,strike_right, vol,
     print(f'-- order volumes  (P): {vol}-contract, (C): {vol}-contract')
     recs = []
     
+    lfee = 0;rfee=0
     if taker_order:
         fee_rate = 5/10000 # Binance: taker 5/10000, maker 2/10000
         premium = (lask + rask)*vol # Assume place instant "taker" orders
+        lfee = calc_fee(lask, vol, lcontract, is_taker=True)
+        rfee = calc_fee(rask, vol, rcontract, is_taker=True)
+        
         print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; iv: {(float(ldata["impvol"])*100):.1f}% )')
         print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; iv: {(float(rdata["impvol"])*100):.1f}% )')
     else: # maker order (usually hard to fill & sliperage is large.)
         fee_rate = 2/10000
+        lfee = calc_fee(lask, vol, lcontract, is_taker=False)
+        rfee = calc_fee(rask, vol, rcontract, is_taker=False)
         r = 1 + 5/1000 # A 0.5% higher than current bid price, to enhance chance of getting filled in time.
         premium = (lbid*r + rbid*r)*vol
     
     adhoc = ex.fetch_ticker(spot_symbol)['bid'] # FIXME Binance calc the fee in a DIFFERENT way!
     
+    from brisk.bfee import calc_fee
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
-    fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
-    fee *= 2 # put & call
+    
+    #fee = vol * adhoc * fee_rate # Binance calc the fee from contract nominal $value.
+    #fee *= 2 # put & call
+    fee = lfee + rfee
 
     liquidation_gain = None # The instant liquidation value of positions
     if user_premium>0: # In case of existing positions, the premium has already been paid.
@@ -149,7 +159,8 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
     
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
-    calc_straddle(  ldata,rdata, 
+    calc_straddle(  left, right,
+                    ldata,rdata, 
                     strike_left,strike_right,
                     vol, 
                     taker_order=is_taker, 
