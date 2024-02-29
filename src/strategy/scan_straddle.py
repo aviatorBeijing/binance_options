@@ -13,6 +13,7 @@ def _main( contracts,sz ):
     recs = []
     for p in puts:
         for c in calls:
+            print('--', p, c)
             with redirect_stdout(io.StringIO()) as f:
                 resp = calc_straddle(p,c,vol=sz)
             recs += [resp]
