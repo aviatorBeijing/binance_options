@@ -9,6 +9,8 @@ def _main( contracts,sz ):
     contracts = contracts.split(',')
     puts = list(filter(lambda s: s.endswith('-P'), contracts))
     calls = list(filter(lambda s: s.endswith('-C'), contracts))
+    puts = list(set(puts))
+    calls = list(set(calls))
 
     recs = []
     for p in puts:
