@@ -33,13 +33,17 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     fee = calc_fee(ask, contract_quantity, contract, is_taker=True)
     cost = premium + fee
     recs = []
+    print('-- contract: ', contract)
+    print(f'\t premium = ${premium:.2f}')
+    print(f'\t     fee = ${fee:.2f}')
+    print(f'\t    cost = ${cost:.2f}')
     for price  in np.arange(low,high,step):
         contract_value = max(0, strike-price )*contract_quantity*nominal - cost
         spot_value = price * spot_quantity
         protective_put_value = contract_value + spot_value
-        recs += [ [ strike, cost, price, protective_put_value, contract_value, spot_value ] ]
+        recs += [ [price, protective_put_value, contract_value, spot_value ] ]
     df = pd.DataFrame.from_records( recs )
-    df.columns = ['strike','put_cost', 'spot','protective','put_value','spot_value']
+    df.columns = ['spot','protective','put_value','spot_value']
     print( df )
 
 def _main( contract, spot_quantity ):
