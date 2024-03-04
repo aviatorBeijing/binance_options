@@ -27,7 +27,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         step = 0.01
 
     low = spot_price*0.8
-    high = spot_price*1.5
+    high = spot_price*1.8
     contract_quantity = spot_quantity/nominal
     premium = ask*contract_quantity
     fee = calc_fee(ask, contract_quantity, contract, is_taker=True)
