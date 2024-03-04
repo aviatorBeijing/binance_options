@@ -19,7 +19,10 @@ def calc_profits_profile(spot_quantity, contract, cdata):
 
     nominal = 1
     step = 5
-    if any( [ e in contract for e in ['BTC-','ETH-'] ]) :
+    if any( [ e in contract for e in ['BTC-'] ]) :
+        nominal = 1
+        step = 1000
+    if any( [ e in contract for e in ['ETH-'] ]) :
         nominal = 1
         step = 100
     elif any( [ e in contract for e in ['DOGE-',] ]) :
