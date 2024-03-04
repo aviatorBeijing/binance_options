@@ -63,13 +63,15 @@ def _main(ric):
     df['weekday'] = ['mon','tue','wed','thur','fri','weedends']
     df.set_index('weekday',inplace=True,drop=True)
 
-    print('-- BTC/USD price changes (daily returns%) by *WEEKDAYS*')
-    print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
-    print(df)    
+    return df,startts,endts
 
 @click.command()
 @click.option('--ric')
 def main(ric):
-    _main(ric)
+    df,startts,endts = _main(ric)
+    print('-- BTC/USD price changes (daily returns%) by *WEEKDAYS*')
+    print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
+    print(df)  
+
 if __name__ == '__main__':
     main()
