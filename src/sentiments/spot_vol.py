@@ -27,12 +27,44 @@ def _main(ric):
         resp = ydata( ric, startts,endts)
         timestamps = resp['chart']['result'][0]['timestamp']
         data = resp['chart']['result'][0]['indicators']['quote'][0]
-        close = data['close']
-        df = pd.DataFrame.from_dict({"date": timestamps, "close":close })
+        
+        df = pd.DataFrame.from_dict({"date": timestamps, 
+                                    "open": data['open'],
+                                    "high": data['high'],
+                                    "low": data['low'],
+                                    "close": data['close'] })
         df.to_csv("btc.csv", index=False)
     else:
         df = pd.read_csv('btc.csv')
-    print(df)
+        startts = df.date.iloc[0]
+        endts = df.date.iloc[-1]
+    
+    df.date = df.date.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
+    #df.set_index('date',drop=True,inplace=True)
+    df['week_days']= df.date.apply(lambda e: e.dayofweek)
+    
+    df.dropna(inplace=True)
+    df['rtn'] = df.close.pct_change()
+    df['gamma'] = df.rtn.pct_change()
+
+    recs = []
+    for i in range(0,5):
+        row = df[df.week_days==i].rtn.describe().to_list()
+        row = [ e*100 for e in row]
+        recs += [row]
+    weekends_vol = df[(df.week_days==5)|(df.week_days==6)].rtn.describe().to_list()
+    weekends_vol = [ e*100 for e in weekends_vol]
+    recs += [ weekends_vol ]
+    df = pd.DataFrame.from_records( recs )
+    df.columns = ['num','mean','std','min','25%','50%','75%','max']
+    df.num /=100
+
+    df['weekday'] = ['mon','tue','wed','thur','fri','weedends']
+    df.set_index('weekday',inplace=True,drop=True)
+
+    print('-- BTC/USD price changes (daily returns%) by *WEEKDAYS*')
+    print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
+    print(df)    
 
 @click.command()
 @click.option('--ric')
