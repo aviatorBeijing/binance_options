@@ -48,12 +48,14 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         recs += [ [price, protective_put_value, contract_value, spot_value ] ]
 
     df = pd.DataFrame.from_records( recs )
-    df.columns = ['spot','protective','put_value','spot_value']
-    df['breakeven'] = df.protective > df.spot_value
+    df.columns = ['spot','protective','put_value','spot_only']
+    df['breakeven'] = df.protective > df.spot_only
 
     df['spot_pct'] = (df.spot - spot_price)/spot_price
     df.spot_pct = df.spot_pct.apply(lambda v: f"{(v*100):.1f}%")
-    
+
+    df['portfolio'] = (df.protective-df.spot_only)/df.spot_only
+    df['portfolio'] = df.portfolio.apply(lambda v: f"{(v*100):.1f}%")
     print( df )
 
 def _main( contract, spot_quantity ):
