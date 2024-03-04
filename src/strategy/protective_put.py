@@ -57,7 +57,10 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     else:
         print(df)
         raise Exception(f"Price range might not be enough. No all_loss found.")
-
+    df.drop(['all_loss'], axis=1, inplace=True)
+    
+    df['spot_pct'] = (df.spot - spot_price)/spot_price
+    df.spot_pct = df.spot_pct.apply(lambda v: f"{(v*100):.1f}%")
 
     print( df )
 
