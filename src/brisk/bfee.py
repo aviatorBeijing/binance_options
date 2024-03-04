@@ -28,7 +28,7 @@ def calc_fee(trade_price, trade_vol, contract, is_taker=True):
             10% * Option Traded Price
         ) * Option Traded Size
     '''
-    fee_rate = 5/10000
+    fee_rate = 5/10000 # FIXME: for DOGE- contract, it's 3/10000 (see the BN trading UI)
     if not is_taker:
         fee_rate = 2/10000
     index_price = get_binance_index( contract )
