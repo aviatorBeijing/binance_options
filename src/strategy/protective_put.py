@@ -37,7 +37,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     print(f'\t premium = ${premium:.2f}')
     print(f'\t     fee = ${fee:.2f}')
     print(f'\t    cost = ${cost:.2f}')
-    print(f'\t     qty = {contract_quantity:.2f} contracts')
+    print(f'\t     qty = {contract_quantity:.2f} contracts @ ${ask:.4f}/contract')
     for price  in np.arange(low,high,step):
         contract_value = max(0, strike-price )*contract_quantity*nominal - cost
         spot_value = price * spot_quantity
