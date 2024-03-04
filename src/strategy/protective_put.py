@@ -24,10 +24,10 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         step = 5
     elif any( [ e in contract for e in ['DOGE-',] ]) :
         nominal = 1_000
-        step = 0.005
+        step = 0.01
 
     low = spot_price*0.8
-    high = spot_price*1.2
+    high = spot_price*1.5
     contract_quantity = spot_quantity/nominal
     premium = ask*contract_quantity
     fee = calc_fee(ask, contract_quantity, contract, is_taker=True)
