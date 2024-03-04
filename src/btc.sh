@@ -1,3 +1,6 @@
 #!/bin/bash
 
-$PYTHON strategy/straddle.py --left BTC-240301-58000-P --right BTC-240301-60000-C --size=0.1
+DT=240308
+LEFT=BTC-$DT-62000-P
+RIGHT=BTC-$DT-62000-C
+$PYTHON strategy/straddle.py --left $LEFT --right $RIGHT --size=0.1
