@@ -61,8 +61,6 @@ def calc_profits_profile(spot_quantity, contract, cdata):
 
     df['spot_pct'] = (df.spot - spot_price)/spot_price
     df.spot_pct = df.spot_pct.apply(lambda v: f"{(v*100):.1f}%")
-    df['gain'] = (df.protective - cost)/spot_price
-    df.spot_pct = df.spot_pct.apply(lambda v: f"{(v*100):.1f}%")
     
     print( df )
 
