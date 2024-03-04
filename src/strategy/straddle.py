@@ -107,7 +107,7 @@ def calc_straddle(  lcontract, rcontract,
         if not DEBUG: step = 1
         else: step = 5
     elif spot_symbol == 'DOGE/USDT':
-        step = 0.001
+        step = 0.01
     else:
         raise Exception(f"Unsupported spot symbol: {spot_symbol}.")
 
