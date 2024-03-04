@@ -37,9 +37,9 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         contract_value = max(0, strike-price )*contract_quantity*nominal - cost
         spot_value = price * spot_quantity
         protective_put_value = contract_value + spot_value
-        recs += [ [ strike, price, protective_put_value, contract_value, spot_value ] ]
+        recs += [ [ strike, cost, price, protective_put_value, contract_value, spot_value ] ]
     df = pd.DataFrame.from_records( recs )
-    df.columns = ['strike', 'spot','protective','put_value','spot_value']
+    df.columns = ['strike','cost', 'spot','protective','put_value','spot_value']
     print( df )
 
 def _main( contract, spot_quantity ):
