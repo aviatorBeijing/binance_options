@@ -1,0 +1,42 @@
+import requests,os,datetime,click
+import pandas as pd 
+import socks,socket
+
+YF="https://query1.finance.yahoo.com/v8/finance/chart/{}?interval=1d&period1={}&period2={}" #1709525226
+
+def using_proxy():
+    if os.getenv("YAHOO_LOCAL", None):
+        print('-- using proxy')
+        socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 50000)
+        socket.socket = socks.socksocket
+
+def ydata(ric,startts,endts):
+    using_proxy()
+    resp = requests.get(
+        YF.format(ric.upper(), int(startts), int(endts)),
+        headers={
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0'
+                }
+    )
+    return resp.json()
+
+def _main(ric):
+    if not os.path.exists('btc.csv'):
+        endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
+        startts = endts - 5*365*24*3600
+        resp = ydata( ric, startts,endts)
+        timestamps = resp['chart']['result'][0]['timestamp']
+        data = resp['chart']['result'][0]['indicators']['quote'][0]
+        close = data['close']
+        df = pd.DataFrame.from_dict({"date": timestamps, "close":close })
+        df.to_csv("btc.csv", index=False)
+    else:
+        df = pd.read_csv('btc.csv')
+    print(df)
+
+@click.command()
+@click.option('--ric')
+def main(ric):
+    _main(ric)
+if __name__ == '__main__':
+    main()
