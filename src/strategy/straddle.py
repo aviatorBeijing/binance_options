@@ -118,7 +118,7 @@ def calc_straddle(  lcontract, rcontract,
         gains += max( stock*face - strike_right, 0)
         gains *= vol
         profits = gains - premium - fee
-        recs += [ ( stock*face, gains, profits )]
+        recs += [ ( stock, gains, profits )]
     
     df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
     df = _find_breakeven( df )
