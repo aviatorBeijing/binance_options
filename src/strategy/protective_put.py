@@ -27,7 +27,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         step = 0.002
 
     low = spot_price*0.95
-    high = spot_price*1.1
+    high = spot_price*1.05
     contract_quantity = spot_quantity/nominal
     premium = ask*contract_quantity
     fee = calc_fee(ask, contract_quantity, contract, is_taker=True)
@@ -49,6 +49,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
 
     df = pd.DataFrame.from_records( recs )
     df.columns = ['spot','protective','put_value','spot_value']
+    """
     df['all_loss'] = (df.put_value + cost).apply(lambda x: np.isclose(x,0.0))
     first_idx = df[df.all_loss==False].shape[0]
     if first_idx >0:
@@ -61,6 +62,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         print(df)
         raise Exception(f"Price range might not be enough. No all_loss found.")
     df.drop(['all_loss'], axis=1, inplace=True)
+    """
 
     df['spot_pct'] = (df.spot - spot_price)/spot_price
     df.spot_pct = df.spot_pct.apply(lambda v: f"{(v*100):.1f}%")
