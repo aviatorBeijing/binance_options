@@ -26,7 +26,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         nominal = 1_000
         step = 0.005
 
-    low = spot_price*0.9
+    low = spot_price*0.8
     high = spot_price*1.2
     contract_quantity = spot_quantity/nominal
     premium = ask*contract_quantity
