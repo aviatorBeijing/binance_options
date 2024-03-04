@@ -21,7 +21,8 @@ def ydata(ric,startts,endts):
     return resp.json()
 
 def _main(ric):
-    if not os.path.exists('btc.csv'):
+    fn = f"{ric.lower()}.csv"
+    if not os.path.exists(fn):
         endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
         startts = endts - 5*365*24*3600
         resp = ydata( ric, startts,endts)
@@ -33,9 +34,9 @@ def _main(ric):
                                     "high": data['high'],
                                     "low": data['low'],
                                     "close": data['close'] })
-        df.to_csv("btc.csv", index=False)
+        df.to_csv(fn, index=False)
     else:
-        df = pd.read_csv('btc.csv')
+        df = pd.read_csv(fn)
         startts = df.date.iloc[0]
         endts = df.date.iloc[-1]
     
