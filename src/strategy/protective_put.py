@@ -30,7 +30,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         step = 0.01
 
     low = spot_price*0.95
-    high = spot_price*1.05
+    high = spot_price*1.1
     contract_quantity = spot_quantity/nominal
     premium = ask*contract_quantity
     fee = calc_fee(ask, contract_quantity, contract, is_taker=True)
@@ -42,6 +42,8 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     print(f'\t    cost = ${cost:.2f}')
     print(f'\t     qty = {contract_quantity:.2f} contracts @ ${ask:.4f}/contract')
     print(f'\t    spot = ${spot_price:.4f}')
+
+    assert strike > spot_price, f"It's meaningless to use a Put in discount w.r.t. spot."
 
     # Protective put
     for price  in np.arange(low,high,step):
