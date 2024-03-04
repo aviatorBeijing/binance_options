@@ -91,6 +91,7 @@ def calc_straddle(  lcontract, rcontract,
 
     low = adhoc*0.8
     high=adhoc*1.3
+    face = 1
     if spot_symbol == 'BTC/USDT':
         low = int(low/1000)*1000
         high = int(high/1000)*1000
@@ -108,15 +109,16 @@ def calc_straddle(  lcontract, rcontract,
         else: step = 5
     elif spot_symbol == 'DOGE/USDT':
         step = 0.01
+        face = 1_000
     else:
         raise Exception(f"Unsupported spot symbol: {spot_symbol}.")
 
     for stock in np.arange(low,high,step): # at expiration
-        gains = max(strike_left - stock,0)
-        gains += max( stock - strike_right, 0)
+        gains = max(strike_left - stock*face,0)
+        gains += max( stock*face - strike_right, 0)
         gains *= vol
         profits = gains - premium - fee
-        recs += [ ( stock, gains, profits )]
+        recs += [ ( stock*face, gains, profits )]
     
     df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
     df = _find_breakeven( df )
