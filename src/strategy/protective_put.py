@@ -39,18 +39,21 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     print(f'\t    cost = ${cost:.2f}')
     print(f'\t     qty = {contract_quantity:.2f} contracts @ ${ask:.4f}/contract')
     print(f'\t    spot = ${spot_price:.4f}')
+
+    # Protective put
     for price  in np.arange(low,high,step):
         contract_value = max(0, strike-price )*contract_quantity*nominal - cost
         spot_value = price * spot_quantity
         protective_put_value = contract_value + spot_value
         recs += [ [price, protective_put_value, contract_value, spot_value ] ]
+
     df = pd.DataFrame.from_records( recs )
     df.columns = ['spot','protective','put_value','spot_value']
     df['all_loss'] = (df.put_value + cost).apply(lambda x: np.isclose(x,0.0))
     first_idx = df[df.all_loss==False].shape[0]
     if first_idx >0:
-        if first_idx<df.shape[0]-1:
-            df = df[:first_idx+1]
+        if first_idx<df.shape[0]-3:
+            df = df[:first_idx+3]
         else:
             print( df )
             raise Exception(f"Price range might not be enough. No all_loss found.")
