@@ -24,7 +24,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         step = 5
     elif any( [ e in contract for e in ['DOGE-',] ]) :
         nominal = 1_000
-        step = 0.001
+        step = 0.002
 
     low = spot_price*0.9
     high = spot_price*1.1
@@ -47,7 +47,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     df = pd.DataFrame.from_records( recs )
     df.columns = ['spot','protective','put_value','spot_value']
     df['all_loss'] = (df.put_value + cost).apply(lambda x: np.isclose(x,0.0))
-    first_idx = df['all_loss'].ne(True).idxmax()
+    first_idx = df[df.all_loss==False].shape[0]
     if first_idx >0:
         if first_idx<df.shape[0]-1:
             df = df[:first_idx+1]
