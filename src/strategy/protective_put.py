@@ -41,7 +41,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     df = pd.DataFrame.from_records( recs )
     df.columns = ['strike', 'spot','protective','put_value','spot_value']
     print( df )
-    
+
 def _main( contract, spot_quantity ):
     try:
         with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
@@ -68,7 +68,7 @@ def _mp_main(spot_quantity,contract):
             break
 
 @click.command()
-@click.option('--spot_quantity')
+@click.option('--spot_quantity', default=1.)
 @click.option('--contract')
 def main(spot_quantity,contract):
     conn = Process( target=ws_connector, args=(f"{contract}", "ticker",) )
