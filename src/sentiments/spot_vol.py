@@ -47,7 +47,10 @@ def _main(ric):
     df.dropna(inplace=True)
     df['rtn'] = df.close.pct_change()
     df['gamma'] = df.rtn.pct_change()
-
+    last_row = df.tail(1)
+    last_rtn = df.rtn.iloc[-1]
+    print( last_row )
+    
     recs = []
     for i in range(0,5):
         row = df[df.week_days==i].rtn.describe().to_list()
@@ -60,6 +63,8 @@ def _main(ric):
     df.columns = ['num','mean','std','min','25%','50%','75%','max']
     df.num /=100
 
+    x = ['' for i in range(0,df.shape[0])];x[ last_row.week_days.iloc[0] ] = last_rtn*100
+    df['lastest_rtn'] = x
     df['weekday'] = ['mon','tue','wed','thur','fri','weedends']
     df.set_index('weekday',inplace=True,drop=True)
 
@@ -67,11 +72,19 @@ def _main(ric):
 
 @click.command()
 @click.option('--ric')
-def main(ric):
-    df,startts,endts = _main(ric)
-    print('-- BTC/USD price changes (daily returns%) by *WEEKDAYS*')
-    print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
-    print(df)  
+@click.option('--rics')
+def main(ric,rics):
+    if ric:
+        df,startts,endts = _main(ric)
+        print(f'-- {ric} price changes (daily returns%) by *WEEKDAYS*')
+        print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
+        print(df)  
+    elif rics:
+        for ric in rics.split(','):
+            df,startts,endts = _main(ric)
+            print(f'-- {ric} price changes (daily returns%) by *WEEKDAYS*')
+            print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
+            print(df) 
 
 if __name__ == '__main__':
     main()
