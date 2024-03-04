@@ -41,10 +41,11 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     print(f'\t    spot = ${spot_price:.4f}')
 
     # Protective put
+    init_spot_value = spot_price*spot_quantity
     for price  in np.arange(low,high,step):
         contract_value = max(0, strike-price )*contract_quantity*nominal - cost
         spot_value = price * spot_quantity
-        protective_put_value = contract_value + spot_value
+        protective_put_value = contract_value + init_spot_value
         recs += [ [price, protective_put_value, contract_value, spot_value ] ]
 
     df = pd.DataFrame.from_records( recs )
