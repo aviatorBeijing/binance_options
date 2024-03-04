@@ -91,16 +91,19 @@ def calc_straddle(  lcontract, rcontract,
 
     low = adhoc*0.8
     high=adhoc*1.3
+    if not DEBUG:
+        low = adhoc*0.98
+        high = adhoc*1.02
     face = 1
     if spot_symbol == 'BTC/USDT':
         low = int(low/1000)*1000
         high = int(high/1000)*1000
-        if not DEBUG: step = 100
+        if not DEBUG: step = 5
         else: step = 1000
     elif spot_symbol == 'ETH/USDT':
         low = int(low/100)*100
         high = int(high/100)*100
-        if not DEBUG: step = 10
+        if not DEBUG: step = 1
         else: step = 100
     elif spot_symbol == 'BNB/USDT':
         low = int(low/10)*10
