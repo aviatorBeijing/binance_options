@@ -24,7 +24,7 @@ def calc_profits_profile(spot_quantity, contract, cdata):
         step = 5
     elif any( [ e in contract for e in ['DOGE-',] ]) :
         nominal = 1_000
-        step = 0.002
+        step = 0.005
 
     low = spot_price*0.9
     high = spot_price*1.2
