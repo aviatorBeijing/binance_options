@@ -20,11 +20,11 @@ def ydata(ric,startts,endts):
     )
     return resp.json()
 
-def _main(ric):
+def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivative of return)
     fn = f"{ric.lower()}.csv"
     if not os.path.exists(fn):
         endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
-        startts = endts - 5*365*24*3600
+        startts = endts - 10*365*24*3600
         resp = ydata( ric, startts,endts)
         timestamps = resp['chart']['result'][0]['timestamp']
         data = resp['chart']['result'][0]['indicators']['quote'][0]
@@ -49,22 +49,29 @@ def _main(ric):
     df['gamma'] = df.rtn.pct_change()
     last_row = df.tail(1)
     last_rtn = df.rtn.iloc[-1]
+    df.dropna(inplace=True)
+    last_gamma = df.gamma.iloc[-1]
     print( last_row )
     
+    col = 'rtn' if check == 'return' else 'gamma' if check == 'gamma' else None 
+    assert col, f"check={check} is NOT supported."
+
     recs = []
     for i in range(0,5):
-        row = df[df.week_days==i].rtn.describe().to_list()
-        row = [ e*100 for e in row]
+        f = 100 if check == 'return' else 1
+        row = df[df.week_days==i][col].describe().to_list()
+        row = [ e*f for e in row]
         recs += [row]
-    weekends_vol = df[(df.week_days==5)|(df.week_days==6)].rtn.describe().to_list()
+    weekends_vol = df[(df.week_days==5)|(df.week_days==6)][col].describe().to_list()
     weekends_vol = [ e*100 for e in weekends_vol]
     recs += [ weekends_vol ]
     df = pd.DataFrame.from_records( recs )
     df.columns = ['num','mean','std','min','25%','50%','75%','max']
     df.num /=100
 
-    x = ['' for i in range(0,df.shape[0])];x[ last_row.week_days.iloc[0] ] = last_rtn*100
-    df['lastest_rtn'] = x
+    x = ['' for i in range(0,df.shape[0])]
+    x[ last_row.week_days.iloc[0] ] = (last_rtn*100) if check=='return' else last_gamma
+    df[f'lastest_{check}'] = x
     df['weekday'] = ['mon','tue','wed','thur','fri','weedends']
     df.set_index('weekday',inplace=True,drop=True)
 
@@ -73,15 +80,16 @@ def _main(ric):
 @click.command()
 @click.option('--ric')
 @click.option('--rics')
-def main(ric,rics):
+@click.option('--check', default='return', help="return | gamma (derivative of return)")
+def main(ric,rics, check):
     if ric:
-        df,startts,endts = _main(ric)
+        df,startts,endts = _main(ric,check)
         print(f'-- {ric} price changes (daily returns%) by *WEEKDAYS*')
         print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
         print(df)  
     elif rics:
         for ric in rics.split(','):
-            df,startts,endts = _main(ric)
+            df,startts,endts = _main(ric,check)
             print(f'-- {ric} price changes (daily returns%) by *WEEKDAYS*')
             print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
             print(df) 
