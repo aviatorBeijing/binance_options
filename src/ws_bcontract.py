@@ -29,7 +29,7 @@ max_volatility = None
 def on_message(ws, message):
     global max_volatility
     msg = json.loads( message )
-    import pprint;pprint.pprint(msg)
+    #import pprint;pprint.pprint(msg)
     fds = ['s','c', 'mp', 'bo','ao','bq','aq', 'b','a','d','g','t','vo','V','A'] #for 'ticker'
     #print( len(msg), msg)
     df = pd.DataFrame.from_records([ msg ] )
@@ -43,6 +43,8 @@ def on_message(ws, message):
     df['theta'] = df['t']
     df['vega']  = df['v']
     df['impvol'] = df['vo']
+    df['impvolbid'] = df['b']
+    df['impvol_ask'] = df['a']
 
     df['spd%'] = df['spread']/avg
     df['spd%'] = df['spd%'].apply(lambda v: f"{(v*100):.1f}%")
@@ -58,7 +60,7 @@ def on_message(ws, message):
     else:
         max_volatility = MaxVolatility(df['s'].values[0], vo)
     
-    rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta','gamma','theta','vega','impvol']].to_records(index=False)
+    rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta','gamma','theta','vega','impvol','impvol_bid','impvol_ask']].to_records(index=False)
     for row in rows:
         row = list(row)
         sym = row[0]; is_updating = False
@@ -85,7 +87,9 @@ def on_message(ws, message):
                         "gamma": df.iloc[0].gamma,
                         "theta": df.iloc[0].theta,
                         "vega": df.iloc[0].vega,
-                        "impvol": df.iloc[0].impvol
+                        "impvol": df.iloc[0].impvol,
+                        "impvol_bid": df.iloc[0].impvol_bid,
+                        "impvol_ask": df.iloc[0].impvol_ask,
                         }
                 json.dump(data, fh)
                 
