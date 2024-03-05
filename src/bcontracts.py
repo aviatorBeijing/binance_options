@@ -4,9 +4,10 @@ import requests
 import click
 
 @click.command()
+@click.option('--underlying', default="BTC")
 @click.option('--price')
 @click.option('--contract', help="call or put")
-def main(price,contract):
+def main(underlying,price,contract):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
     if resp:
@@ -29,12 +30,14 @@ def main(price,contract):
         fn += '/tmp/options_symbols.csv'
         df.to_csv( fn , index=False)
         
-        symbols = df[df.symbol.str.contains('BTC')].symbol.values
+        symbols = df[df.symbol.str.contains(underlying.upper())].symbol.values
         # print(','.join(symbols))
 
         print('-- saved: ', fn)
 
         rcs = df.copy()
+        if underlying:
+            rcs = rcs[ rcs.symbol.str.contains(underlying.upper()) ]
         if price:
             rcs = rcs[ rcs.symbol.str.contains(price) ]
         if contract:
