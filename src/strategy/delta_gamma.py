@@ -9,6 +9,10 @@ import seaborn
 seaborn.set_style("ticks")
 
 np.set_printoptions(suppress=True)
+"""
+Black-Schole Theory
+European-style Options
+"""
 
 # Call option pprice
 def callprice(S,K,T,sigma,r):

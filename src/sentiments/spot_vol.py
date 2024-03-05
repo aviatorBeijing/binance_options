@@ -47,6 +47,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
     df.dropna(inplace=True)
     df['rtn'] = df.close.pct_change()
     df['gamma'] = df.rtn.pct_change()
+    df['gamma_rnk'] = df.rtn.pct_change().rolling(30).rank(pct=True)
     last_row = df.tail(1)
     last_rtn = df.rtn.iloc[-1]
     df.dropna(inplace=True)
