@@ -35,7 +35,7 @@ def _mp_main(contracts):
 @click.option('--contracts')
 def main(contracts):
     conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
-    calc = Process( target=_mp_main, args=(contracts.split(",")) )
+    calc = Process( target=_mp_main, args=(contracts.split(","), ) )
     conn.start()
     calc.start()
     
