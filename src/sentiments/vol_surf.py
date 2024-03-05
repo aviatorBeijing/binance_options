@@ -7,6 +7,16 @@ from ws_bcontract import _main as ws_connector
 from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 
 
+def monitor_surf(df):
+    expiries = df.c.apply(lambda s: s.split("-")[0])
+    expiries = list(set(expiries))
+    print('-- # of expiries:', len(expiries ))
+
+    strikes = df.c.apply(lambda s: s.split("-")[0])
+    strikes = list(set(strikes))
+    print('-- # of strikes:', len(strikes ))
+
+
 def _main( contracts ):
     try:
         recs = []
@@ -20,6 +30,7 @@ def _main( contracts ):
         df = df[df.askv.astype(float)>0] # Only keep those are available to be bought
         df.reset_index(inplace=True)
         print(df )
+        monitor_surf(df)
     except FileNotFoundError as  e:
         print('*** waiting for data ...')
         time.sleep(5)
