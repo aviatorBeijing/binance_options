@@ -16,7 +16,7 @@ def monitor_surf(df):
     strikes = list(set(strikes))
     print('-- # of strikes:', len(strikes ))
 
-    surf = df[['c','impvol']] # FIXME: bid, ask implied vol also can ben monitored
+    surf = df[['c','impvol']].copy() # FIXME: bid, ask implied vol also can ben monitored
     surf['date'] = '';surf['strike'] = 0.
     surf.loc[:,'date'] = df.c.apply(lambda s: s.split('-')[1])
     surf.loc[:,'strike'] = df.c.apply(lambda s: float(s.split('-')[2]))
