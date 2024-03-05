@@ -16,8 +16,8 @@ def _main( contracts ):
                 contract_data['c'] = contract 
                 recs += [ contract_data ]
         df = pd.DataFrame.from_records( recs )
-        
-        df = df[df.askv>0] # Only keep those are available to be bought
+
+        df = df[df.askv.astype(float)>0] # Only keep those are available to be bought
         print(df )
     except FileNotFoundError as  e:
         print('*** waiting for data ...')
