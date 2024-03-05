@@ -6,8 +6,10 @@ import click
 @click.command()
 @click.option('--underlying', default="BTC")
 @click.option('--price')
+@click.option('--low', help="low price bound of strike")
+@click.option('--high', help="high price bound of strike")
 @click.option('--contract', help="call or put")
-def main(underlying,price,contract):
+def main(underlying,price,low,high,contract):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
     if resp:
@@ -43,6 +45,19 @@ def main(underlying,price,contract):
         if contract:
             rcs = rcs[ rcs.symbol.str.endswith( f"-{contract[0].upper()}" ) ]
         rcs = rcs.symbol.values 
+        if low:
+            rcs = list(
+                filter(
+                    lambda c: float(c.split('-')[2]) >= float(low), rcs
+                )
+            )
+        if high:
+            rcs = list(
+                filter(
+                    lambda c: float(c.split('-')[2]) <= float(high), rcs
+                )
+            )
+
         print(','.join( rcs ))
         print(len(rcs), ' contracts')
         print('saved: ',fn)
