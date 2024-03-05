@@ -15,8 +15,8 @@ def _main( contracts ):
                 contract_data = json.loads(fh.read())
                 contract_data['c'] = contract 
                 recs += [ contract_data ]
-            df = pd.DataFrame.from_records( recs )
-            print(df )
+        df = pd.DataFrame.from_records( recs )
+        print(df )
     except FileNotFoundError as  e:
         print('*** waiting for data ...')
         time.sleep(5)
