@@ -9,10 +9,14 @@ from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 
 def _main( contracts ):
     try:
+        recs = []
         for contract in contracts:
             with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
                 contract_data = json.loads(fh.read())
-                print( '\t',contract, '\n', contract_data  )
+                contract_data['c'] = contract 
+                recs += [ contract_data ]
+            df = pd.DataFrame.from_records( recs )
+            print(df )
     except FileNotFoundError as  e:
         print('*** waiting for data ...')
         time.sleep(5)
