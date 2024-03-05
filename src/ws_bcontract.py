@@ -43,7 +43,7 @@ def on_message(ws, message):
     df['theta'] = df['t']
     df['vega']  = df['v']
     df['impvol'] = df['vo']
-    df['impvolbid'] = df['b']
+    df['impvol_bid'] = df['b']
     df['impvol_ask'] = df['a']
 
     df['spd%'] = df['spread']/avg
