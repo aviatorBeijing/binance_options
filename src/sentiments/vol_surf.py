@@ -9,7 +9,7 @@ from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 
 def _main( contracts ):
     try:
-        for contract in contracts.split(','):
+        for contract in contracts:
             with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
                 contract_data = json.loads(fh.read())
                 print( '\t',contract, '\n', contract_data  )
@@ -21,7 +21,7 @@ def _main( contracts ):
         print('*** json data conflict, wait ...')
         time.sleep(5)
         return
-        
+
 def _mp_main(contracts):
     while True:
         try:
@@ -35,7 +35,7 @@ def _mp_main(contracts):
 @click.option('--contracts')
 def main(contracts):
     conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
-    calc = Process( target=_mp_main, args=(contracts) )
+    calc = Process( target=_mp_main, args=(contracts.split(",")) )
     conn.start()
     calc.start()
     
