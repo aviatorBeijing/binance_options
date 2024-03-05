@@ -44,6 +44,8 @@ def main(underlying,price,contract):
             rcs = rcs[ rcs.symbol.str.endswith( f"-{contract[0].upper()}" ) ]
         rcs = rcs.symbol.values 
         print(','.join( rcs ))
+        print(len(rcs), ' contracts')
+        print('saved: ',fn)
 
 
 if __name__ == '__main__':
