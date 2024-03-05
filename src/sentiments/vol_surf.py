@@ -20,8 +20,7 @@ def monitor_surf(df):
     surf['date'] = df.c.apply(lambda s: s.split('-')[1])
     surf['strike'] = df.c.apply(lambda s: float(s.split('-')[2]))
     surf = surf[['date','strike','impvol']]
-    print(surf.columns)
-    surf = surf.sort_values(['date'], ascending=True)
+    surf = surf.sort_values(['date','strike'], ascending=True)
     print(surf)
     
 def _main( contracts ):
