@@ -18,6 +18,7 @@ def _main( contracts ):
         df = pd.DataFrame.from_records( recs )
 
         df = df[df.askv.astype(float)>0] # Only keep those are available to be bought
+        df.reset_index(inplace=True)
         print(df )
     except FileNotFoundError as  e:
         print('*** waiting for data ...')
