@@ -52,6 +52,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
     last_rtn = df.rtn.iloc[-1]
     df.dropna(inplace=True)
     last_gamma = df.gamma.iloc[-1]
+    last_gamma_rnk = df.gamma_rnk.iloc[-1]
     print( last_row )
     
     col = 'rtn' if check == 'return' else 'gamma' if check == 'gamma' else None 
