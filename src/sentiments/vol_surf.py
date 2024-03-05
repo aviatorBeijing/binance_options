@@ -30,7 +30,7 @@ def _main( contracts ):
         df = df[df.askv.astype(float)>0] # Only keep those are available to be bought
         df.reset_index(inplace=True,drop=True)
         for col in df.columns[ :df.shape[1]-1]:
-            df[col] = df.col.apply(float)
+            df[col] = df[col].apply(float)
         print(df )
         monitor_surf(df)
     except FileNotFoundError as  e:
