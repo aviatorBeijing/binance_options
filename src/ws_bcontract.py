@@ -29,6 +29,7 @@ max_volatility = None
 def on_message(ws, message):
     global max_volatility
     msg = json.loads( message )
+    import pprint;pprint.pprint(msg)
     fds = ['s','c', 'mp', 'bo','ao','bq','aq', 'b','a','d','g','t','vo','V','A'] #for 'ticker'
     #print( len(msg), msg)
     df = pd.DataFrame.from_records([ msg ] )
