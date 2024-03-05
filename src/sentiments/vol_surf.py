@@ -8,11 +8,11 @@ from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 
 
 def monitor_surf(df):
-    expiries = df.c.apply(lambda s: s.split("-")[0])
+    expiries = df.c.apply(lambda s: s.split("-")[1])
     expiries = list(set(expiries))
     print('-- # of expiries:', len(expiries ))
 
-    strikes = df.c.apply(lambda s: s.split("-")[0])
+    strikes = df.c.apply(lambda s: s.split("-")[2])
     strikes = list(set(strikes))
     print('-- # of strikes:', len(strikes ))
 
