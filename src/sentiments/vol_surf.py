@@ -16,7 +16,12 @@ def monitor_surf(df):
     strikes = list(set(strikes))
     print('-- # of strikes:', len(strikes ))
 
-
+    surf = df[['c','impvol']] # FIXME: bid, ask implied vol also can ben monitored
+    surf['date'] = df.c.apply(lambda s: s.split('-')[1])
+    surf['strike'] = df.c.apply(lambda s: float(s.split('-')[2]))
+    surf = surf[['date','strike','impvol']]
+    print(surf)
+    
 def _main( contracts ):
     try:
         recs = []
