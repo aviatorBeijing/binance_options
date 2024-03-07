@@ -38,7 +38,9 @@ def check_disparity(contract,df):
             print( spot_price, K, T, sigma, r)
             option_price = callprice(spot_price, K, T, sigma, r )
             recs += [ (contract, r, sigma, option_price, market_quote_bid, market_quote_ask,) ]
-    df = pd.DataFrame.from_records(recs)
+    df = pd.DataFrame.from_records(recs, columns=[
+        'contract', 'rf', 'sigma', 'bsm', 'bid','ask'
+    ])
     print( df )
 
 def _main( contracts ):
