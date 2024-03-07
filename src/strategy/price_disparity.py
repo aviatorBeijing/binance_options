@@ -28,6 +28,7 @@ def check_disparity(contract,df):
     underlying,T,K,ctype = extract_specs( contract)
     spot_price = ex.fetch_ticker(underlying)['bid']
     
+    print( df )
     market_quote_bid = df.iloc[0].bid
     market_quote_ask = df.iloc[0].ask
 
