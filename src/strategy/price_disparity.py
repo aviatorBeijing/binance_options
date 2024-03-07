@@ -33,7 +33,7 @@ def check_disparity(contract,market_df):
     market_quote_ask = market_df.iloc[0].ask
 
     recs = []
-    for sigma in [ 30/100, 80/100, 120/100, 200/100, 
+    for sigma in [ 10/100, 30/100, 80/100, 
                         market_df.iloc[0].impvol, 
                         market_df.iloc[0].impvol_bid, 
                         market_df.iloc[0].impvol_ask]:
