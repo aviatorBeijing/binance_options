@@ -20,6 +20,12 @@ def callprice(S,K,T,sigma,r)->float:
     d2=(np.log(S/K) + (r - 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
     return S*scs.norm.cdf(d1) - np.exp(-r *T) * K * scs.norm.cdf(d2)
 
+# Parity: C+PV(S) = P+S
+def putprice(S,K,T,sigma,r)->float:
+    C = callprice( S,K,T,sigma, r)
+    return C + K*np.exp(-r*T) -S
+
+
 # Delta
 def deltafunc(S, K, T, sigma, r):
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))

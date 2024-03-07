@@ -7,7 +7,7 @@ ex = ccxt.binance()
 
 from ws_bcontract import _main as ws_connector, _maturity
 from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
-from strategy.delta_gamma import callprice
+from strategy.delta_gamma import callprice,putprice
 
 def get_maturity(contract):
     fds = contract.split('-')
@@ -37,7 +37,10 @@ def check_disparity(contract,market_df):
     interests = np.arange(-5/100, 5/100, 1/100)
     for sigma in sigmas:
         for r in interests: # risk-free rate
-            option_price = callprice(spot_price, K, T/252, sigma, r )
+            if ctype == 'call':
+                option_price = callprice(spot_price, K, T/252, sigma, r )
+            elif ctype == 'put':
+                option_price =  putprice(spot_price, K, T/252, sigma, r )
             recs += [ (contract, r, sigma, option_price, 
                             market_quote_bid-option_price, market_quote_ask-option_price,) ]
     df = pd.DataFrame.from_records(recs, columns=[
