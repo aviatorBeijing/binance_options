@@ -38,9 +38,9 @@ def check_disparity(contract,market_df):
     for sigma in sigmas:
         for r in interests: # risk-free rate
             if ctype == 'call':
-                option_price = callprice(spot_price, K, T/252, sigma, r )
+                option_price = callprice(spot_price, K, T/365, sigma, r )
             elif ctype == 'put':
-                option_price =  putprice(spot_price, K, T/252, sigma, r )
+                option_price =  putprice(spot_price, K, T/365, sigma, r )
             recs += [ (contract, r, sigma, option_price, 
                             market_quote_bid-option_price, market_quote_ask-option_price,) ]
     df = pd.DataFrame.from_records(recs, columns=[
