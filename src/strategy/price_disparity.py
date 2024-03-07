@@ -33,8 +33,8 @@ def check_disparity(contract,market_df):
     market_quote_ask = market_df.iloc[0].ask
 
     recs = []
-    for sigma in [ 60/100, 65/100, 70/100, 80/100, 
-                        market_df.iloc[0].impvol, 
+    sigmas = np.arange(30/100, 80/100, 0.01)
+    for sigma in sigmas + [market_df.iloc[0].impvol, 
                         market_df.iloc[0].impvol_bid, 
                         market_df.iloc[0].impvol_ask]:
         for r in [-5/100, 0.,5/100]: # risk-free rate
