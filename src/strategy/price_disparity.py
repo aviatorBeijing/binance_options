@@ -33,7 +33,7 @@ def check_disparity(contract,market_df):
     market_quote_ask = market_df.iloc[0].ask
 
     recs = []
-    sigmas = np.arange(30/100, 80/100, 0.001)
+    sigmas = np.arange(30/100, 90/100, 1/100)
     for sigma in sigmas:
         for r in [-5/100, 0.,5/100]: # risk-free rate
             option_price = callprice(spot_price, K, T/252, sigma, r )
