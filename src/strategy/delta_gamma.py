@@ -5,8 +5,8 @@ import numpy.random as npr
 import scipy.stats as scs
 import matplotlib.pyplot as plt
 import numpy.random as npr
-import seaborn
-seaborn.set_style("ticks")
+#import seaborn
+#seaborn.set_style("ticks")
 
 np.set_printoptions(suppress=True)
 """
