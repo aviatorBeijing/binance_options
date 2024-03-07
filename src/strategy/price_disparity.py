@@ -46,7 +46,7 @@ def check_disparity(contract,market_df):
     df = pd.DataFrame.from_records(recs, columns=[
         'contract', 'rf', 'sigma', 'bsm_fair', 'bid-bsm','ask-bsm'
     ])
-    df = df[ (abs(df['bid-bsm'])<5) | (abs(df['ask-bsm'])<5)]
+    df = df[ (abs(df['bid-bsm'])<2) | (abs(df['ask-bsm'])<2)]
     df.bsm_fair = df.bsm_fair.apply(lambda v: (int(v*10)/10))
     df.sort_values(['bid-bsm','ask-bsm'], inplace=True, ascending=False)
     print( df )
