@@ -24,16 +24,16 @@ def extract_specs( contract):
     spot = f'{sym.upper()}/USDT'
     return spot, maturity, strike, ctype
     
-def check_disparity(contract,df):
+def check_disparity(contract,market_df):
     underlying,T,K,ctype = extract_specs( contract)
     spot_price = ex.fetch_ticker(underlying)['bid']
     
-    print( df )
-    market_quote_bid = df.iloc[0].bid
-    market_quote_ask = df.iloc[0].ask
+    print( market_df )
+    market_quote_bid = market_df.iloc[0].bid
+    market_quote_ask = market_df.iloc[0].ask
 
     recs = []
-    for sigma in [ 30/100, 80/100, 121/100]:
+    for sigma in [ 30/100, 80/100, 121/100, market_df.iloc['impvol']]:
         for r in [1/100,5/100]: # risk-free rate
             option_price = callprice(spot_price, K, T/252, sigma, r )
             recs += [ (contract, r, sigma, option_price, market_quote_bid, market_quote_ask,) ]
