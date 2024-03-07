@@ -39,9 +39,10 @@ def check_disparity(contract,market_df):
                         market_df.iloc[0].impvol_ask]:
         for r in [0.,5/100]: # risk-free rate
             option_price = callprice(spot_price, K, T/252, sigma, r )
-            recs += [ (contract, r, sigma, option_price, market_quote_bid, market_quote_ask,) ]
+            recs += [ (contract, r, sigma, option_price, 
+                            market_quote_bid-option_price, market_quote_ask-option_price,) ]
     df = pd.DataFrame.from_records(recs, columns=[
-        'contract', 'rf', 'sigma', 'bsm', 'bid','ask'
+        'contract', 'rf', 'sigma', 'bsm', 'bid-bsm','ask-bsm'
     ])
     df.bsm = df.bsm.apply(lambda v: (int(v*10)/10))
     df.sort_values('rf', inplace=True, ascending=False)
