@@ -42,7 +42,7 @@ def check_disparity(contract,market_df):
             recs += [ (contract, r, sigma, option_price, 
                             market_quote_bid-option_price, market_quote_ask-option_price,) ]
     df = pd.DataFrame.from_records(recs, columns=[
-        'contract', 'rf', 'sigma', 'bsm', 'bid-bsm','ask-bsm'
+        'contract', 'rf', 'sigma', 'bsm_fair', 'bid-bsm','ask-bsm'
     ])
     df = df[ (abs(df['bid-bsm'])<50) | (abs(df['ask-bsm'])<50)]
     df.bsm = df.bsm.apply(lambda v: (int(v*10)/10))
