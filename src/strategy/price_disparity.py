@@ -40,6 +40,7 @@ def check_disparity(contract,market_df):
     df = pd.DataFrame.from_records(recs, columns=[
         'contract', 'rf', 'sigma', 'bsm', 'bid','ask'
     ])
+    df.bsm = df.bsm.apply(lambda v: (int(v*10)/10))
     print( df )
 
 def _main( contracts ):
