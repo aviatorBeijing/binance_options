@@ -2,6 +2,7 @@ import datetime,os
 import pandas as pd
 import requests,time
 import click
+import numpy as np
 from multiprocessing import Process
 
 
@@ -40,21 +41,24 @@ def get_atm( underlying, df ):
         recs[expiry] = list(edf.head(4).symbol.values)
     return recs 
 
-def calc_vol( rec, contract='' ):
-    bid,ask,delta,gamma,theta,vega,vol,volb,vola = \
+def calc_vol( rec, vols=None, contract='' ):
+    bid,ask,delta,gamma,theta,vega,impvol,impvolb,impvola = \
         rec['bid'],rec['ask'],rec['delta'],rec['gamma'],rec['theta'],rec['vega'],rec['impvol'],\
             rec['impvol_bid'],rec['impvol_ask']
-    print(contract, vol, volb,vola)
+    if vols:
+        rvol_7d = vols['7d']
+        rvol_30d = vols['30d']
+    print(contract, impvol, impvolb,impvola,rvol_7d,rvol_30d )
 
 from functools import partial
-def _main( contracts ):
+def _main( contracts, vols ):
     for c in contracts:
-        sync_fetch_ticker( c, partial(calc_vol, contract=c,) )
+        sync_fetch_ticker( c, partial(calc_vol, contract=c, vols = vols,) )
 
-def _mp_main(contracts):
+def _mp_main(contracts, vols):
     while True:
         try:
-            _main(contracts)
+            _main(contracts, vols)
             time.sleep(5)
         except KeyboardInterrupt as e:
             print("-- Exiting --")
@@ -73,13 +77,16 @@ def main(underlying):
             print( atm, T, K, ctype )
 
     # Klines
-    ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
-    print( ohlcs )
+    ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d').tail(100)
+    vols = {
+        "7d":  ohlcs.close.rolling(7).apply(np.std).iloc[-1],
+        "30d": ohlcs.close.rolling(30).apply(np.std).iloc[-1],
+    }
 
     # Vols
     contracts = contracts[:4] # DEBUG
     conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
-    calc = Process( target=_mp_main, args=(contracts,) )
+    calc = Process( target=_mp_main, args=(contracts, vols, ) )
     conn.start()
     calc.start()
     
