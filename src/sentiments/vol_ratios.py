@@ -74,14 +74,14 @@ def main(underlying):
         for atm in atms:
             contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
-            print( atm, T, K, ctype )
+            #print( atm, T, K, ctype )
 
     # Klines
     ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
     ohlcs['rtn'] = ohlcs.close.pct_change().tail(100)
     vols = {
-        "7d":  ohlcs.rtn.rolling(7).apply(np.std).mean(),
-        "30d": ohlcs.rtn.rolling(30).apply(np.std).mean(),
+        "7d":  ohlcs.rtn.rolling(7).apply(np.std).mean() * np.sqrt(365),
+        "30d": ohlcs.rtn.rolling(30).apply(np.std).mean() * np.sqrt(365),
     }
 
     # Vols
