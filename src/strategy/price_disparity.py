@@ -11,7 +11,7 @@ from strategy.delta_gamma import callprice,putprice
 
 def get_maturity(contract):
     fds = contract.split('-')
-    ts = datetime.datetime.strptime('20'+fds[1], '%Y%m%d')
+    ts = datetime.datetime.strptime('20'+fds[1], '%Y%m%d') + datetime.timedelta(hours=8) # Settle at 08:00 (UTC) of the date.
     tnow = datetime.datetime.utcnow()
     dt = (ts-tnow).total_seconds()/3600./24
     return dt
