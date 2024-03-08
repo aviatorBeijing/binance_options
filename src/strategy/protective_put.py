@@ -79,8 +79,8 @@ def _main( contract, spot_quantity ):
     """
     sync_fetch_ticker( contract, partial(
         calc_profits_profile, 
-            spot_quantity=spot_quantity,
-            contract=contract)
+            spot_quantity,
+            contract)
     )
     
     #calc_profits_profile( spot_quantity, contract, contract_data )
