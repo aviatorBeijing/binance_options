@@ -78,10 +78,10 @@ def main(underlying):
 
     # Klines
     ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
-    ohlcs['rtn'] = ohlcs.close.pct_change().tail(365)
+    ohlcs['rtn'] = ohlcs.close.pct_change().tail(100)
     vols = {
-        "7d":  ohlcs.rtn.rolling(7).apply(np.std).mean() * np.sqrt(365),
-        "30d": ohlcs.rtn.rolling(30).apply(np.std).mean() * np.sqrt(365),
+        "7d":  ohlcs.rtn.rolling(7).apply(np.std).iloc[-1] * np.sqrt(365),
+        "30d": ohlcs.rtn.rolling(30).apply(np.std).iloc[-1] * np.sqrt(365),
     }
 
     # Vols
