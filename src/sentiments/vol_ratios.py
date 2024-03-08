@@ -31,7 +31,7 @@ def get_atm( underlying, df ):
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     df['distance'] = abs(df.strikePrice-bid)
     for expiry in sorted(df.expiryDate.values):
-        edf = df[df.expiry==expiry].sort_values( ['expiryDate','distance'], ascending=True)
+        edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
         print( edf.head(2) )
 
 @click.command()
