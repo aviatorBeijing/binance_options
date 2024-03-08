@@ -37,7 +37,7 @@ def get_itm( underlying, df ):
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
-    idf = get_itm( df )
+    idf = get_itm( underlying, df )
 
 if __name__ == '__main__':
     main()
