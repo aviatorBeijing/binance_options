@@ -73,7 +73,8 @@ def main(underlying):
             print( atm, T, K, ctype )
 
     # Klines
-    binance_kline(f"{underlying.upper()}/USDT", '1d')
+    ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
+    print( ohlcs )
 
     # Vols
     contracts = contracts[:4] # DEBUG

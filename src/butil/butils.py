@@ -1,5 +1,6 @@
 import os,datetime
 import ccxt
+import pandas as pd
 
 DEBUG = os.getenv("BINANCE_DEBUG", None)
 
@@ -117,7 +118,12 @@ def binance_spot(symbol='BTC/USDT')->tuple:
     bid,ask = qts['bid'],qts['ask']
     return float(bid),float(ask)
 
-def binance_kline(symbol='BTC/USDT', span="1d"):
+def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     ohlcvs = ex_binance.fetch_ohlcv(symbol, span)
+    recs = []
     for ohlcv in ohlcvs:
-        print(ex_binance.iso8601(ohlcv[0]), ohlcv[1:])
+        ts = ex_binance.iso8601(ohlcv[0])
+        vals = ohlcv[1:]
+        recs += [(ts,vals[0], vals[1],vals[2], vals[3],vals[4])]
+    df = pd.DataFrame.from_records( recs, columns = ['timestamp','open','high','low','close','volume'] )
+    return df
