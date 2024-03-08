@@ -47,5 +47,7 @@ def main(underlying):
             spot_ric, T,K,ctype = extract_specs( atm )
             print( atm, T, K, ctype )
 
+    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
+    print('-- spot bid/ask:', bid, ask)
 if __name__ == '__main__':
     main()
