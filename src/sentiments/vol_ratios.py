@@ -4,6 +4,7 @@ import requests
 import click
 
 from butil.butils import binance_spot
+from strategy.price_disparity import extract_specs 
 
 def fetch_contracts(underlying):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
@@ -29,17 +30,21 @@ def fetch_contracts(underlying):
 
 def get_atm( underlying, df ):
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
-    df['distance'] = abs(df.strikePrice-bid)
+    df['distance'] = abs(df.strikePrice-(bid+ask)*.5)
+    recs = {}
     for expiry in sorted( list(set(df.expiryDate.values))):
         edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
-        print( edf.head(4) )
-    print( bid, ask )
+        recs[expiry] = list(edf.head(4).symbol.values)
+    return recs 
 
 @click.command()
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
-    idf = get_atm( underlying, df )
+    atm_contracts = get_atm( underlying, df )
+    for atm in atm_contracts:
+        spot_ric, T,K,ctype = extract_specs( atm )
+        print( atm, T, K, ctype )
 
 if __name__ == '__main__':
     main()
