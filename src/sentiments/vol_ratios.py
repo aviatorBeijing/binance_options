@@ -27,13 +27,17 @@ def fetch_contracts(underlying):
         return df 
     return pd.DataFrame()
 
+def get_itm( underlying, df ):
+    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
+    df['distance'] = df.strikePrice-bid 
+    df = df.sort_values( 'distance', ascending=True)
+    print( df.head(5) )
+
 @click.command()
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
-    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
-    print( bid,ask )
-    print( df )
+    idf = get_itm( df )
 
 if __name__ == '__main__':
     main()
