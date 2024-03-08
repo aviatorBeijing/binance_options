@@ -28,3 +28,6 @@ def fetch_contracts(underlying):
 def main(underlying,price,low,high,contract):
     df = fetch_contracts( underlying )
     print( df )
+
+if __name__ == '__main__':
+    main()
