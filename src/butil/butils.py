@@ -116,3 +116,8 @@ def binance_spot(symbol='BTC/USDT')->tuple:
     qts = ex_binance.fetch_ticker(symbol)
     bid,ask = qts['bid'],qts['ask']
     return float(bid),float(ask)
+
+def binance_kline(symbol='BTC/USDT', span="1d"):
+    ohlcvs = ex_binance.fetch_ohlcv(symbol, span)
+    for ohlcv in ohlcvs:
+        print(ex_binance.iso8601(ohlcv[0]), ohlcv[1:])

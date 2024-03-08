@@ -5,7 +5,7 @@ import click
 from multiprocessing import Process
 
 
-from butil.butils import binance_spot
+from butil.butils import binance_spot,binance_kline
 from strategy.price_disparity import extract_specs 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
@@ -45,7 +45,7 @@ def calc_vol( rec, contract='' ):
         rec['bid'],rec['ask'],rec['delta'],rec['gamma'],rec['theta'],rec['vega'],rec['impvol'],\
             rec['impvol_bid'],rec['impvol_ask']
     print(contract, vol, volb,vola)
-    
+
 from functools import partial
 def _main( contracts ):
     for c in contracts:
@@ -72,6 +72,10 @@ def main(underlying):
             spot_ric, T,K,ctype = extract_specs( atm )
             print( atm, T, K, ctype )
 
+    # Klines
+    binance_kline(f"{underlying.upper()}/USDT", '1d')
+
+    # Vols
     contracts = contracts[:4] # DEBUG
     conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
     calc = Process( target=_mp_main, args=(contracts,) )
