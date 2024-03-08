@@ -42,10 +42,10 @@ def get_atm( underlying, df ):
 def main(underlying):
     df = fetch_contracts( underlying )
     atm_contracts = get_atm( underlying, df )
-    for atm in atm_contracts:
-        print(atm)
-        spot_ric, T,K,ctype = extract_specs( atm )
-        print( atm, T, K, ctype )
+    for expiry, atms in atm_contracts.items():
+        for atm in atms:
+            spot_ric, T,K,ctype = extract_specs( atm )
+            print( atm, T, K, ctype )
 
 if __name__ == '__main__':
     main()
