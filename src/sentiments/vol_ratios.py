@@ -31,7 +31,7 @@ def get_itm( underlying, df ):
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     df['distance'] = abs(df.strikePrice-bid)
     df = df.sort_values( ['expiryDate','distance'], ascending=True)
-    print( df.head(5) )
+    print( df.head(10) )
 
 @click.command()
 @click.option('--underlying', default="BTC")
