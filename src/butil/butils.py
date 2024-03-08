@@ -111,3 +111,8 @@ def get_binance_index(contract)->tuple:
         fh.write(f"{bjnow_str()}\n{v}")
 
     return float(v)
+
+def binance_spot(symbol='BTC/USDT')->tuple:
+    qts = ex_binance.fetch_ticker(symbol)
+    bid,ask = qts['bid'],qts['ask']
+    return float(bid),float(ask)

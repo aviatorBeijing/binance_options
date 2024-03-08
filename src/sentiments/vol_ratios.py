@@ -3,6 +3,8 @@ import pandas as pd
 import requests 
 import click
 
+from butil.butils import binance_spot
+
 def fetch_contracts(underlying):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
@@ -29,6 +31,8 @@ def fetch_contracts(underlying):
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
+    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
+    print( bid,ask )
     print( df )
 
 if __name__ == '__main__':
