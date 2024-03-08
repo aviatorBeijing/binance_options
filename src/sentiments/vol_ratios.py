@@ -43,6 +43,7 @@ def main(underlying):
     df = fetch_contracts( underlying )
     atm_contracts = get_atm( underlying, df )
     for atm in atm_contracts:
+        print(atm)
         spot_ric, T,K,ctype = extract_specs( atm )
         print( atm, T, K, ctype )
 
