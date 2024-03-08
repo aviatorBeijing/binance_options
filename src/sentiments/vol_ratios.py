@@ -32,10 +32,9 @@ def get_atm( underlying, df ):
     df['distance'] = abs(df.strikePrice-bid)
     for expiry in sorted( list(set(df.expiryDate.values))):
         edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
-        edf = edf[ (edf.strikePrice) | ()]
         print( edf.head(4) )
     print( bid, ask )
-    
+
 @click.command()
 @click.option('--underlying', default="BTC")
 def main(underlying):
