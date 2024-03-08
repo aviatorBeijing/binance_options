@@ -3,7 +3,7 @@ import pandas as pd
 from multiprocessing import Process
 import numpy as np
 
-from ws_bcontract import _main as ws_connector
+from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 from brisk.bfee import calc_fee
 
@@ -62,9 +62,9 @@ def calc_profits_profile(spot_quantity, contract, cdata):
     df['portfolio'] = (df.protective-df.spot_only)/df.spot_only
     df['portfolio'] = df.portfolio.apply(lambda v: f"{(v*100):.1f}%")
     print( df )
-
+from functools import partial
 def _main( contract, spot_quantity ):
-    try:
+    """try:
         with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
             contract_data = json.loads(fh.read())
             print( '\t',contract )
@@ -76,8 +76,14 @@ def _main( contract, spot_quantity ):
         print('*** json data conflict, wait ...')
         time.sleep(5)
         return
+    """
+    sync_fetch_ticker( contract, partial(
+        calc_profits_profile, 
+            spot_quantity=spot_quantity,
+            contract=contract)
+    )
     
-    calc_profits_profile( spot_quantity, contract, contract_data )
+    #calc_profits_profile( spot_quantity, contract, contract_data )
 
 def _mp_main(spot_quantity,contract):
     while True:

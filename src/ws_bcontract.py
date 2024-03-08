@@ -106,6 +106,20 @@ def on_open(ws):
 
 endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
 
+def sync_fetch_ticker( contract:str, handler ):
+    try:
+        with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
+            contract_data = json.loads(fh.read())
+            handler( contract_data )
+    except FileNotFoundError as  e:
+        print('*** waiting for data ...')
+        time.sleep(5)
+        return 
+    except json.JSONDecodeError as  je:
+        print('*** json data conflict, wait ...')
+        time.sleep(5)
+        return
+
 def _main(rics:str, channel):
     rics = rics.split(',')
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )

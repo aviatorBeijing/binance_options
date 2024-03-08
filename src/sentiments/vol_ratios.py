@@ -1,10 +1,13 @@
 import datetime,os
 import pandas as pd
-import requests 
+import requests,time
 import click
+from multiprocessing import Process
+
 
 from butil.butils import binance_spot
 from strategy.price_disparity import extract_specs 
+from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
 def fetch_contracts(underlying):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
@@ -37,17 +40,41 @@ def get_atm( underlying, df ):
         recs[expiry] = list(edf.head(4).symbol.values)
     return recs 
 
+def _main( contracts ):
+    for c in contracts:
+        sync_fetch_ticker( c, print )
+
+def _mp_main(contracts):
+    while True:
+        try:
+            _main(contracts)
+            time.sleep(5)
+        except KeyboardInterrupt as e:
+            print("-- Exiting --")
+            break
+
 @click.command()
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
     atm_contracts = get_atm( underlying, df )
+    contracts = []
     for expiry, atms in atm_contracts.items():
         for atm in atms:
+            contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
             print( atm, T, K, ctype )
+            
+    contracts = contracts[:4] # DEBUG
+    conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
+    calc = Process( target=_mp_main, args=(contracts,) )
+    conn.start()
+    calc.start()
+    
+    conn.join()
+    calc.join() 
 
-    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
-    print('-- spot bid/ask:', bid, ask)
+    #bid,ask = binance_spot(f"{underlying.upper()}/USDT")
+    #print('-- spot bid/ask:', bid, ask)
 if __name__ == '__main__':
     main()
