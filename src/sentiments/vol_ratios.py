@@ -25,7 +25,7 @@ def fetch_contracts(underlying):
 
 @click.command()
 @click.option('--underlying', default="BTC")
-def main(underlying,price,low,high,contract):
+def main(underlying):
     df = fetch_contracts( underlying )
     print( df )
 
