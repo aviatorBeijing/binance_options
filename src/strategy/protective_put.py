@@ -11,7 +11,7 @@ from brisk.bfee import calc_fee
 ex = ccxt.binance()
 
 def _v(v): return float(v)
-def calc_profits_profile(spot_quantity, contract, cdata):
+def calc_profits_profile(cdata,spot_quantity=0., contract=""):
     bid,ask,vbol, avol, delta = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv']),_v(cdata['delta'])
     spot_symbol = contract.split('-')[0]+'/USDT'
     spot_price = ex.fetch_ticker(spot_symbol)['bid']
@@ -79,8 +79,8 @@ def _main( contract, spot_quantity ):
     """
     sync_fetch_ticker( contract, partial(
         calc_profits_profile, 
-            spot_quantity,
-            contract)
+            spot_quantity = spot_quantity,
+            contract = contract )
     )
     
     #calc_profits_profile( spot_quantity, contract, contract_data )
