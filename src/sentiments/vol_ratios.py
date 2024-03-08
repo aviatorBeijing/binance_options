@@ -48,7 +48,8 @@ def calc_vol( rec, vols=None, contract='' ):
     if vols:
         rvol_7d = vols['7d']
         rvol_30d = vols['30d']
-    print(contract, impvol, impvolb,impvola,rvol_7d,rvol_30d )
+        rvol_1yr = vols['1yr']
+    print(contract, impvol, impvolb,impvola,rvol_7d,rvol_30d,rvol_1yr )
 
 from functools import partial
 def _main( contracts, vols ):
@@ -78,10 +79,11 @@ def main(underlying):
 
     # Klines
     ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
-    ohlcs['rtn'] = ohlcs.close.pct_change().tail(100)
+    ohlcs['rtn'] = ohlcs.close.pct_change().tail(400)
     vols = {
         "7d":  ohlcs.rtn.rolling(7).apply(np.std).iloc[-1] * np.sqrt(365),
         "30d": ohlcs.rtn.rolling(30).apply(np.std).iloc[-1] * np.sqrt(365),
+        "1yr": ohlcs.rtn.rolling(365).apply(np.std).iloc[-1] * np.sqrt(365),
     }
 
     # Vols
