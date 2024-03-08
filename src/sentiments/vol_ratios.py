@@ -27,17 +27,18 @@ def fetch_contracts(underlying):
         return df 
     return pd.DataFrame()
 
-def get_itm( underlying, df ):
+def get_atm( underlying, df ):
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     df['distance'] = abs(df.strikePrice-bid)
-    df = df.sort_values( ['expiryDate','distance'], ascending=True)
-    print( df.head(10) )
+    for expiry in sorted(df.expiryDate.values):
+        edf = df[df.expiry==expiry].sort_values( ['expiryDate','distance'], ascending=True)
+        print( edf.head(2) )
 
 @click.command()
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
-    idf = get_itm( underlying, df )
+    idf = get_atm( underlying, df )
 
 if __name__ == '__main__':
     main()
