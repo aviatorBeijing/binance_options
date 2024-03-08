@@ -40,9 +40,16 @@ def get_atm( underlying, df ):
         recs[expiry] = list(edf.head(4).symbol.values)
     return recs 
 
+def calc_vol( rec, contract='' ):
+    bid,ask,delta,gamma,theta,vega,vol,volb,vola = \
+        rec['bid'],rec['ask'],rec['delta'],rec['gamma'],rec['theta'],rec['vega'],rec['impvol'],\
+            rec['impvol_bid'],rec['impvol_ask']
+    print(contract, vol, volb,vola)
+    
+from functools import partial
 def _main( contracts ):
     for c in contracts:
-        sync_fetch_ticker( c, print )
+        sync_fetch_ticker( c, partial(calc_vol, contract=c,) )
 
 def _mp_main(contracts):
     while True:
@@ -64,7 +71,7 @@ def main(underlying):
             contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
             print( atm, T, K, ctype )
-            
+
     contracts = contracts[:4] # DEBUG
     conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
     calc = Process( target=_mp_main, args=(contracts,) )
