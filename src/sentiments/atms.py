@@ -62,6 +62,8 @@ def main(underlying, refresh_oi):
     df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
     
     expiries = list( set(df.expiry.values) )
+    odf = pd.DataFrame()
+    oi_fn = f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv"
     if refresh_oi:
         oi_df = []
         for expiry in expiries:
@@ -71,9 +73,14 @@ def main(underlying, refresh_oi):
                 oi_df += [ oi ]
             time.sleep(1)
         if oi_df:
-            oi_df = pd.concat( oi_df, axis=0)
-            oi_df.to_csv(f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv", index=False)
-            
+            odf = oi_df = pd.concat( oi_df, axis=0)
+            oi_df.to_csv(oi_fn, index=False)
+    else: 
+        if os.path.exists( oi_fn):
+            odf = pd.read_csv(oi_fn)
+        else:
+            print('-- use "--refresh_oi" to cach open interest data first.')
+            raise Exception("Empty OI")
 
     atm_contracts = get_atm( underlying, df )
     contracts = []
@@ -85,6 +92,7 @@ def main(underlying, refresh_oi):
             recs += [ (spot_ric, T,K,ctype, atm,)]
     df = pd.DataFrame.from_records( recs )
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
+    df['oi'] = df.symbol.apply(lambda s: odf[odf.symbol==s].sumOpenInterestUsd.iloc[0])
     print( tabulate(df, headers="keys") )
 
     fn = f"{fdir}/_atms_{underlying.lower()}.csv"
