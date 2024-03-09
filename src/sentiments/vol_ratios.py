@@ -48,9 +48,12 @@ def calc_vol( rec, vols=None, contract='' ):
     if vols:
         rvol_on = vols['1d']
         rvol_7d = vols['7d']
+        rvol_14d = vols['14d']
         rvol_30d = vols['30d']
     spot_ric, T,K,ctype = extract_specs( contract )
-    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', rvol_on, rvol_7d,rvol_30d, '\t', delta, gamma, theta )
+    f = f1 = lambda v: f"{v:.1f}"
+    f2 = lambda v: f"{v:.2f}"
+    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', f(rvol_on), f(rvol_7d), f(rvol_14d), f(rvol_30d), '\t', f2(delta), f2(gamma), f2(theta) )
 
 from functools import partial
 def _main( contracts, vols ):
