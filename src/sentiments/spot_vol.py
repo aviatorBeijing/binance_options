@@ -44,9 +44,9 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
         startts = df.date.iloc[0]
         endts = df.date.iloc[-1]
     
-    df.date = df.date.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
+    df.timestamp = df.timestamp.apply(pd.Timestamp)
     #df.set_index('date',drop=True,inplace=True)
-    df['week_days']= df.date.apply(lambda e: e.dayofweek)
+    df['week_days']= df.timestamp.apply(lambda e: e.dayofweek)
     
     df.dropna(inplace=True)
     df['rtn'] = df.close.pct_change()
