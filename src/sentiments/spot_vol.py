@@ -90,13 +90,13 @@ def main(ric,rics, check):
     if ric:
         df,startts,endts = _main(ric,check)
         print(f'-- {ric} price changes (daily returns%) by *WEEKDAYS*')
-        print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
+        print('-- from', startts, '~', endts)
         print(df)  
     elif rics:
         for ric in rics.split(','):
             df,startts,endts = _main(ric,check)
             print(f'-- {ric} price changes (daily returns%) by *WEEKDAYS*')
-            print('-- from', datetime.datetime.fromtimestamp(startts), '~', datetime.datetime.fromtimestamp(endts))
+            print('-- from', startts, '~', endts)
             print(df) 
 
 if __name__ == '__main__':
