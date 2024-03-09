@@ -64,7 +64,7 @@ def main(underlying, refresh_oi):
     expiries = list( set(df.expiry.values) )
     if refresh_oi:
         oi_df = []
-        for expiry in expiries[:2]:
+        for expiry in expiries:
             print('-- expiry:', expiry)
             oi = fetch_oi( expiry, underlying=underlying)
             if not oi.empty:
@@ -72,7 +72,7 @@ def main(underlying, refresh_oi):
             time.sleep(1)
         if oi_df:
             oi_df = pd.concat( oi_df, axis=0)
-            oi_df.to_csv(f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv")
+            oi_df.to_csv(f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv", index=False)
             
 
     atm_contracts = get_atm( underlying, df )
