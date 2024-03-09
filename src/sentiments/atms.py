@@ -69,7 +69,7 @@ def main(underlying, refresh_oi):
             oi = fetch_oi( expiry, underlying=underlying)
             if not oi.empty:
                 oi_df += [ oi ]
-            time.sleep(500)
+            time.sleep(2)
         if oi_df:
             oi_df = pd.concat( oi_df, axis=1)
             oi_df.to_csv(f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv")
