@@ -93,7 +93,7 @@ def main(underlying, refresh_oi):
     df = pd.DataFrame.from_records( recs )
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
 
-    _f = lambda v: f"${v:,.2f}"
+    _f = lambda v: f"$ {v:,.0f}"
     df['oi'] = df.contract.apply(lambda s: _f(odf[odf.symbol==s].sumOpenInterestUsd.iloc[0]))
     print( tabulate(df, headers="keys") )
 
