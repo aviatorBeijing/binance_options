@@ -81,7 +81,7 @@ def main(underlying, refresh_oi):
         else:
             print('-- use "--refresh_oi" to cach open interest data first.')
             raise Exception("Empty OI")
-
+    print(odf)
     atm_contracts = get_atm( underlying, df )
     contracts = []
     recs = []
