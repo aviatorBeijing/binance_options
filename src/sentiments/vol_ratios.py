@@ -46,14 +46,13 @@ def calc_vol( rec, vols=None, contract='' ):
         rec['bid'],rec['ask'],rec['delta'],rec['gamma'],rec['theta'],rec['vega'],rec['impvol'],\
             rec['impvol_bid'],rec['impvol_ask']
     if vols:
-        rvol_on = vols['1d']
         rvol_7d = vols['7d']
         rvol_14d = vols['14d']
         rvol_30d = vols['30d']
     spot_ric, T,K,ctype = extract_specs( contract )
     f = lambda v: f"{(float(v)):.2f}"
     f2 = lambda v: f"{(float(v)):.2f}"
-    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', f2(rvol_on), f2(rvol_7d), f2(rvol_14d), f(rvol_30d), '\t', f2(delta), f2(gamma), f2(theta) )
+    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', f2(rvol_7d), f2(rvol_14d), f(rvol_30d), '\t', f2(delta), f2(gamma), f2(theta) )
 
 from functools import partial
 def _main( contracts, vols ):
@@ -87,7 +86,7 @@ def main(underlying):
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
     """
-    for n in [1,3,7,14,30]:
+    for n in [7,14,30]:
         closeNd = ohlcs.resample(f'{n}d').close.agg('last')
         d = closeNd.dropna().pct_change()
         x = 14
@@ -97,9 +96,13 @@ def main(underlying):
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
         vols[f"{n}d"] = sigma
     """
-    for n in [1,3,7,14,30]:
+    """for n in [7,14,30]:
         atrs = talib.ATR(ohlcs.high, ohlcs.low, ohlcs.close, timeperiod=n )
         sigma = atrs[-1]/ohlcs.close.iloc[-1] * np.sqrt(365)
+        vols[f"{n}d"] = sigma"""
+    ohlcs['rtns'] = ohlcs.close.dropna().pct_change()
+    for n in [7,14,30]:
+        sigma = np.std( ohlcs.rtns.iloc[-n:]) * np.sqrt(365)
         vols[f"{n}d"] = sigma
 
     # Vols
