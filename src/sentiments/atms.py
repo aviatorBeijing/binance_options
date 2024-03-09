@@ -61,6 +61,7 @@ def main(underlying, refresh_oi):
     df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
     df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
     
+    # Open Interests
     expiries = list( set(df.expiry.values) )
     odf = pd.DataFrame()
     oi_fn = f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv"
@@ -93,7 +94,7 @@ def main(underlying, refresh_oi):
     df = pd.DataFrame.from_records( recs )
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
 
-    _f = lambda v: f"$ {v:,.0f}"
+    _f = lambda v: f"$ {v:,.0f}" if not isinstance(v, str) else v
     df['oi'] = df.contract.apply(lambda s: _f(odf[odf.symbol==s].sumOpenInterestUsd.iloc[0]))
     print( tabulate(df, headers="keys") )
 
