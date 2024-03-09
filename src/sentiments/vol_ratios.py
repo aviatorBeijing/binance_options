@@ -89,7 +89,7 @@ def main(underlying):
     vols = {}
 
     closeNd = ohlcs.close.dropna().pct_change()
-    vols['1d'] = closeNd.iloc[-1]
+    vols['1d'] = closeNd.iloc[-1]*np.sqrt(365/n)
     for n in [3,7,14,30]:
         d = talib.EMA( closeNd, timeperiod=n)
         sigma = d.iloc[-1]
