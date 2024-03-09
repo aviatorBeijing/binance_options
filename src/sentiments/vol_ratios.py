@@ -83,6 +83,7 @@ def main(underlying):
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.resample(f'{n}d').close.agg('last')
+        print( closeNd )
         d = closeNd.dropna().pct_change()
         x = 7
         assert d.shape[0]>x, f"No enough data: n={n}, data L={d.shape[0]}"
