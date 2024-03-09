@@ -35,6 +35,8 @@ def check_disparity(contract,market_df):
     market_impvol_bid = market_df.iloc[0].impvol_bid
     market_impvol_ask = market_df.iloc[0].impvol_ask
 
+    def _diff(a,b):
+        return (a-b)/b*100
     recs = []
     sigmas = np.arange(10/100, 150/100, 1/100)
     interests = np.arange(-5/100, 5/100, 1/100)
@@ -46,7 +48,9 @@ def check_disparity(contract,market_df):
                 option_price =  putprice(spot_price, K, T/365, sigma, r )
             recs += [ (contract, r, sigma, option_price, 
                             market_quote_bid-option_price, market_quote_ask-option_price,
-                            market_impvol, market_impvol_bid, market_impvol_ask ) ]
+                            _diff(market_impvol,sigma), 
+                            _diff(market_impvol_bid,sigma), 
+                            _diff(market_impvol_ask,sigma) ) ]
     df = pd.DataFrame.from_records(recs, columns=[
         'contract', 'rf', 'bsm_vol', 'bsm_fair', 'bid-bsm','ask-bsm','impvol','impvol_bid', 'impvol_ask'
     ])
