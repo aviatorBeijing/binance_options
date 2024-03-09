@@ -89,7 +89,7 @@ def main(underlying):
     vols = {}
     def _f(s):
         print( type(s),'\n', s )
-        return talib.EMA(s, timeperiod=14)
+        return talib.EMA(s.values, timeperiod=14)
 
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.close.dropna().pct_change()
