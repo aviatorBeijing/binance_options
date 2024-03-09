@@ -87,11 +87,12 @@ def main(underlying):
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
     for n in [1,3,7,14,30]:
-        rtns = ohlcs.close.dropna().pct_change()
-        sigma = rtns.iloc[-1]
-        if n>1:
-            sigma = rtns.rolling(n).agg(np.std).iloc[-1]
-        sigma *= np.sqrt(365)
+        closeNd = ohlcs.close.rolling(n).agg('last')
+        d = closeNd.dropna().pct_change()
+        x = 14
+        assert d.shape[0]>x, f"No enough data: n={n}, data L={d.shape[0]}"
+        sigma = closeNd.dropna().pct_change().rolling(x).apply(np.std).iloc[-1]
+        sigma *= np.sqrt(365/n)
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
         vols[f"{n}d"] = sigma
 
