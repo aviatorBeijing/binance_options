@@ -99,7 +99,7 @@ def main(underlying):
     """
     for n in [1,3,7,14,30]:
         atrs = talib.ATR(ohlcs.high, ohlcs.low, ohlcs.close, timeperiod=n )
-        sigma = atrs[-1]
+        sigma = atrs[-1]/ohlcs.close.iloc[-1]
         vols[f"{n}d"] = sigma
 
     # Vols
