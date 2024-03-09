@@ -93,7 +93,7 @@ def main(underlying):
         d = closeNd.copy()
         print(  d)
         if n>1:
-            d = d.rolling(n).apply(lambda s: talib.EMA(s, timeperiod=14))
+            d = d.rolling(n).apply(lambda s: talib.EMA(np.array(s), timeperiod=14))
         sigma = d.iloc[-1]
         sigma *= np.sqrt(365/n)
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
