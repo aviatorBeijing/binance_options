@@ -7,7 +7,7 @@ from multiprocessing import Process
 
 
 from butil.butils import binance_spot,binance_kline
-from strategy.price_disparity import extract_specs 
+from strategy.price_disparity import extract_specs
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
 def fetch_contracts(underlying):
@@ -49,7 +49,8 @@ def calc_vol( rec, vols=None, contract='' ):
         rvol_on = vols['1d']
         rvol_7d = vols['7d']
         rvol_30d = vols['30d']
-    print(contract, impvol, impvolb,impvola,'\t', rvol_on, rvol_7d,rvol_30d, '\t', delta, gamma, theta )
+    spot_ric, T,K,ctype = extract_specs( contract )
+    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', rvol_on, rvol_7d,rvol_30d, '\t', delta, gamma, theta )
 
 from functools import partial
 def _main( contracts, vols ):
