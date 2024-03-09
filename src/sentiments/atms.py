@@ -92,7 +92,9 @@ def main(underlying, refresh_oi):
             recs += [ (spot_ric, T,K,ctype, atm,)]
     df = pd.DataFrame.from_records( recs )
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
-    df['oi'] = df.contract.apply(lambda s: odf[odf.symbol==s].sumOpenInterestUsd.iloc[0])
+
+    _f = lambda v: f"${v:,.2f}"
+    df['oi'] = df.contract.apply(lambda s: _f(odf[odf.symbol==s].sumOpenInterestUsd.iloc[0]))
     print( tabulate(df, headers="keys") )
 
     fn = f"{fdir}/_atms_{underlying.lower()}.csv"
