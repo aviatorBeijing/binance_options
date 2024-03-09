@@ -81,7 +81,7 @@ def main(underlying):
     ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
     ohlcs.timestamp = ohlcs.timestamp.apply(pd.Timestamp)
     ohlcs.set_index('timestamp', inplace=True, drop=True)
-    for n in [1,3,7,30]:
+    for n in [1,3,7,14,30]:
         closeNd = ohlcs.resample(f'{n}d').close.agg('last')
         d = closeNd.dropna().pct_change()
         x = 7
