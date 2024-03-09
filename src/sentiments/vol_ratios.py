@@ -88,7 +88,9 @@ def main(underlying):
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
     for n in [1,3,7,14,30]:
-        closeNd = ohlcs.close.dropna().pct_change().rolling(n)
+        closeNd = ohlcs.close.dropna().pct_change()
+        if n>1:
+            closeNd = closeNd.rolling(n)
         d = closeNd.apply(lambda s: talib.EMA(s))
         sigma = d.iloc[-1]
         sigma *= np.sqrt(365/n)
