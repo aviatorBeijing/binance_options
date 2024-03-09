@@ -8,6 +8,18 @@ from tabulate import tabulate
 
 from butil.butils import binance_spot
 from strategy.price_disparity import extract_specs
+
+def fetch_oi( expiry, underlying='BTC'):
+    try:
+        recs = requests.get(url='https://eapi.binance.com/eapi/v1/openInterest',
+                params={'underlyingAsset': underlying.upper(), 
+                            'expiration':expiry}).json()
+        df = pd.DataFrame.from_records( recs )
+        return df
+    except Exception as e:
+        print("*** fetch_oi failed: ", expiry, underlying)
+        return pd.DataFrame()
+
 def fetch_contracts(underlying):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
@@ -46,6 +58,17 @@ def main(underlying):
 
     df = fetch_contracts( underlying )
     df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
+    expiries = list( set(df.expiryDate.values) )
+    oi_df = []
+    for expiry in expiries[:1]:
+        print('-- expiry:', expiry)
+        oi = fetch_oi( expiry, underlying=underlying)
+        if not oi.empty:
+            oi_df += [ oi ]
+    if oi_df:
+        oi_df = pd.concat( oi_df, axis=1)
+        print( oi_df )
+            
 
     atm_contracts = get_atm( underlying, df )
     contracts = []
