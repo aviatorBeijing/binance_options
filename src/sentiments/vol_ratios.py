@@ -3,7 +3,6 @@ import pandas as pd
 import requests,time
 import click
 import numpy as np
-import talib
 from multiprocessing import Process
 
 
@@ -87,11 +86,9 @@ def main(underlying):
     ohlcs.timestamp = ohlcs.timestamp.apply(pd.Timestamp)
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
-
-    closeNd = ohlcs.close.dropna().pct_change()
-    vols['1d'] = closeNd.iloc[-1]*np.sqrt(365)
-    for n in [3,7,14,30]:
-        d = talib.EMA( closeNd, timeperiod=n)
+    for n in [1,3,7,14,30]:
+        rtns = ohlcs.close.dropna().pct_change()
+        d = rtns.rolling(n).agg(np.std)
         sigma = d.iloc[-1]
         sigma *= np.sqrt(365)
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
