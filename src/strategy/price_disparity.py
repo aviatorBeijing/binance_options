@@ -37,7 +37,7 @@ def check_disparity(contract,market_df):
 
     def _diff(a,b):
         x = (a-b)/b*100
-        return f"{x:.1}%"
+        return f"{x:.1f}%"
     recs = []
     sigmas = np.arange(10/100, 150/100, 1/100)
     interests = np.arange(-5/100, 5/100, 1/100)
