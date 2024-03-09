@@ -83,7 +83,7 @@ def calc_straddle(  lcontract, rcontract,
         liquidation_gain = liquidation_value - user_premium
         liquidation_gain -= fee # FIXME: fee might not be accurate!
         rtn = liquidation_gain/(user_premium+fee)*100
-        ldelta = ldata['delta'];rdelta = rdata['delta']
+        ldelta = _v(ldata['delta']);rdelta = _v(rdata['delta'])
         print(f' '*10,'$'*20, ' Positions ', '$'*20)
         print(' '*15,f'spot (now): ${adhoc}' )
         print(' '*15,f'position delta: ${(ldelta+rdelta):.3f}')
