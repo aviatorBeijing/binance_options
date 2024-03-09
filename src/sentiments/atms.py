@@ -64,14 +64,14 @@ def main(underlying, refresh_oi):
     expiries = list( set(df.expiry.values) )
     if refresh_oi:
         oi_df = []
-        for expiry in expiries:
+        for expiry in expiries[:2]:
             print('-- expiry:', expiry)
             oi = fetch_oi( expiry, underlying=underlying)
             if not oi.empty:
                 oi_df += [ oi ]
-            time.sleep(2)
+            time.sleep(1)
         if oi_df:
-            oi_df = pd.concat( oi_df, axis=1)
+            oi_df = pd.concat( oi_df, axis=0)
             oi_df.to_csv(f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv")
             
 
