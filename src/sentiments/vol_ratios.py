@@ -94,7 +94,7 @@ def main(underlying):
         vols[f"{n}d"] = sigma
 
     # Vols
-    contracts = contracts[:10] # DEBUG
+    contracts = contracts[:24] # DEBUG
     conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
     calc = Process( target=_mp_main, args=(contracts, vols, ) )
     conn.start()
