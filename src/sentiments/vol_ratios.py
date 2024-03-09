@@ -53,7 +53,7 @@ def calc_vol( rec, vols=None, contract='' ):
     spot_ric, T,K,ctype = extract_specs( contract )
     f = lambda v: f"{(float(v)):.2f}"
     f2 = lambda v: f"{(float(v)):.2f}"
-    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', f2(rvol_on), f2(rvol_7d), f2(rvol_14d), f2(rvol_30d), '\t', f2(delta), f2(gamma), f2(theta) )
+    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', f2(rvol_on), f2(rvol_7d), f2(rvol_14d), f(rvol_30d), '\t', f2(delta), f2(gamma), f2(theta) )
 
 from functools import partial
 def _main( contracts, vols ):
@@ -87,7 +87,7 @@ def main(underlying):
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
     for n in [1,3,7,14,30]:
-        closeNd = ohlcs.close.rolling(n).agg('last')
+        closeNd = ohlcs.resample(f'{n}d').close.agg('last')
         d = closeNd.dropna().pct_change()
         x = 14
         assert d.shape[0]>x, f"No enough data: n={n}, data L={d.shape[0]}"
