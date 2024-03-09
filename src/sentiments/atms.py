@@ -1,15 +1,13 @@
 import datetime,os
 import pandas as pd
-import requests,time
+import requests
 import click
 import numpy as np
-from multiprocessing import Process
-import talib
+import pandas as pd
+from tabulate import tabulate
 
-from butil.butils import binance_spot,binance_kline
+from butil.butils import binance_spot
 from strategy.price_disparity import extract_specs
-from ws_bcontract import _main as ws_connector, sync_fetch_ticker
-
 def fetch_contracts(underlying):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
@@ -41,48 +39,27 @@ def get_atm( underlying, df ):
         recs[expiry] = list(edf.head(4).symbol.values)
     return recs 
 
-def calc_vol( rec, vols=None, contract='' ):
-    bid,ask,delta,gamma,theta,vega,impvol,impvolb,impvola = \
-        rec['bid'],rec['ask'],rec['delta'],rec['gamma'],rec['theta'],rec['vega'],rec['impvol'],\
-            rec['impvol_bid'],rec['impvol_ask']
-    if vols:
-        rvol_7d = vols['7d']
-        rvol_14d = vols['14d']
-        rvol_30d = vols['30d']
-    spot_ric, T,K,ctype = extract_specs( contract )
-    f = lambda v: f"{(float(v)):.2f}"
-    f2 = lambda v: f"{(float(v)):.2f}"
-    print(contract, f"T={T:.2f}", impvol, impvolb,impvola,'\t', f2(rvol_7d), f2(rvol_14d), f(rvol_30d), '\t', f2(delta), f2(gamma), f2(theta) )
-
-from functools import partial
-def _main( contracts, vols ):
-    for c in contracts:
-        sync_fetch_ticker( c, partial(calc_vol, contract=c, vols = vols,) )
-
-def _mp_main(contracts, vols):
-    while True:
-        try:
-            _main(contracts, vols)
-            time.sleep(5)
-        except KeyboardInterrupt as e:
-            print("-- Exiting --")
-            break
-
 @click.command()
 @click.option('--underlying', default="BTC")
 def main(underlying):
     df = fetch_contracts( underlying )
     atm_contracts = get_atm( underlying, df )
     contracts = []
+    recs = []
     for expiry, atms in atm_contracts.items():
         for atm in atms:
             contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
-            print( atm, T, K, ctype )
+            recs += [ (spot_ric, T,K,ctype,)]
+    df = pd.DataFrame.from_records( recs )
+    df.columns = 'spot_ric, T,K,ctype'.split(',')
+    print( tabulate(df, headers="keys") )
+
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
     fn = f"{fdir}/_atms.csv"
     with open(fn, 'w') as fh:
         fh.write(','.join(contracts))
     print('-- written:', fn )
+
 if __name__ == '__main__':
     main()
