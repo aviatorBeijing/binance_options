@@ -36,7 +36,8 @@ def check_disparity(contract,market_df):
     market_impvol_ask = market_df.iloc[0].impvol_ask
 
     def _diff(a,b):
-        return (a-b)/b*100
+        x = (a-b)/b*100
+        return f"{x:.1}%"
     recs = []
     sigmas = np.arange(10/100, 150/100, 1/100)
     interests = np.arange(-5/100, 5/100, 1/100)
