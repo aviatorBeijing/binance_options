@@ -108,7 +108,7 @@ def main(underlying):
     
     ohlcs['rtns'] = ohlcs.close.dropna().pct_change()
     for n in [7,14,30]:
-        sigma = ohlcs.rtns.rolling(n).std().iloc[-1] * np.sqrt(365)
+        sigma = ohlcs.rtns.rolling(n).std().iloc[-1] * np.sqrt(365/n)
         vols[f"{n}d"] = sigma
 
     # Vols
