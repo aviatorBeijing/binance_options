@@ -57,8 +57,9 @@ def main(underlying):
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
 
     df = fetch_contracts( underlying )
+    df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
     df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
-    expiries = list( set(df.expiryDate.values) )
+    expiries = list( set(df.expiry.values) )
     oi_df = []
     for expiry in expiries[:1]:
         print('-- expiry:', expiry)
