@@ -81,7 +81,7 @@ def main(underlying, refresh_oi):
         else:
             print('-- use "--refresh_oi" to cach open interest data first.')
             raise Exception("Empty OI")
-    print(odf)
+    
     atm_contracts = get_atm( underlying, df )
     contracts = []
     recs = []
@@ -92,7 +92,7 @@ def main(underlying, refresh_oi):
             recs += [ (spot_ric, T,K,ctype, atm,)]
     df = pd.DataFrame.from_records( recs )
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
-    df['oi'] = df.symbol.apply(lambda s: odf[odf.symbol==s].sumOpenInterestUsd.iloc[0])
+    df['oi'] = df.contract.apply(lambda s: odf[odf.symbol==s].sumOpenInterestUsd.iloc[0])
     print( tabulate(df, headers="keys") )
 
     fn = f"{fdir}/_atms_{underlying.lower()}.csv"
