@@ -45,7 +45,7 @@ def main(underlying):
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
 
     df = fetch_contracts( underlying )
-    df.to_csv(f"{fdir}/_all_binance_contracts.csv")
+    df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
 
     atm_contracts = get_atm( underlying, df )
     contracts = []
@@ -59,10 +59,10 @@ def main(underlying):
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
     print( tabulate(df, headers="keys") )
 
-    fn = f"{fdir}/_atms.csv"
+    fn = f"{fdir}/_atms_{underlying.lower()}.csv"
     with open(fn, 'w') as fh:
         fh.write(','.join(contracts))
-    print('-- written:', f"{fdir}/_all_binance_contracts.csv")
+    print('-- written:', f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
     print('-- written:', fn )
 
 if __name__ == '__main__':
