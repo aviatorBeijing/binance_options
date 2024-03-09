@@ -10,6 +10,11 @@ from butil.butils import binance_spot,binance_kline
 from strategy.price_disparity import extract_specs
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
+"""
+FIXME
+  the functions here are NOT done, no proper calc methood found for the
+  "realized vol".
+"""
 def fetch_contracts(underlying):
     endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
     resp = requests.get(endpoint)
