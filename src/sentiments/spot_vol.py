@@ -37,6 +37,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
         """
         from butil.butils import binance_kline
         df = binance_kline(f"{ric.upper()}/USDT")
+        print(df)
         df.to_csv(fn, index=False)
     else:
         df = pd.read_csv(fn)
