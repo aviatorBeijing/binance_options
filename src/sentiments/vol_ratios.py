@@ -85,7 +85,7 @@ def main(underlying):
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.resample(f'{n}d').close.agg('last')
         d = closeNd.dropna().pct_change()
-        x = 7
+        x = 14
         assert d.shape[0]>x, f"No enough data: n={n}, data L={d.shape[0]}"
         sigma = closeNd.dropna().pct_change().rolling(x).apply(np.std).iloc[-1]
         sigma *= np.sqrt(365/n)
