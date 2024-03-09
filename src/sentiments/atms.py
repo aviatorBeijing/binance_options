@@ -83,6 +83,8 @@ def main(underlying, refresh_oi):
             print('-- use "--refresh_oi" to cach open interest data first.')
             raise Exception("Empty OI")
     
+    print(tabulate(odf.sort_values('sumOpenInterestUsd', ascending=False).head(5), headers="keys"))
+
     atm_contracts = get_atm( underlying, df )
     contracts = []
     recs = []
