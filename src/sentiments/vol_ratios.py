@@ -91,6 +91,7 @@ def main(underlying):
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.close.dropna().pct_change()
         d = closeNd
+        print(  d)
         if n>1:
             d = closeNd.rolling(n).apply(lambda s: talib.EMA(s, timeperiod=14))
         sigma = d.iloc[-1]
