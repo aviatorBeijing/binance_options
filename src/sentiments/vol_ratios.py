@@ -93,6 +93,7 @@ def main(underlying):
 
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.close.dropna().pct_change()
+        d = closeNd
         if n>1:
             closeNd = closeNd.rolling(n)
             d = closeNd.apply(lambda s: _f(s))
