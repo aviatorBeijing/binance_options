@@ -50,9 +50,9 @@ def main(underlying):
         for atm in atms:
             contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
-            recs += [ (spot_ric, T,K,ctype,)]
+            recs += [ (spot_ric, T,K,ctype, atm,)]
     df = pd.DataFrame.from_records( recs )
-    df.columns = 'spot_ric, T,K,ctype'.split(',')
+    df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
     print( tabulate(df, headers="keys") )
 
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
