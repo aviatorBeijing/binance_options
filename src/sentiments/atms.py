@@ -79,6 +79,10 @@ def main(underlying):
             contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
             print( atm, T, K, ctype )
-
+    fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
+    fn = f"{fdir}/_atms.csv"
+    with open(fn, 'w') as fh:
+        fh.write(','.join(contracts))
+    print('-- written:', fn )
 if __name__ == '__main__':
     main()
