@@ -79,6 +79,17 @@ def main(underlying):
 
     # Klines
     ohlcs = binance_kline(f"{underlying.upper()}/USDT", '1d')
+    ohlcs.timestamp = ohlcs.timestamp.apply(pd.Timestamp)
+    ohlcs.set_index('timestamp', inplace=True, drop=True)
+    for n in [1,3,7,30,90,180]:
+        closeNd = ohlcs.resample(f'{n}d').close.agg('last')
+        d = closeNd.dropna().pct_change()
+        x = 7
+        assert d.shape[0]>x, f"No enough data: n={n}, data L={d.shape[0]}"
+        sigma = closeNd.dropna().pct_change().rolling(x).apply(np.std).iloc[-1]
+        sigma *= np.sqrt(365/n)
+        print(f'-- {n}d', f", {(sigma*100):.1f}%" )
+
     ohlcs['rtn'] = ohlcs.close.pct_change().tail(400)
     vols = {
         "7d":  ohlcs.rtn.rolling(7).apply(np.std).iloc[-1] * np.sqrt(365),
