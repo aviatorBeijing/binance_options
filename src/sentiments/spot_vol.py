@@ -23,7 +23,7 @@ def ydata(ric,startts,endts):
 def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivative of return)
     fn = f"{ric.lower()}.csv"
     if not os.path.exists(fn):
-        endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
+        """endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
         startts = endts - 10*365*24*3600
         resp = ydata( ric, startts,endts)
         timestamps = resp['chart']['result'][0]['timestamp']
@@ -34,6 +34,9 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
                                     "high": data['high'],
                                     "low": data['low'],
                                     "close": data['close'] })
+        """
+        from butil.butils import binance_kline
+        df = binance_kline(f"{ric.upper()}/USDT")
         df.to_csv(fn, index=False)
     else:
         df = pd.read_csv(fn)
