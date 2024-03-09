@@ -88,7 +88,8 @@ def main(underlying):
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
     def _f(s):
-        print(s)
+        return talib.EMA(s)
+        
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.close.dropna().pct_change()
         if n>1:
