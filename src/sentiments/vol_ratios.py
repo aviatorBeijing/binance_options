@@ -87,15 +87,10 @@ def main(underlying):
     ohlcs.timestamp = ohlcs.timestamp.apply(pd.Timestamp)
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
-    def _f(s):
-        print( s )
-        return talib.EMA(s, timeperiod=14)
-
+    
     closeNd = ohlcs.close.dropna().pct_change()
     for n in [1,3,7,14,30]:
-        d = closeNd.copy()
-        if n>1:
-            d = d.rolling(n).apply( _f )
+        d = talib.EMA(closeNd, timeperiod=n)
         sigma = d.iloc[-1]
         sigma *= np.sqrt(365/n)
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
