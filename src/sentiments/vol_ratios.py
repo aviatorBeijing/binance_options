@@ -4,7 +4,7 @@ import requests,time
 import click
 import numpy as np
 from multiprocessing import Process
-
+import talib
 
 from butil.butils import binance_spot,binance_kline
 from strategy.price_disparity import extract_specs
@@ -86,14 +86,20 @@ def main(underlying):
     ohlcs.timestamp = ohlcs.timestamp.apply(pd.Timestamp)
     ohlcs.set_index('timestamp', inplace=True, drop=True)
     vols = {}
+    """
     for n in [1,3,7,14,30]:
         closeNd = ohlcs.resample(f'{n}d').close.agg('last')
         d = closeNd.dropna().pct_change()
         x = 14
         assert d.shape[0]>x, f"No enough data: n={n}, data L={d.shape[0]}"
-        sigma = closeNd.dropna().pct_change().rolling(x).apply(np.std).iloc[-1]
+        sigma = d.rolling(x).apply(np.std).iloc[-1]
         sigma *= np.sqrt(365/n)
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
+        vols[f"{n}d"] = sigma
+    """
+    for n in [1,3,7,14,30]:
+        atrs = talib.ATR(ohlcs.high, ohlcs.low, ohlcs.close, timeperiod=n )
+        sigma = atrs[-1]
         vols[f"{n}d"] = sigma
 
     # Vols
