@@ -101,14 +101,15 @@ def main(underlying):
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
         vols[f"{n}d"] = sigma
     """
-    for n in [7,14,30]:
+    """for n in [7,14,30]:
         atrs = talib.ATR(ohlcs.high, ohlcs.low, ohlcs.close, timeperiod=n )
         sigma = atrs[-1]/ohlcs.close.iloc[-1] * np.sqrt(365)
-        vols[f"{n}d"] = sigma
-    """ohlcs['rtns'] = ohlcs.close.dropna().pct_change()
-    for n in [7,14,30]:
-        sigma = np.std( ohlcs.rtns.iloc[-n:]) * np.sqrt(365)
         vols[f"{n}d"] = sigma"""
+    
+    ohlcs['rtns'] = ohlcs.close.dropna().pct_change()
+    for n in [7,14,30]:
+        sigma = ohlcs.rtns.rolling(n).std().iloc[-1] * np.sqrt(365)
+        vols[f"{n}d"] = sigma
 
     # Vols
     contracts = contracts[:24] # DEBUG
