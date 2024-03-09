@@ -22,7 +22,7 @@ def ydata(ric,startts,endts):
 
 def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivative of return)
     fn = f"{ric.lower()}.csv"
-    if not os.path.exists(fn):
+    if True: #not os.path.exists(fn):
         """endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
         startts = endts - 10*365*24*3600
         resp = ydata( ric, startts,endts)
