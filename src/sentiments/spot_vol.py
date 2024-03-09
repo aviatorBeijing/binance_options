@@ -37,12 +37,11 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
         """
         from butil.butils import binance_kline
         df = binance_kline(f"{ric.upper()}/USDT")
-        print(df)
         df.to_csv(fn, index=False)
     else:
         df = pd.read_csv(fn)
-        startts = df.date.iloc[0]
-        endts = df.date.iloc[-1]
+        startts = df.timestamp.iloc[0]
+        endts = df.timestamp.iloc[-1]
     
     df.timestamp = df.timestamp.apply(pd.Timestamp)
     #df.set_index('date',drop=True,inplace=True)
