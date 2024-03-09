@@ -1,7 +1,7 @@
 import datetime,os
 import pandas as pd
 import requests
-import click
+import click,time
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
@@ -53,22 +53,26 @@ def get_atm( underlying, df ):
 
 @click.command()
 @click.option('--underlying', default="BTC")
-def main(underlying):
+@click.option('--refresh_oi', is_flag=True, default=False)
+def main(underlying, refresh_oi):
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
 
     df = fetch_contracts( underlying )
     df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
     df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
+    
     expiries = list( set(df.expiry.values) )
-    oi_df = []
-    for expiry in expiries[:1]:
-        print('-- expiry:', expiry)
-        oi = fetch_oi( expiry, underlying=underlying)
-        if not oi.empty:
-            oi_df += [ oi ]
-    if oi_df:
-        oi_df = pd.concat( oi_df, axis=1)
-        print( oi_df )
+    if refresh_oi:
+        oi_df = []
+        for expiry in expiries:
+            print('-- expiry:', expiry)
+            oi = fetch_oi( expiry, underlying=underlying)
+            if not oi.empty:
+                oi_df += [ oi ]
+            time.sleep(500)
+        if oi_df:
+            oi_df = pd.concat( oi_df, axis=1)
+            oi_df.to_csv(f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv")
             
 
     atm_contracts = get_atm( underlying, df )
