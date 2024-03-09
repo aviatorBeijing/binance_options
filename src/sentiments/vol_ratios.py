@@ -91,8 +91,7 @@ def main(underlying):
         closeNd = ohlcs.close.dropna().pct_change()
         if n>1:
             closeNd = closeNd.rolling(n)
-        print( closeNd )
-        d = closeNd.apply(lambda s: talib.EMA(s))
+        d = closeNd.apply(lambda s: talib.EMA(s.values))
         sigma = d.iloc[-1]
         sigma *= np.sqrt(365/n)
         #print(f'-- {n}d', f", {(sigma*100):.1f}%" )
