@@ -3,7 +3,7 @@ import datetime
 """
 Ref: Trading Options Greeks, by Dan Passarelli, pg. 256
 """
-class PeudoPostion:
+class Asset:
     def __init__(self, ric, entry_price, quantity) -> None:
         self.ric = ric
         self.entry_price = entry_price
@@ -21,7 +21,7 @@ class PeudoPostion:
 
     def value(self): raise Exception("Need impl.") 
 
-class Spot(PeudoPostion):
+class Spot(Asset):
     def __init__(self, ric, entry_price, quantity) -> None:
         super().__init__(ric, entry_price, quantity)
     def value(self):
@@ -36,7 +36,7 @@ class Spot(PeudoPostion):
     def __repr__(self) -> str:
         return self.__str__()
 
-class EuropeanOption(PeudoPostion):
+class EuropeanOption(Asset):
     def __init__(self, ric, entry_price, quantity,
                 nominal) -> None:
         """
@@ -138,9 +138,10 @@ if __name__ == '__main__':
     print( '-- delta of spot:', spot.delta)
     print( '-- total delta:', spot.delta + c.position_delta )
 
-    gains = []
-    
-    def adjust_delta( new_price, spots=spots, gains=gains, end_of_day=False ):
+    def eod():
+        return c.greeks['theta'] * c.nominal * c.quantity
+
+    def adjust_delta( new_price, spots=spots ):
         c.get_spot_price = lambda e: new_price #Test
         delta_shift = c.on_new_spot(new_price)
         spot = Spot('XYZ/USDT', new_price, -delta_shift) # Short more if delta increased
@@ -148,16 +149,35 @@ if __name__ == '__main__':
         spots+=[spot]
 
         shares = sum([d.delta for d in spots])
-        g1 = scaples = -sum( [d.value() for d in spots[1:]] )
-        option_decay = 0 if not end_of_day else c.greeks['theta'] * c.nominal * c.quantity
         netp = c.position_delta + shares
         assert (netp)==0, f"Not fully hedged. Net={netp}"
-        gains += [ scaples + option_decay ]
+    
+    eods = []
     
     adjust_delta(42)
-    adjust_delta(40,end_of_day=True)
-    print( gains[1:] )
+    adjust_delta(40)
+    eods += [eod()]
 
     adjust_delta(39.6)
-    adjust_delta(40, end_of_day=True)
-    print( gains[1:])
+    adjust_delta(40)
+    eods += [eod()]
+
+    adjust_delta(40.5)
+    adjust_delta(41)
+    adjust_delta(41.5)
+    adjust_delta(42)
+    eods += [eod()]
+
+    adjust_delta(38)
+    eods += [eod()]
+
+    # Weekends
+    eods += [eod()]
+    eods += [eod()]
+
+    adjust_delta(38.25)
+    eods += [eod()]
+
+    scaples = -sum( [d.value() for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
+    print( f"-- scaple profits: ${(scaples + sum(eods)):.2f}" )
+    print( f"-- spot position left: ${sum([d.delta for d in spots])}")
