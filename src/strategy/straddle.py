@@ -200,7 +200,7 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
     if not rdata: 
         raise Exception(f'*** {right.upper()} contract is not found in cached dir: {DATADIR}')
     
-    check_bsm_disparity( f'{left},{right}' )
+    check_bsm_disparity( [left,right] )
 
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])

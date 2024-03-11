@@ -60,8 +60,10 @@ def check_disparity(contract,market_df):
     df.sort_values(['bid-bsm','ask-bsm'], inplace=True, ascending=False)
     print( df )
 
-def _main( contracts ):
+def _main( contracts:list ):
     try:
+        if isinstance(contracts,str):
+            contracts = contracts.split(',')
         recs = []
         for contract in contracts:
             fn = f"{DATADIR}/{contract.upper()}.json"
