@@ -98,7 +98,10 @@ def main(underlying, refresh_oi):
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
 
     _f = lambda v: f"$ {v:,.0f}" if not isinstance(v, str) else v
-    df['oi'] = df.contract.apply(lambda s: _f(odf[odf.symbol==s].sumOpenInterestUsd.iloc[0]))
+    df['raw_oi'] = df.contract.apply(lambda s: odf[odf.symbol==s].sumOpenInterestUsd.iloc[0])
+    df['oi'] = df.raw_oi.apply(lambda s: _f(s))
+    print( tabulate(df.sort_values('raw_oi', ascending=False), headers="keys") ) 
+    df.drop(['raw_oi'], inplace=True, axis=1)
     print( tabulate(df, headers="keys") )
 
     fn = f"{fdir}/_atms_{underlying.lower()}.csv"
