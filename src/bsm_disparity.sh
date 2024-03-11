@@ -1,5 +1,5 @@
 #!/bin/bash
 
 source setup.sh
-CS=BTC-240310-69750-C,BTC-240310-69750-P
+CS=BTC-240313-66000-C,BTC-240313-66000-P
 $PYTHON strategy/price_disparity.py --contracts $CS
