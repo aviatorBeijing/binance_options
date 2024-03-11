@@ -127,3 +127,12 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
         recs += [(ts,vals[0], vals[1],vals[2], vals[3],vals[4])]
     df = pd.DataFrame.from_records( recs, columns = ['timestamp','open','high','low','close','volume'] )
     return df
+
+
+# Options
+def get_maturity( contract:str )->float:
+    fds = contract.split('-')
+    ts = datetime.datetime.strptime('20'+fds[1], '%Y%m%d')
+    tnow = datetime.datetime.utcnow()
+    dt = (ts-tnow).total_seconds()/3600./24
+    return dt

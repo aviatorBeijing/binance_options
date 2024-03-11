@@ -5,7 +5,9 @@ from tabulate import tabulate
 import ccxt
 import numpy  as np
 
-from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
+from butil.butils import ( DATADIR,DEBUG,
+                get_binance_next_funding_rate,
+                get_maturity )
 from brisk.bfee import calc_fee
 
 ex = ccxt.binance()
@@ -43,6 +45,12 @@ def calc_straddle(  lcontract, rcontract,
             'is_taker': taker_order, 'paid_premium': user_premium,
             }
 
+    # Maturity and time-values left
+    lmaturity = Tl = get_maturity( lcontract )
+    rmaturity = Tr = get_maturity( rcontract )
+    timeValueL = -float(ldata["theta"]) * Tl 
+    timeValueR = -float(rdata["theta"]) * Tr
+
     lfee = 0;rfee=0
     if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
                     #        but, if user already holds two positions, fee should be calculated
@@ -53,8 +61,8 @@ def calc_straddle(  lcontract, rcontract,
         lfee = calc_fee(lask, vol, lcontract, is_taker=True)
         rfee = calc_fee(rask, vol, rcontract, is_taker=True)
         
-        print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; iv: {(float(ldata["impvol"])*100):.1f}% )')
-        print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; iv: {(float(rdata["impvol"])*100):.1f}% )')
+        print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; iv: {(float(ldata["impvol"])*100):.1f}% ); time-value left: ${timeValueL:.2f}')
+        print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; iv: {(float(rdata["impvol"])*100):.1f}% ); time-value left: ${timeValueR:.2f}')
     else: # maker order (usually hard to fill & sliperage is large.)
         fee_rate = 2/10000
         lfee = calc_fee(lask, vol, lcontract, is_taker=False)
