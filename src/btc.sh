@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CRYPTO=BTC
-PCE=66000
+PCE=65000
 DT=240313
 
 PUT=$PCE

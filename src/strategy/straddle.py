@@ -92,11 +92,11 @@ def calc_straddle(  lcontract, rcontract,
         print(' '*15, 'liquidation gain: ', f'${liquidation_gain:.2f}, {rtn:.1f}%')
         print(f' '*10,'$'*53)
 
-    low = adhoc*0.8
-    high=adhoc*1.3
+    low = adhoc*0.7
+    high=adhoc*1.5
     if not DEBUG:
-        low = adhoc*0.9
-        high = adhoc*1.1
+        low = adhoc*0.7
+        high = adhoc*1.5
     face = 1
     if spot_symbol == 'BTC/USDT':
         low = int(low/1000)*1000
