@@ -87,6 +87,7 @@ def _mp_main(contracts):
     while True:
         try:
             _main(contracts)
+            print('\n\n')
             time.sleep(10)
         except KeyboardInterrupt as e:
             print("-- Exiting --")
