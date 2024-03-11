@@ -64,7 +64,9 @@ def _main( contracts ):
     try:
         recs = []
         for contract in contracts:
-            with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
+            fn = f"{DATADIR}/{contract.upper()}.json"
+            print('-- reading:', fn)
+            with open(fn, 'r') as fh:
                 contract_data = json.loads(fh.read())
                 contract_data['c'] = contract
             df = pd.DataFrame.from_records( [ contract_data ] )
