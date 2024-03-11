@@ -9,6 +9,7 @@ from butil.butils import ( DATADIR,DEBUG,
                 get_binance_next_funding_rate,
                 get_maturity )
 from brisk.bfee import calc_fee
+from strategy.price_disparity import _main as check_bsm_disparity
 
 ex = ccxt.binance()
 
@@ -198,6 +199,9 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
         raise Exception(f'*** {left.upper()} contract is not found in cached dir: {DATADIR}')
     if not rdata: 
         raise Exception(f'*** {right.upper()} contract is not found in cached dir: {DATADIR}')
+    
+    check_bsm_disparity( left )
+    check_bsm_disparity( right )
     
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
