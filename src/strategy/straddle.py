@@ -50,6 +50,8 @@ def calc_straddle(  lcontract, rcontract,
     rmaturity = Tr = get_maturity( rcontract )
     timeValueL = -float(ldata["theta"]) * Tl 
     timeValueR = -float(rdata["theta"]) * Tr
+    timeValueLPct = timeValueL/lask * 100
+    timeValueRPct = timeValueR/rask * 100 
 
     lfee = 0;rfee=0
     if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
@@ -61,8 +63,8 @@ def calc_straddle(  lcontract, rcontract,
         lfee = calc_fee(lask, vol, lcontract, is_taker=True)
         rfee = calc_fee(rask, vol, rcontract, is_taker=True)
         
-        print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; iv: {(float(ldata["impvol"])*100):.1f}% ); time-value left: ${timeValueL:.2f}')
-        print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; iv: {(float(rdata["impvol"])*100):.1f}% ); time-value left: ${timeValueR:.2f}')
+        print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; iv: {(float(ldata["impvol"])*100):.1f}% ); time-value left: ${timeValueL:.2f}, {timeValueL:.1f}%')
+        print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; iv: {(float(rdata["impvol"])*100):.1f}% ); time-value left: ${timeValueR:.2f}, {timeValueR:.1f}%')
     else: # maker order (usually hard to fill & sliperage is large.)
         fee_rate = 2/10000
         lfee = calc_fee(lask, vol, lcontract, is_taker=False)
