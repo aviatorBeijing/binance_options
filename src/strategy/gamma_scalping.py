@@ -3,46 +3,48 @@ import datetime
 """
 Ref: Trading Options Greeks, by Dan Passarelli, pg. 256
 """
-class Asset:
-    def __init__(self, ric, entry_price, quantity, is_long=True) -> None:
+class PeudoPostion:
+    def __init__(self, ric, entry_price, quantity) -> None:
         self.ric = ric
-        self.is_long = is_long 
         self.entry_price = entry_price
         self.quantity = quantity
     
     @classmethod
     def get_spot_price(self,ric):
-        return 40
+        return 
     @classmethod
     def get_options_price(self,ric):
         return 
     @classmethod
     def get_options_greeks(self,ric):
-        return  {}
+        return  
+
     def value(self): raise Exception("Need impl.") 
 
-class Spot(Asset):
-    def __init__(self, ric, entry_price, quantity, is_long=True) -> None:
-        super().__init__(ric, entry_price, quantity, is_long)
-        self.quantity = abs(self.quantity)
+class Spot(PeudoPostion):
+    def __init__(self, ric, entry_price, quantity) -> None:
+        super().__init__(ric, entry_price, quantity)
     def value(self):
-        spot = self.get_spot_price(self.ric)
-        dv = ( spot-self.entry_price ) * self.quantity
-        return dv if self.is_long else -dv
+        dv = self.entry_price * self.quantity
+        return dv
     @property
     def delta(self):
-        return 1.*self.quantity if self.is_long else -1.*self.quantity
+        return 1.*self.quantity
 
-class EuropeanOption(Asset):
+    def __str__(self):
+        return f"Spot({self.quantity}@ ${self.entry_price}, value=${self.value()})"
+    def __repr__(self) -> str:
+        return self.__str__()
+
+class EuropeanOption(PeudoPostion):
     def __init__(self, ric, entry_price, quantity,
-                nominal,
-                is_long=True) -> None:
+                nominal) -> None:
         """
         @brief
         param nominal   (int): The multiplier of a single contract, 
                               i.e., how many spot asset is covered by one option contract.
         """
-        super().__init__(ric, entry_price, quantity, is_long)
+        super().__init__(ric, entry_price, quantity)
         fds = ric.split("-")
         self.strike = float(fds[2])
         self.expiry = fds[1]
@@ -57,7 +59,9 @@ class EuropeanOption(Asset):
         # Position delta
     def init(self):
         self.pdelta = self.greeks['delta']*self.nominal*self.quantity
-        self.pdelta = self.pdelta if self.is_long else -self.pdelta
+        t = 1 if self.putcall == 'call' else -1
+        s = 1 if self.quantity >0 else -1
+        self.pdelta *= (t*s)
 
     def __str__(self):
         return f'''
@@ -94,21 +98,33 @@ class EuropeanOption(Asset):
         return self.pdelta
         
     def on_new_spot(self, new_spot):
-        delta_chg = ( new_spot - self.init_spot ) * self.greeks['gamma'] *self.nominal *self.quantity
-        delta_chg = round(delta_chg) # convert to whole number as stock shares FIXME what about BTC, DOGE, etc.?
-        self.pdelta += delta_chg
+        dd = self.on_spot_change( self.init_spot, new_spot)
+        self.pdelta += dd
+        if abs(dd)>0:
+            print(f'  -- spot change from ${self.init_spot} to ${new_spot}')
+            print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         self.init_spot = new_spot
+        return dd
+    
+    def on_spot_change(self, from_spot, to_spot):
+        if from_spot == to_spot: return 0
+
+        delta_chg = ( to_spot - from_spot ) * self.greeks['gamma'] *self.nominal *self.quantity
+        delta_chg = round(delta_chg) # convert to whole number as stock shares FIXME what about BTC, DOGE, etc.?
         return delta_chg
-    def on_greeks_change(self): # TODO if delta,gamma changes, also need dynamic hedging
+        
+    def on_greeks_change(self, new_greeks={}): # TODO if delta,gamma changes, also need dynamic hedging
         pass
 
 if __name__ == '__main__':
-    contract = 'XYZ-240309-40-C'
     nc = 20 # numbmer of calls
     call_price = 19.5
+    p0 = 40 # initial spot price when creating portfolio
 
-    c = EuropeanOption(contract, call_price, nc, 100, is_long=True)
-    c.greeks = {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20} # per contract
+    contract = f'XYZ-240309-{p0}-C'
+    c = EuropeanOption(contract, call_price, nc, 100)
+    c.greeks = {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20}
+    c.init_spot = p0
     c.init()
 
     print(c)
@@ -116,84 +132,32 @@ if __name__ == '__main__':
 
     spots = [] # spot stack
 
-    p0 = 40 # initial spot price when creating portfolio
-    spot = Spot('XYZ/USDT', p0, 1_000, is_long=False);spots+=[spot]
+    spot = Spot('XYZ/USDT', p0, -1_000)
+    spot.get_spot_price = lambda e: p0
+    spots+=[spot]
     print( '-- delta of spot:', spot.delta)
     print( '-- total delta:', spot.delta + c.position_delta )
 
-    # Day 1
-    c.get_spot_price = lambda e: 42
-    delta_shift = c.on_new_spot(42)
-    print( '-- (day1.1) options delta  (shares):', delta_shift)
-    spot = Spot('XYZ/USDT', 42, delta_shift, is_long=delta_shift<0);spots+=[spot]
-    print( '-- (day1.1) 2nd spot delta:', spot.delta )
-    shares = sum([d.delta for d in spots])
-    print('-- (day1.1) spot positions:', shares)
-    print( '-- (day1.1) total delta:', c.position_delta + shares)
-
-    c.get_spot_price = lambda e: 40
-    delta_shift = c.on_new_spot(40)
-    print( '-- (day1.2) options delta  (shares):', delta_shift)
-    spot = Spot('XYZ/USDT', 40, delta_shift, is_long=delta_shift<0);spots+=[spot]
-    print( '-- (day1.2) new spot delta:', spot.delta )
-    shares = sum([d.delta for d in spots])
-    print('-- (day1.2) spot positions:', shares)
-    print( '-- (day1.2) total delta:', c.position_delta + shares)
-    g1 = gain_on_spot = sum( [d.value() for d in spots] )
-    print('-- spot value change:', gain_on_spot)
-    option_decay = c.greeks['theta'] * c.nominal * c.quantity
-    print( '-- option value decay:', option_decay)
-    print('-- net gain on 1st day:', gain_on_spot + option_decay )
-
+    gains = []
     
-    print('-- 2nd day')
-    c.get_spot_price = lambda e: 39.6
-    delta_shift = c.on_new_spot(39.6)
-    print('  -- (day2) option delta (shares):', delta_shift)
-    spot = Spot('XYZ/USDT', 39.6, delta_shift, is_long=delta_shift<0);spots+=[spot]
-    print(f"  -- (day2) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    c.get_spot_price = lambda e: 40
-    delta_shift = c.on_new_spot(40)
-    spot = Spot('XYZ/USDT', 40, delta_shift, is_long=delta_shift<0);spots+=[spot]
-    print(f"  -- (day2) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    shares = sum([d.delta for d in spots]) 
-    print( '  -- (day2) EOD position delta:', c.position_delta + shares  )
-    g2 = gain_on_spot = sum( [d.value() for d in spots] ) - g1
-    option_decay = c.greeks['theta'] * c.nominal * c.quantity
-    print('  -- net gain on 2nd day:', gain_on_spot + option_decay)
+    def adjust_delta( new_price, spots=spots, gains=gains, end_of_day=False ):
+        c.get_spot_price = lambda e: new_price #Test
+        delta_shift = c.on_new_spot(new_price)
+        spot = Spot('XYZ/USDT', new_price, -delta_shift) # Short more if delta increased
+        spot.get_spot_price = lambda e: new_price # Test
+        spots+=[spot]
 
-    """
-    print('-- 3rd day')
-    c.get_spot_price = lambda e: 40.5
-    delta_shift = c.on_new_spot(40.5)
-    print('  -- (day3) option delta (shares):', delta_shift)
-    spot6 = Spot('XYZ/USDT', 40.5, delta_shift, is_long=delta_shift<0)
-    print(f"  -- (day3) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    c.get_spot_price = lambda e: 41
-    delta_shift = c.on_new_spot(41)
-    spot7 = Spot('XYZ/USDT', 41, delta_shift, is_long=delta_shift<0)
-    print(f"  -- (day3) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    c.get_spot_price = lambda e: 41.5
-    delta_shift = c.on_new_spot(41.5)
-    spot8 = Spot('XYZ/USDT', 41.5, delta_shift, is_long=delta_shift<0)
-    print(f"  -- (day3) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    c.get_spot_price = lambda e: 42
-    delta_shift = c.on_new_spot(42)
-    spot9 = Spot('XYZ/USDT', 42, delta_shift, is_long=delta_shift<0)
-    print(f"  -- (day3) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    shares = spot.delta + spot2.delta + spot3.delta + spot4.delta + spot5.delta \
-        +spot6.delta +spot7.delta+spot8.delta+spot9.delta
-    print( '  -- (day3) EOD position delta:', c.position_delta + shares, c.position_delta, shares  )
+        shares = sum([d.delta for d in spots])
+        g1 = scaples = -sum( [d.value() for d in spots[1:]] )
+        option_decay = 0 if not end_of_day else c.greeks['theta'] * c.nominal * c.quantity
+        netp = c.position_delta + shares
+        assert (netp)==0, f"Not fully hedged. Net={netp}"
+        gains += [ scaples + option_decay ]
+    
+    adjust_delta(42)
+    adjust_delta(40,end_of_day=True)
+    print( gains[1:] )
 
-    print('-- 4th day')
-    c.get_spot_price = lambda e: 38
-    delta_shift = c.on_new_spot(38)
-    print('  -- (day4) option delta (shares):', delta_shift)
-    spot10 = Spot('XYZ/USDT', 38, delta_shift, is_long=delta_shift<0)
-    print(f"  -- (day4) {'sell' if delta_shift>0 else 'long'} {abs(delta_shift)} shares")
-    shares = spot.delta + spot2.delta + spot3.delta + spot4.delta + spot5.delta \
-        +spot6.delta +spot7.delta+spot8.delta+spot9.delta\
-            +spot10.delta
-    print( '  -- (day4) EOD position delta:', c.position_delta + shares, c.position_delta, shares  )
-
-    """
+    adjust_delta(39.6)
+    adjust_delta(40, end_of_day=True)
+    print( gains[1:])
