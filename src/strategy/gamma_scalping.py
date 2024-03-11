@@ -1,5 +1,7 @@
 import datetime 
 
+from butil.butils import get_maturity
+
 """
 Ref: Trading Options Greeks, by Dan Passarelli, pg. 256
 """
@@ -76,7 +78,7 @@ class EuropeanOption(Asset):
         fds = self.ric.split('-')
         return f"{fds[0]}/USDT"
     def get_maturity(self):
-        get_maturity( self.ric )
+        dt = get_maturity( self.ric )
         return dt
     def value(self):
         if self.putcall == 'call': # value at Expiry
