@@ -32,6 +32,5 @@ export BINANCE_DEBUG=1
 Notes:
 ```
 Only support BTC,BNB, and DOGE contracts, for now.
-Make sure you are using OTM options, both call & put for straddle. Otherwise, meaningless.
 Ref: https://www.fidelity.com/learning-center/investment-products/options/options-strategy-guide/long-strangle
 ```
