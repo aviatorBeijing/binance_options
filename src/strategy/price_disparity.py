@@ -46,9 +46,10 @@ def check_disparity(contract,market_df):
         for r in interests: # risk-free rate (BSM)
             if ctype == 'call':
                 bsm_price = callprice(spot_price, K, T/365, sigma, r )
+                bsm_delta = deltafunc(spot_price,K,T/365,sigma,r)
             elif ctype == 'put':
                 bsm_price =  putprice(spot_price, K, T/365, sigma, r )
-            bsm_delta = deltafunc(spot_price,K,T/365,sigma,r)
+                bsm_delta = deltafunc(spot_price,K,T/365,sigma,r) -1            
             recs += [ (contract, r, sigma, bsm_delta, bsm_price, 
                             market_quote_bid-bsm_price, market_quote_ask-bsm_price,
                             _diff(market_impvol,sigma), 

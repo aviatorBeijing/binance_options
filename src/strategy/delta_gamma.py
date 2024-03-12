@@ -31,7 +31,7 @@ def deltafunc(S, K, T, sigma, r)->float:
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
     return scs.norm.cdf(d1) 
 
-# Gamma
+# Gamma (call), d_put + d_call = 1
 def gamma(S, K, T, sigma, r)->float:
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
     return scs.norm.pdf(d1) / (S * sigma * np.sqrt(T))
