@@ -1,5 +1,4 @@
-# binance_options
-## Toolbox to use Binance Options trading APIs 
+# Options Trading Strategies (Binance)
 
 ```
 python -m pip install -r requirements.txt
