@@ -3,6 +3,7 @@ import pandas as pd
 from multiprocessing import Process
 import numpy as np
 import ccxt
+from tabulate import tabulate
 ex = ccxt.binance()
 
 from ws_bcontract import _main as ws_connector, _maturity
@@ -49,17 +50,20 @@ def check_disparity(contract,market_df):
                 bsm_price =  putprice(spot_price, K, T/365, sigma, r )
             bsm_delta = deltafunc(spot_price,K,T/365,sigma,r)
             recs += [ (contract, r, sigma, bsm_delta, bsm_price, 
-                            #market_quote_bid-bsmm_price, market_quote_ask-bsm_price,
+                            market_quote_bid-bsm_price, market_quote_ask-bsm_price,
                             _diff(market_impvol,sigma), 
                             _diff(market_impvol_bid,sigma), 
                             _diff(market_impvol_ask,sigma) ) ]
     df = pd.DataFrame.from_records(recs, columns=[
-        'contract', 'bsm_rf', 'bsm_vol', 'bsm_delta', 'bsm_fair','impvol','impvol_bid', 'impvol_ask'
+        'contract', 'bsm_rf', 'bsm_vol', 'bsm_delta', 'bsm_fair',
+        'bid-bsm','ask-bsm',
+        'impvol','impvol_bid', 'impvol_ask'
     ])
     df = df[ (abs(df['bid-bsm'])<2) | (abs(df['ask-bsm'])<2)]
     df.bsm_fair = df.bsm_fair.apply(lambda v: (int(v*10)/10))
     df.sort_values(['bid-bsm','ask-bsm'], inplace=True, ascending=False)
-    print( df )
+    df.drop(['bid-bsm','ask-bsm'], axis=1,inplace=True)
+    print( tabulate(df, headers="keys") )
 
 def _main( contracts:list ):
     try:
