@@ -11,7 +11,9 @@ Example (Long straddle):
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
 
 cd src
-python strategy/straddle.py --left BTC-240301-56000-P --right BTC-240301-58000-C --size=0.1
+source setup.sh
+
+python strategy/straddle.py --left BTC-240313-71000-P --right BTC-240313-71000-C --size=0.1
 python strategy/straddle.py --left BNB-240301-385-P --right BNB-240301-400-C --size=1
 ```
 
