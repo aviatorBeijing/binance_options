@@ -17,6 +17,13 @@ python strategy/straddle.py --left BTC-240313-71000-P --right BTC-240313-71000-C
 python strategy/straddle.py --left BNB-240301-385-P --right BNB-240301-400-C --size=1
 ```
 
+Example (Gamma scalping):
+```
+cd src
+source setup.sh
+python strategy/gamma_scalping.py 
+```
+
 Debug mode:
 ```
 export BINANCE_DEBUG=1
