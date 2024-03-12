@@ -10,7 +10,7 @@ import numpy.random as npr
 
 np.set_printoptions(suppress=True)
 """
-Black-Schole Theory
+Black-Schole-Merton Theory (BSM)
 European-style Options
 """
 
@@ -27,7 +27,7 @@ def putprice(S,K,T,sigma,r)->float:
 
 
 # Delta
-def deltafunc(S, K, T, sigma, r):
+def deltafunc(S, K, T, sigma, r)->float:
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
     return scs.norm.cdf(d1) 
 

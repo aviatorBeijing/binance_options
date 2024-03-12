@@ -7,7 +7,7 @@ ex = ccxt.binance()
 
 from ws_bcontract import _main as ws_connector, _maturity
 from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
-from strategy.delta_gamma import callprice,putprice
+from strategy.delta_gamma import callprice, deltafunc,putprice,gamma
 
 def get_maturity(contract):
     fds = contract.split('-')
@@ -41,19 +41,20 @@ def check_disparity(contract,market_df):
     recs = []
     sigmas = np.arange(10/100, 150/100, 1/100)
     interests = np.arange(-5/100, 5/100, 1/100)
-    for sigma in sigmas:
-        for r in interests: # risk-free rate
+    for sigma in sigmas:    # (BSM)
+        for r in interests: # risk-free rate (BSM)
             if ctype == 'call':
-                option_price = callprice(spot_price, K, T/365, sigma, r )
+                bsm_price = callprice(spot_price, K, T/365, sigma, r )
             elif ctype == 'put':
-                option_price =  putprice(spot_price, K, T/365, sigma, r )
-            recs += [ (contract, r, sigma, option_price, 
-                            market_quote_bid-option_price, market_quote_ask-option_price,
+                bsm_price =  putprice(spot_price, K, T/365, sigma, r )
+            bsm_delta = deltafunc(spot_price,K,T/365,sigma,r)
+            recs += [ (contract, r, sigma, bsm_delta, bsm_price, 
+                            #market_quote_bid-bsmm_price, market_quote_ask-bsm_price,
                             _diff(market_impvol,sigma), 
                             _diff(market_impvol_bid,sigma), 
                             _diff(market_impvol_ask,sigma) ) ]
     df = pd.DataFrame.from_records(recs, columns=[
-        'contract', 'rf', 'bsm_vol', 'bsm_fair', 'bid-bsm','ask-bsm','impvol','impvol_bid', 'impvol_ask'
+        'contract', 'bsm_rf', 'bsm_vol', 'bsm_delta', 'bsm_fair','impvol','impvol_bid', 'impvol_ask'
     ])
     df = df[ (abs(df['bid-bsm'])<2) | (abs(df['ask-bsm'])<2)]
     df.bsm_fair = df.bsm_fair.apply(lambda v: (int(v*10)/10))
