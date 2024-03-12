@@ -29,12 +29,16 @@ def _main( contracts,sz ):
             recs += [resp]
     df = pd.DataFrame.from_records( recs )
     
-    df['x'] = df.be_returns.apply(lambda e: len(e))
+    try:
+        df['x'] = df.be_returns.apply(lambda e: len(e))
+    except Exception as e:
+        print( df )
+        raise e
     df = df[df.x>0]
     try:
         df['x'] = df.be_returns.apply(lambda e: e[-1])
         df = df.sort_values(['x'], ascending=True)
-        df.drop(['x'],inplace=True,axis=1)
+        #df.drop(['x'],inplace=True,axis=1)
     except Exception as e:
         df.to_csv(f'{os.getenv("USER_HOME")}/tmp/debug.csv')
 

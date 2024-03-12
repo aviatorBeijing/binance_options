@@ -5,4 +5,6 @@ rm *.csv
 
 source setup.sh
 
-$PYTHON $SRC/sentiments/atms.py --refresh_oi --underlying=BTC
+SYM=$1
+
+$PYTHON $SRC/sentiments/atms.py --refresh_oi --underlying=$SYM
