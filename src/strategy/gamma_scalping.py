@@ -26,15 +26,15 @@ class Asset:
 class Spot(Asset):
     def __init__(self, ric, entry_price, quantity) -> None:
         super().__init__(ric, entry_price, quantity)
-    def value(self):
-        dv = self.entry_price * self.quantity
+    def value(self, current_price):
+        dv = (current_price - self.entry_price) * self.quantity
         return dv
     @property
     def delta(self):
         return 1.*self.quantity
 
     def __str__(self):
-        return f"Spot({self.quantity}@ ${self.entry_price}, value=${self.value()})"
+        return f"Spot: {self.quantity} @ ${self.entry_price}"
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -96,12 +96,12 @@ class EuropeanOption(Asset):
     def position_delta(self):
         return self.pdelta
         
-    def on_new_spot(self, new_spot):
+    def on_market_move(self, new_spot):
         dd = self.on_spot_change( self.init_spot, new_spot)
         self.pdelta += dd
         if abs(dd)>0:
-            print(f'  -- spot change from ${self.init_spot} to ${new_spot}')
-            print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
+            print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.1f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
+            #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         self.init_spot = new_spot
         return dd
     
@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
     def adjust_delta( new_price, spots=spots ):
         c.get_spot_price = lambda e: new_price #Test
-        delta_shift = c.on_new_spot(new_price)
+        delta_shift = c.on_market_move(new_price)
         spot = Spot('XYZ/USDT', new_price, -delta_shift) # Short more if delta increased
         spot.get_spot_price = lambda e: new_price # Test
         spots+=[spot]
@@ -177,6 +177,8 @@ if __name__ == '__main__':
     adjust_delta(38.25)
     eods += [eod()]
 
-    scaples = -sum( [d.value() for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
-    print( f"-- scaple profits: ${(scaples + sum(eods)):.2f}" )
-    print( f"-- spot position left: ${sum([d.delta for d in spots])}")
+    p1 = 38.25
+    for spot in spots[1:]:print( spot, spot.value(p1))
+    scaples = sum( [d.value( p1 ) for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
+    print( f"-- scaple profits (after reduced of theta decay): \n\t${(scaples + sum(eods)):.2f}" )
+    print( f"-- spot position left: {sum([d.delta for d in spots])}")
