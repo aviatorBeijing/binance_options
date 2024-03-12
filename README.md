@@ -3,13 +3,13 @@
 
 ```
 python -m pip install -r requirements.txt
+
+export USER_HOME=<set_a_tmp_directory_for_data_cache>
 ```
 
 Example (Long straddle):
 
 ```
-export USER_HOME=<set_a_tmp_directory_for_data_cache>
-
 cd src
 source setup.sh
 
