@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# can also use "./atms.sh" to find all avalialbe ATM options, and select two ATM options.
+
 CRYPTO=BTC
 STRIKE=71000
 DT=240313
