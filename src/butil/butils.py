@@ -119,7 +119,7 @@ def binance_spot(symbol='BTC/USDT')->tuple:
     return float(bid),float(ask)
 
 def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
-    ohlcvs = ex_binance.fetch_ohlcv(symbol, span)
+    ohlcvs = ex_binance.fetch_ohlcv(symbol, span,limit=1000)
     recs = []
     for ohlcv in ohlcvs:
         ts = ex_binance.iso8601(ohlcv[0])
