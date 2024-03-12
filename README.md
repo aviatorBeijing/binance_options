@@ -6,7 +6,7 @@ python -m pip install -r requirements.txt
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
 ```
 
-Example (Long straddle):
+Example#1 (Long straddle):
 
 ```
 cd src
@@ -16,7 +16,7 @@ python strategy/straddle.py --left BTC-240313-71000-P --right BTC-240313-71000-C
 python strategy/straddle.py --left BNB-240301-385-P --right BNB-240301-400-C --size=1
 ```
 
-Example (Gamma scalping):
+Example#2 (Gamma scalping):
 ```
 cd src
 source setup.sh
