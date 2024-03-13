@@ -122,7 +122,7 @@ class EuropeanOption(Asset):
         
     def on_market_move(self):
         new_spot = Asset.get_spot_price( self.underlying )
-        dd = self.on_spot_change( self.init_spot)
+        dd = self.on_spot_change( self.init_spot, new_spot)
         self.pdelta += dd
         if abs(dd)>0:
             print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.1f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
@@ -132,7 +132,6 @@ class EuropeanOption(Asset):
     
     def on_spot_change(self, from_spot, to_spot):
         if from_spot == to_spot: return 0
-
         delta_chg = ( to_spot - from_spot ) * self.greeks['gamma'] *self.nominal *self.quantity
         #delta_chg = round(delta_chg) # convert to whole number as stock shares FIXME what about BTC, DOGE, etc.?
         return delta_chg
