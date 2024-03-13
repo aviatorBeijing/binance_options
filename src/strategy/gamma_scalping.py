@@ -87,6 +87,7 @@ class EuropeanOption(Asset):
         t = 1 if self.putcall == 'call' else -1
         s = 1 if self.quantity >0 else -1
         self.pdelta *= (t*s)
+        return self
 
     def __str__(self):
         return f'''
