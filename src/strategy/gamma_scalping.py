@@ -12,22 +12,22 @@ class Asset:
         self.entry_price = entry_price
         self.quantity = quantity
     
-    @classmethod
-    def get_spot_price(self,ric, ask=True):
+    @staticmethod
+    def get_spot_price(ric, ask=True):
         bid,ask = get_binance_spot( ric )
         if ask: return float(ask)
         else:
             return (float(bid)+float(ask))*.5 
-    @classmethod
-    def get_options_price(self,contract):
+    @staticmethod
+    def get_options_price(contract):
         contract_price = None 
         def price_setter(c, data):
             c = data
         sync_fetch_ticker( contract, handler=partial( price_setter, (contract_price,) ) )
         return contract_price
 
-    @classmethod
-    def get_options_greeks(self,ric):
+    @staticmethod
+    def get_options_greeks(ric):
         return  
 
     def value(self): raise Exception("Need impl.") 
@@ -127,7 +127,7 @@ class EuropeanOption(Asset):
 
 if __name__ == '__main__':
     s = EuropeanOption('BTC-240313-71000-P',1500,0.01,1)
-    print( s.get_options_price( s.contract ) )
+    print( Asset.get_options_price( s.contract ) )
 
 
     nc = 20 # numbmer of calls
