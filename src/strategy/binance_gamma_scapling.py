@@ -15,6 +15,8 @@ def _main( contracts ):
         gamma = opt.greeks['gamma']
         vol = opt.greeks['impvol']
         print( contract, delta,gamma,vol )
+
+        del opt
     
 def _mp_main(contracts):
     while True:
