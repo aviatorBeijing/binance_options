@@ -49,7 +49,7 @@ class Asset:
 class Spot(Asset):
     def __init__(self, ric, entry_price, quantity) -> None:
         super().__init__(ric, entry_price, quantity)
-    def value(self, current_price=None ):
+    def value(self, current_price=None ): # dollar value
         if not current_price: # If not provided by caller
             current_price = Asset.get_spot_price(self.ric)
         dv = (current_price - self.entry_price) * self.quantity
@@ -127,7 +127,7 @@ class EuropeanOption(Asset):
         self.pdelta += dd
         addition = None
         if abs(dd)>0:
-            print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.1f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
+            print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.3f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
             addition = Spot(self.underlying, new_spot, -dd)
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         self.init_spot = new_spot # Reset mark price after rebalnced
