@@ -115,11 +115,11 @@ def sync_fetch_ticker( contract:str, handler=None ):
             else:
                 return contract_data
     except FileNotFoundError as  e:
-        print('*** waiting for data ...')
+        print(f'*** waiting for data ({contract}) ...')
         time.sleep(5)
         return 
     except json.JSONDecodeError as  je:
-        print('*** json data conflict, wait ...')
+        print(f'*** json data conflict ({contract}), wait ...')
         time.sleep(5)
         return
 
