@@ -109,7 +109,6 @@ def sync_fetch_ticker( contract:str, handler=None ):
     try:
         with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
             contract_data = json.loads(fh.read())
-            print(  contract_data )
             if handler:
                 handler( contract_data )
             else:
