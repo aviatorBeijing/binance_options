@@ -28,7 +28,7 @@ def _mp_main(contracts:str):
     td = total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
     print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
-    print(f'-- need to upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of spot')
+    print(f'-- need to upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of {underlying}')
 
     while True:
         try:
