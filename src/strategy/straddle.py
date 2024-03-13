@@ -13,7 +13,7 @@ from strategy.price_disparity import _main as check_bsm_disparity
 
 ex = ccxt.binance()
 
-def _find_breakeven(df):
+def _find_breakeven(df, adhoc):
     col = 'net profit @ expiry'
     df['next_neg'] = (df[col]<0).shift(-1) # shift up
     df['prev_neg'] = (df[col]<0).shift(1) # shift down
@@ -23,8 +23,14 @@ def _find_breakeven(df):
     df['break_even'] = False; df.loc[ df.prev_pos & df.next_neg, 'break_even'] = True 
     df.loc[df.prev_neg & df.next_pos, 'break_even'] = True 
     df.drop(['next_neg','next_pos','prev_neg','prev_pos','is_pos'], inplace=True, axis=1)
+
+    # find current spot position
+    df['sd'] = df.loc[:,0] - adhoc 
+    df['spot_vicinity'] = df.sd.apply(abs) < 5
+    df.drop(['sd'], axis=1, inplace=True)
+
     if not DEBUG:
-        df = df[df.break_even]
+        df = df[ (df.break_even) | (df.spot_vicinity)]
     return df    
 
 def _v(v): return float(v)
@@ -138,7 +144,8 @@ def calc_straddle(  lcontract, rcontract,
         recs += [ ( stock, gains, profits )]
     
     df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
-    df = _find_breakeven( df )
+    df = _find_breakeven( df, adhoc )
+
     cost = premium + fee
     df['stradle_return'] = ( df['net profit @ expiry']) / cost
     df['spot_return'] = (df[f"{spot_symbol} @ expiry"] - adhoc)/adhoc
