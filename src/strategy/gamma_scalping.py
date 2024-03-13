@@ -57,7 +57,7 @@ class Spot(Asset):
         return 1.*self.quantity
 
     def __str__(self):
-        return f"Spot: {self.quantity} @ ${self.entry_price}"
+        return f"Spot: {self.quantity:.6f} @ ${self.entry_price:.6f}"
     def __repr__(self) -> str:
         return self.__str__()
 
