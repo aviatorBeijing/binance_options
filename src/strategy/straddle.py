@@ -25,7 +25,7 @@ def _find_breakeven(df, adhoc):
     df.drop(['next_neg','next_pos','prev_neg','prev_pos','is_pos'], inplace=True, axis=1)
 
     # find current spot position
-    df['sd'] = df.loc[:,0] - adhoc 
+    df['sd'] = df.iloc[:,0] - adhoc 
     df['spot_vicinity'] = df.sd.apply(abs) < 5
     df.drop(['sd'], axis=1, inplace=True)
 
