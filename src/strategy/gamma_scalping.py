@@ -131,7 +131,8 @@ class EuropeanOption(Asset):
         
         new_spot = Asset.get_spot_price( self.underlying )
         chg = (new_spot-self.init_spot)/self.init_spot
-        
+        if chg < 1/1000:
+            return 0, None
         delta_change = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
         self.pdelta += delta_change
         addition = None
