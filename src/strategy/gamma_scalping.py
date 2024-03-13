@@ -124,6 +124,7 @@ class EuropeanOption(Asset):
         new_spot = Asset.get_spot_price( self.underlying )
         chg = (new_spot-self.init_spot)/self.init_spot
         if abs(chg)<2/10000:
+            print(f'  -- trivial chg: {(chg*100):.3f}%')
             return -np.inf, None 
 
         dd = self.on_spot_change( self.init_spot, new_spot)
