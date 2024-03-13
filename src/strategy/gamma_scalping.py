@@ -123,6 +123,7 @@ class EuropeanOption(Asset):
     def on_market_move(self, new_spot):
         dd = self.on_spot_change( self.init_spot, new_spot)
         self.pdelta += dd
+        print( self.pdelta, dd )
         if abs(dd)>0:
             print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.1f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
