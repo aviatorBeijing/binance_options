@@ -8,7 +8,7 @@ from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 from brisk.bfee import calc_fee
 from strategy.gamma_scalping import EuropeanOption, Asset, Spot 
 
-spot_positions = []
+spot_positions = [] # TODO Need a storage method, to track the scraple history. FIXME
 
 def _main( contracts:list ):
     global spot_positions
