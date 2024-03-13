@@ -134,7 +134,7 @@ class EuropeanOption(Asset):
         if from_spot == to_spot: return 0
 
         delta_chg = ( to_spot - from_spot ) * self.greeks['gamma'] *self.nominal *self.quantity
-        delta_chg = round(delta_chg) # convert to whole number as stock shares FIXME what about BTC, DOGE, etc.?
+        #delta_chg = round(delta_chg) # convert to whole number as stock shares FIXME what about BTC, DOGE, etc.?
         return delta_chg
         
     def on_greeks_change(self, new_greeks={}): # TODO if delta,gamma changes, also need dynamic hedging
