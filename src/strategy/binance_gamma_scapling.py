@@ -21,7 +21,8 @@ def _main( contracts:list ):
         if addition:
             spot_positions += [addition]
             p1 = Asset.get_spot_price( spot_positions[0].ric ) # value positions based on a the same spot price
-            print(f'    -- scaples (#{len(spot_positions)-1}):', sum([d.value(p1) for d in spot_positions[1:]]))
+            profit = sum([d.value(p1) for d in spot_positions[1:]])
+            print(f'    -- scaples (#{len(spot_positions)-1}): ${profit:.4f}')
     
 def _mp_main(contracts:str):
     global spot_positions
