@@ -20,10 +20,7 @@ class Asset:
             return (float(bid)+float(ask))*.5 
     @staticmethod
     def get_options_price(contract):
-        contract_price = None 
-        def price_setter(c, data):
-            c = data
-        sync_fetch_ticker( contract, handler=partial( price_setter, (contract_price,) ) )
+        contract_price = sync_fetch_ticker( contract )
         return contract_price
 
     @staticmethod
