@@ -19,7 +19,7 @@ def _main( contracts:list ):
 def _mp_main(contracts:str):
     cts = []
     for contract in contracts.split(','):
-        opt = EuropeanOption(contract, 1500, 0.01, 1).init()
+        opt = EuropeanOption(contract, 1500, 1, 1).init()
         cts += [ opt ]
     underlying = cts[0].underlying
     init_spot = cts[0].init_spot
