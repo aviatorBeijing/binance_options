@@ -92,6 +92,9 @@ class EuropeanOption(Asset):
         self.pdelta *= (t*s)
         return self
 
+    def update_greeks(self):
+        self.greeks = Asset.get_options_greeks(self.contract)
+        
     def __str__(self):
         return f'''
       -- {self.ric} --
@@ -121,6 +124,7 @@ class EuropeanOption(Asset):
         return self.pdelta
         
     def on_market_move(self):
+        self.update_greeks()
         print( self.greeks['delta'])
         new_spot = Asset.get_spot_price( self.underlying )
         chg = (new_spot-self.init_spot)/self.init_spot
