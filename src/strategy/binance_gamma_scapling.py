@@ -35,7 +35,7 @@ def _mp_main(contracts:str):
     print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
     print(f'-- need to upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of {underlying}')
-    spot_positions += [ Spot(underlying,init_spot,total_option_deltas) ]
+    spot_positions += [ Spot(underlying,init_spot,total_option_deltas*(-1)) ]
 
     while True:
         try:
