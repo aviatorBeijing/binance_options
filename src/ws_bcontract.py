@@ -107,6 +107,7 @@ def on_open(ws):
 endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
 
 def sync_fetch_ticker( contract:str, handler ):
+    print( '***', contract, handler)
     try:
         with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
             contract_data = json.loads(fh.read())
