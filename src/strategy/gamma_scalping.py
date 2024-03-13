@@ -121,15 +121,19 @@ class EuropeanOption(Asset):
         return self.pdelta
         
     def on_market_move(self):
-        
         new_spot = Asset.get_spot_price( self.underlying )
+        chg = (new_spot-self.init_spot)/self.init_spot
+        if abs(chg)<2/10000:
+            return -np.inf, None 
+
         dd = self.on_spot_change( self.init_spot, new_spot)
         self.pdelta += dd
         addition = None
         if abs(dd)>0:
-            print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.3f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
+            print(f'  -- spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
             addition = Spot(self.underlying, new_spot, -dd)
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
+        
         self.init_spot = new_spot # Reset mark price after rebalnced
         return dd, addition
     
@@ -176,13 +180,13 @@ if __name__ == '__main__':
     def adjust_delta( new_price, spots=spots ):
         Asset.get_spot_price = lambda e: new_price #Test
         delta_shift, spot = c.on_market_move()
-        #spot = Spot('XYZ/USDT', new_price, -delta_shift) # Short more if delta increased
-        Asset.get_spot_price = lambda e: new_price # Test
-        spots+=[spot]
+        if spot: # Threshold reached and a new position is necessary
+            Asset.get_spot_price = lambda e: new_price # Test
+            spots+=[spot]
 
-        shares = sum([d.delta for d in spots])
-        netp = c.position_delta + shares
-        assert (netp)==0, f"Not fully hedged. Net={netp}"
+            shares = sum([d.delta for d in spots])
+            netp = c.position_delta + shares
+            assert (netp)==0, f"Not fully hedged. Net={netp}"
     
     eods = []
     
