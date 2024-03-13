@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
     spots = [] # spot stack
 
-    spot = Spot('XYZ/USDT', p0, -1_000)
+    spot = Spot('XYZ/USDT', p0, -c.position_delta)
     Asset.get_spot_price = lambda e: p0
     spots+=[spot]
     print( '-- delta of spot:', spot.delta)
