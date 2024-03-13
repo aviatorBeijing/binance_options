@@ -49,8 +49,9 @@ class Asset:
 class Spot(Asset):
     def __init__(self, ric, entry_price, quantity) -> None:
         super().__init__(ric, entry_price, quantity)
-    def value(self):
-        current_price = Asset.get_spot_price(self.ric)
+    def value(self, current_price=None ):
+        if not current_price: # If not provided by caller
+            current_price = Asset.get_spot_price(self.ric)
         dv = (current_price - self.entry_price) * self.quantity
         return dv
     @property
