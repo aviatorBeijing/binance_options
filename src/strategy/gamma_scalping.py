@@ -140,12 +140,12 @@ class EuropeanOption(Asset):
         self.pdelta += delta_change
         addition = None
         if abs(delta_change)>0:
-            print(f'  -- spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
+            print(f'  -- spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if delta_change>0 else "BUY" if delta_change<0 else "STAY"} {abs(delta_change):.6f} spot')
             addition = Spot(self.underlying, new_spot, -s_delta_change)
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         
         self.init_spot = new_spot # Reset mark price after rebalnced
-        return dd, addition
+        return delta_change, addition
     
     def on_option_delta_change(self):
         self.update_greeks()
