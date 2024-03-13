@@ -18,14 +18,17 @@ def _main( contracts:list ):
     
 def _mp_main(contracts:str):
     cts = []
+    qty = 1.
+    nominal = 1.
     for contract in contracts.split(','):
-        opt = EuropeanOption(contract, 1500, 1, 1).init()
+        opt = EuropeanOption(contract, 1500, qty, nominal).init()
         cts += [ opt ]
     underlying = cts[0].underlying
     init_spot = cts[0].init_spot
-    total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
+    td = total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
     print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
+    print(f'-- need to upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of spot')
 
     while True:
         try:
