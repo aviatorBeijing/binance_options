@@ -92,9 +92,7 @@ class EuropeanOption(Asset):
 
     def normalized_delta(self):
         dt = self.greeks['delta']*self.nominal*self.quantity
-        t = 1 if self.putcall == 'call' else -1
-        s = 1 if self.quantity >0 else -1
-        dt *= (t*s)
+        dt *= 1 if self.quantity >0 else -1
         return dt
 
     def update_greeks(self):
