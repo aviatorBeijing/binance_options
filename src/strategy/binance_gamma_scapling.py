@@ -23,6 +23,8 @@ def _mp_main(contracts:str):
     for contract in contracts.split(','):
         opt = EuropeanOption(contract, 1500, 0.01, 1).init()
         cts += [ opt ]
+    total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
+    print('-- initial option delta:', total_option_deltas)
 
     while True:
         try:
