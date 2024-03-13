@@ -6,9 +6,12 @@ import numpy as np
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 from brisk.bfee import calc_fee
+from strategy.gamma_scalping import EuropeanOption
 
 def _main( contracts ):
-    pass
+    for contract in contracts.split(','):
+        opt = EuropeanOption(contract, 1500, 0.01, 1)
+        print( opt.greeks )
     
 def _mp_main(contracts):
     while True:
