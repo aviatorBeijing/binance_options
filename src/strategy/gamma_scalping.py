@@ -82,15 +82,20 @@ class EuropeanOption(Asset):
         self.underlying = get_underlying( contract)
         self.maturity = self.get_maturity( )
         self.nominal = nominal 
+
         self.init_spot = Asset.get_spot_price(self.underlying)
         
         # Position delta
     def init(self):
-        self.pdelta = self.greeks['delta']*self.nominal*self.quantity
+        self.pdelta = self.normalized_delta()
+        return self
+
+    def normalized_delta(self):
+        dt = self.greeks['delta']*self.nominal*self.quantity
         t = 1 if self.putcall == 'call' else -1
         s = 1 if self.quantity >0 else -1
-        self.pdelta *= (t*s)
-        return self
+        dt *= (t*s)
+        return dt
 
     def update_greeks(self):
         self.greeks = Asset.get_options_greeks(self.contract)
@@ -125,15 +130,13 @@ class EuropeanOption(Asset):
         
     def on_market_move(self):
         self.update_greeks()
-        print( self.greeks['delta'])
+        delta_change = self.normalized_delta() - self.pdelta # delta chg from options itself
         new_spot = Asset.get_spot_price( self.underlying )
+        
         chg = (new_spot-self.init_spot)/self.init_spot
-        if abs(chg)<2/10000:
-            if DEBUG:
-                print(f'  -- trivial chg: {(chg*100):.3f}%')
-            return -np.inf, None 
-
-        dd = self.on_spot_change( self.init_spot, new_spot)
+        
+        dd = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
+        print('***', delta_change, dd, delta_change+dd)
         self.pdelta += dd
         addition = None
         if abs(dd)>0:
