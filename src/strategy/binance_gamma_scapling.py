@@ -11,9 +11,9 @@ from strategy.gamma_scalping import EuropeanOption
 def _main( contracts ):
     for contract in contracts.split(','):
         opt = EuropeanOption(contract, 1500, 0.01, 1)
-        delta = opt['delta']
-        gamma = opt['gamma']
-        vol = opt['impvol']
+        delta = opt.greeks['delta']
+        gamma = opt.greeks['gamma']
+        vol = opt.greeks['impvol']
         print( contract, delta,gamma,vol )
     
 def _mp_main(contracts):
