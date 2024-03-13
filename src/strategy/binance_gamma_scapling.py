@@ -17,7 +17,9 @@ def _main( contracts:list ):
         gamma = opt.greeks['gamma']
         vol = opt.greeks['impvol']
 
-        opt.on_market_move()
+        _, addition = opt.on_market_move()
+        if addition:
+            spot_positions += [addition]
         print('    -- spots:', spot_positions)
     
 def _mp_main(contracts:str):
