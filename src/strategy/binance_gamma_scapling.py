@@ -14,16 +14,17 @@ def _main( contracts:list ):
         gamma = opt.greeks['gamma']
         vol = opt.greeks['impvol']
 
-        opt.on_market_move(
-            Asset.get_spot_price( opt.get_underlying() )
-        )
+        opt.on_market_move()
     
 def _mp_main(contracts:str):
     cts = []
     for contract in contracts.split(','):
         opt = EuropeanOption(contract, 1500, 0.01, 1).init()
         cts += [ opt ]
+    underlying = cts[0].underlying
+    init_spot = cts[0].init_spot
     total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
+    print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
 
     while True:
