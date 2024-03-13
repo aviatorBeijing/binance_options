@@ -27,7 +27,7 @@ class Asset:
         return None
 
     @staticmethod
-    def get_options_greeks(ric):
+    def get_options_greeks(contract):
         gks = sync_fetch_ticker( contract )
         if gks:
             delta, gamma, theta, vega = gks['delta'], gks['gamma'], gks['theta'], gks['vega']
