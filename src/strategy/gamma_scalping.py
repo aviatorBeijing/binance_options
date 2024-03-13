@@ -212,7 +212,7 @@ if __name__ == '__main__':
     p1 = 38.25
     Asset.get_spot_price = lambda v: p1
     for spot in spots[1:]:
-        v = spot.value(p1)
+        v = spot.value()
         print( spot, f"{v:.6f}")
     scaples = sum( [d.value() for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
     print( f"-- scaple profits (after reduced of theta decay): \n\t${(scaples + sum(eods)):.2f}" )
