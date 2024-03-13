@@ -1,5 +1,4 @@
 import datetime,click
-import websocket
 import time,os
 import rel,json
 import pandas as pd
@@ -124,6 +123,7 @@ def sync_fetch_ticker( contract:str, handler=None ):
         return
 
 def _main(rics:str, channel):
+    import websocket
     rics = rics.split(',')
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )
     websocket.enableTrace(False) #True)

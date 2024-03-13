@@ -120,6 +120,10 @@ def binance_spot(symbol='BTC/USDT')->tuple:
     bid,ask = qts['bid'],qts['ask']
     return float(bid),float(ask)
 
+def get_underlying(contract):
+    fds = contract.split('-')
+    return f"{fds[0]}/USDT"
+
 def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     ohlcvs = ex_binance.fetch_ohlcv(symbol, span,limit=1000)
     recs = []

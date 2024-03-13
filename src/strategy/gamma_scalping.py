@@ -1,7 +1,8 @@
 from functools import partial 
 
-from butil.butils import get_maturity,get_binance_spot
+from butil.butils import get_maturity,get_binance_spot,get_underlying
 from ws_bcontract import sync_fetch_ticker
+import numpy  as np
 
 """
 Ref: Trading Options Greeks, by Dan Passarelli, pg. 256
@@ -76,7 +77,7 @@ class EuropeanOption(Asset):
         self.putcall = "call" if fds[3] == 'C' else "put"
 
         self.greeks = Asset.get_options_greeks(self.contract)
-        self.underlying = self.get_underlying( )
+        self.underlying = get_underlying( contract)
         self.maturity = self.get_maturity( )
         self.nominal = nominal 
         self.init_spot = Asset.get_spot_price(self.underlying)
@@ -98,21 +99,18 @@ class EuropeanOption(Asset):
     maturity: {self.maturity:.4f}
     greeks: {self.greeks}
     '''
-    def get_underlying(self):
-        fds = self.contract.split('-')
-        return f"{fds[0]}/USDT"
     def get_maturity(self):
         dt = get_maturity( self.contract )
         return dt
     def value(self):
         if self.putcall == 'call': # value at Expiry
-            return max(0, self.get_spot_price(self.underlying) - self.strike ) 
+            return max(0, Asset.get_spot_price(self.underlying) - self.strike ) 
         elif self.putcall == 'put':
-            return max(0, self.strike - self.get_spot_price(self.underlying) )
+            return max(0, self.strike - Asset.get_spot_price(self.underlying) )
         else:
             raise Exception(f"Type = {self.putcall} is unkown.")
     def calc_bsm_greeks(self):
-        S = self.get_spot_price( self.ric )
+        S = Asset.get_spot_price( self.ric )
         K = self.strike
         T = self.maturity
         r = 5/100
@@ -121,11 +119,12 @@ class EuropeanOption(Asset):
         return self.pdelta
         
     def on_market_move(self):
+        
         new_spot = Asset.get_spot_price( self.underlying )
         dd = self.on_spot_change( self.init_spot, new_spot)
         self.pdelta += dd
         if abs(dd)>0:
-            print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.1f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
+            print(f'  -- spot ${self.init_spot} to ${new_spot}, {((new_spot-self.init_spot)/self.init_spot*100):.1f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         self.init_spot = new_spot # Reset mark price after rebalnced
         return dd
@@ -140,9 +139,9 @@ class EuropeanOption(Asset):
         pass
 
 if __name__ == '__main__':
-    s = EuropeanOption('BTC-240313-71000-P',1500,0.01,1)
-    print( Asset.get_options_price( s.contract ) )
-    print( s.greeks )
+    #s = EuropeanOption('BTC-240313-71000-P',1500,0.01,1)
+    #print( Asset.get_options_price( s.contract ) )
+    #print( s.greeks )
 
 
     nc = 20 # numbmer of calls
@@ -162,7 +161,7 @@ if __name__ == '__main__':
     spots = [] # spot stack
 
     spot = Spot('XYZ/USDT', p0, -1_000)
-    spot.get_spot_price = lambda e: p0
+    Asset.get_spot_price = lambda e: p0
     spots+=[spot]
     print( '-- delta of spot:', spot.delta)
     print( '-- total delta:', spot.delta + c.position_delta )
@@ -171,10 +170,10 @@ if __name__ == '__main__':
         return c.greeks['theta'] * c.nominal * c.quantity
 
     def adjust_delta( new_price, spots=spots ):
-        c.get_spot_price = lambda e: new_price #Test
-        delta_shift = c.on_market_move(new_price)
+        Asset.get_spot_price = lambda e: new_price #Test
+        delta_shift = c.on_market_move()
         spot = Spot('XYZ/USDT', new_price, -delta_shift) # Short more if delta increased
-        spot.get_spot_price = lambda e: new_price # Test
+        Asset.get_spot_price = lambda e: new_price # Test
         spots+=[spot]
 
         shares = sum([d.delta for d in spots])

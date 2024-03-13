@@ -55,6 +55,8 @@ def get_atm( underlying, df ):
 @click.option('--underlying', default="BTC")
 @click.option('--refresh_oi', is_flag=True, default=False)
 def main(underlying, refresh_oi):
+    assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
+
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
 
     df = fetch_contracts( underlying )
@@ -106,8 +108,14 @@ def main(underlying, refresh_oi):
     print( tabulate(df.sort_values('raw_oi', ascending=False), headers="keys") ) 
     df.drop(['raw_oi'], inplace=True, axis=1)
 
+    from butil.butils import get_binance_spot
+    get_binance_spot()
     print('-- ATM by maturities:')
     print( tabulate(df, headers="keys") )
+    print('  -- ATM by maturities (Puts):')
+    print( tabulate(df[df.ctype=='put'], headers="keys") )
+    print('  -- ATM by maturities (Calls):')
+    print( tabulate(df[df.ctype=='call'], headers="keys") )
 
     fn = f"{fdir}/_atms_{underlying.lower()}.csv"
     with open(fn, 'w') as fh:
