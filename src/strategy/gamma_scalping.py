@@ -66,7 +66,7 @@ class EuropeanOption(Asset):
         self.underlying = self.get_underlying( )
         self.maturity = self.get_maturity( )
         self.nominal = nominal 
-        self.init_spot = self.get_spot_price(self.underlying)
+        self.init_spot = Asset.get_spot_price(self.underlying)
         
         # Position delta
     def init(self):
@@ -135,6 +135,7 @@ if __name__ == '__main__':
     p0 = 40 # initial spot price when creating portfolio
 
     contract = f'XYZ-240309-{p0}-C'
+    Asset.get_spot_price = lambda e: p0
     c = EuropeanOption(contract, call_price, nc, 100)
     c.greeks = {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20}
     c.init_spot = p0
