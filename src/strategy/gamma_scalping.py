@@ -21,11 +21,27 @@ class Asset:
     @staticmethod
     def get_options_price(contract):
         contract_price = sync_fetch_ticker( contract )
-        return contract_price
+        if contract_price:
+            bid, ask = contract_price['bid'], contract_price['ask']
+            return float(bid), float(ask)
+        return None
 
     @staticmethod
     def get_options_greeks(ric):
-        return  
+        gks = sync_fetch_ticker( contract )
+        if gks:
+            delta, gamma, theta, vega = gks['delta'], gks['gamma'], gks['theta'], gks['vega']
+            impvol, impvol_bid, impvol_ask = gks['impvol'], gks['impvol_bid'], gks['impvol_ask']
+            return {
+                'delta': float(delta),
+                'gamma': float(gamma),
+                'theta': float(theta),
+                'vega': float(vega),
+                'impvol': float(impvol),
+                'impvol_bid': float( impvol_bid ),
+                'impvol_ask': float( impvol_ask ),
+            }
+        return {}  
 
     def value(self): raise Exception("Need impl.") 
 
@@ -59,7 +75,7 @@ class EuropeanOption(Asset):
         self.expiry = fds[1]
         self.putcall = "call" if fds[3] == 'C' else "put"
 
-        self.greeks = self.get_options_greeks(self.contract)
+        self.greeks = Asset.get_options_greeks(self.contract)
         self.underlying = self.get_underlying( )
         self.maturity = self.get_maturity( )
         self.nominal = nominal 
@@ -125,6 +141,7 @@ class EuropeanOption(Asset):
 if __name__ == '__main__':
     s = EuropeanOption('BTC-240313-71000-P',1500,0.01,1)
     print( Asset.get_options_price( s.contract ) )
+    print( s.greeks )
 
 
     nc = 20 # numbmer of calls
