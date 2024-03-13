@@ -207,7 +207,9 @@ if __name__ == '__main__':
     eods += [eod()]
 
     p1 = 38.25
-    for spot in spots[1:]:print( spot, spot.value(p1))
+    for spot in spots[1:]:
+        v = spot.value(p1)
+        print( spot, f"{v:.6f}")
     scaples = sum( [d.value( p1 ) for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
     print( f"-- scaple profits (after reduced of theta decay): \n\t${(scaples + sum(eods)):.2f}" )
     print( f"-- spot position left: {sum([d.delta for d in spots])}")
