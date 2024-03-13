@@ -129,24 +129,29 @@ class EuropeanOption(Asset):
         return self.pdelta
         
     def on_market_move(self):
-        self.update_greeks()
-        delta_change = self.normalized_delta() - self.pdelta # delta chg from options itself
-        new_spot = Asset.get_spot_price( self.underlying )
         
+        new_spot = Asset.get_spot_price( self.underlying )
         chg = (new_spot-self.init_spot)/self.init_spot
         
-        dd = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
-        print('***', delta_change, dd, delta_change+dd)
-        self.pdelta += dd
+        o_delta_change = self.on_option_delta_change()
+        s_delta_change = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
+        delta_change = o_delta_change + s_delta_change
+        
+        self.pdelta += delta_change
         addition = None
-        if abs(dd)>0:
+        if abs(delta_change)>0:
             print(f'  -- spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd):.6f} spot')
-            addition = Spot(self.underlying, new_spot, -dd)
+            addition = Spot(self.underlying, new_spot, -s_delta_change)
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         
         self.init_spot = new_spot # Reset mark price after rebalnced
         return dd, addition
     
+    def on_option_delta_change(self):
+        self.update_greeks()
+        delta_change = self.normalized_delta() - self.pdelta # delta chg from options itself
+        return delta_change
+
     def on_spot_change(self, from_spot, to_spot):
         if from_spot == to_spot: return 0
         delta_chg = ( to_spot - from_spot ) * self.greeks['gamma'] *self.nominal *self.quantity
