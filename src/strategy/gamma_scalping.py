@@ -121,6 +121,7 @@ class EuropeanOption(Asset):
         return self.pdelta
         
     def on_market_move(self):
+        print( self.greeks['delta'])
         new_spot = Asset.get_spot_price( self.underlying )
         chg = (new_spot-self.init_spot)/self.init_spot
         if abs(chg)<2/10000:
