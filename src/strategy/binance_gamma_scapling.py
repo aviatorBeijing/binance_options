@@ -14,7 +14,7 @@ def _main( contracts ):
         delta = opt.greeks['delta']
         gamma = opt.greeks['gamma']
         vol = opt.greeks['impvol']
-        print( contract, delta,gamma,vol )
+        print( contract, delta,gamma,vol, opt.value() )
 
         del opt
     

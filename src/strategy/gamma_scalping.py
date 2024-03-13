@@ -110,7 +110,7 @@ class EuropeanOption(Asset):
             return max(0, self.strike - self.get_spot_price(self.underlying) )
         else:
             raise Exception(f"Type = {self.putcall} is unkown.")
-    def calc_options_greeks(self):
+    def calc_bsm_greeks(self):
         S = self.get_spot_price( self.ric )
         K = self.strike
         T = self.maturity
