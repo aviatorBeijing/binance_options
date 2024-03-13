@@ -13,7 +13,7 @@ class Asset:
         self.quantity = quantity
     
     @staticmethod
-    def get_spot_price(ric, ask=True):
+    def get_spot_price(ric, ask=True) -> float:
         bid,ask = get_binance_spot( ric )
         if ask: return float(ask)
         else:
