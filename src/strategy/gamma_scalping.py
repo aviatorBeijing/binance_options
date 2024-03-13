@@ -175,6 +175,7 @@ if __name__ == '__main__':
     Asset.get_spot_price = lambda e: p0
     c = EuropeanOption(contract, call_price, nc, 100)
     c.greeks = {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20}
+    c.update_greeks = lambda x: {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20} # Assume unchange
     c.init_spot = p0
     c.init()
 
