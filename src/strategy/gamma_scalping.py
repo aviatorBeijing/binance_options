@@ -1,6 +1,7 @@
-import datetime 
+from functools import partial 
 
-from butil.butils import get_maturity
+from butil.butils import get_maturity,get_binance_spot
+from ws_bcontract import sync_fetch_ticker
 
 """
 Ref: Trading Options Greeks, by Dan Passarelli, pg. 256
@@ -12,11 +13,19 @@ class Asset:
         self.quantity = quantity
     
     @classmethod
-    def get_spot_price(self,ric):
-        return 
+    def get_spot_price(self,ric, ask=True):
+        bid,ask = get_binance_spot( ric )
+        if ask: return float(ask)
+        else:
+            return (float(bid)+float(ask))*.5 
     @classmethod
-    def get_options_price(self,ric):
-        return 
+    def get_options_price(self,contract):
+        contract_price = None 
+        def price_setter(c, data):
+            c = data
+        sync_fetch_ticker( contract, handler=partial( price_setter, (contract_price,) ) )
+        return contract_price
+
     @classmethod
     def get_options_greeks(self,ric):
         return  
@@ -39,20 +48,21 @@ class Spot(Asset):
         return self.__str__()
 
 class EuropeanOption(Asset):
-    def __init__(self, ric, entry_price, quantity,
+    def __init__(self, contract, entry_price, quantity,
                 nominal) -> None:
         """
         @brief
         param nominal   (int): The multiplier of a single contract, 
                               i.e., how many spot asset is covered by one option contract.
         """
-        super().__init__(ric, entry_price, quantity)
-        fds = ric.split("-")
+        super().__init__(contract, entry_price, quantity)
+        fds = contract.split("-")
+        self.contract = self.ric = contract
         self.strike = float(fds[2])
         self.expiry = fds[1]
         self.putcall = "call" if fds[3] == 'C' else "put"
 
-        self.greeks = self.get_options_greeks(self.ric)
+        self.greeks = self.get_options_greeks(self.contract)
         self.underlying = self.get_underlying( )
         self.maturity = self.get_maturity( )
         self.nominal = nominal 
@@ -75,10 +85,10 @@ class EuropeanOption(Asset):
     greeks: {self.greeks}
     '''
     def get_underlying(self):
-        fds = self.ric.split('-')
+        fds = self.contract.split('-')
         return f"{fds[0]}/USDT"
     def get_maturity(self):
-        dt = get_maturity( self.ric )
+        dt = get_maturity( self.contract )
         return dt
     def value(self):
         if self.putcall == 'call': # value at Expiry
@@ -116,6 +126,10 @@ class EuropeanOption(Asset):
         pass
 
 if __name__ == '__main__':
+    s = EuropeanOption('BTC-240313-71000-P',1500,0.01,1)
+    print( s.get_options_price( s.contract ) )
+
+
     nc = 20 # numbmer of calls
     call_price = 19.5
     p0 = 40 # initial spot price when creating portfolio

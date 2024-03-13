@@ -113,6 +113,8 @@ def get_binance_index(contract)->tuple:
 
     return float(v)
 
+def get_binance_spot( symbol='BTC/USDT'): #Alias
+    return binance_spot( symbol )
 def binance_spot(symbol='BTC/USDT')->tuple:
     qts = ex_binance.fetch_ticker(symbol)
     bid,ask = qts['bid'],qts['ask']
