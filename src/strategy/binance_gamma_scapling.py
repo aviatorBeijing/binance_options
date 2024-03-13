@@ -20,7 +20,7 @@ def _main( contracts:list ):
         _, addition = opt.on_market_move()
         if addition:
             spot_positions += [addition]
-        print('    -- spots:', spot_positions)
+            print('    -- spots:', len(spot_positions), sum([d.value() for d in spot_positions[1:]]))
     
 def _mp_main(contracts:str):
     global spot_positions

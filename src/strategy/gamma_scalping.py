@@ -49,7 +49,8 @@ class Asset:
 class Spot(Asset):
     def __init__(self, ric, entry_price, quantity) -> None:
         super().__init__(ric, entry_price, quantity)
-    def value(self, current_price):
+    def value(self):
+        current_price = Asset.get_spot_price(self.ric)
         dv = (current_price - self.entry_price) * self.quantity
         return dv
     @property
@@ -209,9 +210,10 @@ if __name__ == '__main__':
     eods += [eod()]
 
     p1 = 38.25
+    Asset.get_spot_price = lambda v: p1
     for spot in spots[1:]:
         v = spot.value(p1)
         print( spot, f"{v:.6f}")
-    scaples = sum( [d.value( p1 ) for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
+    scaples = sum( [d.value() for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
     print( f"-- scaple profits (after reduced of theta decay): \n\t${(scaples + sum(eods)):.2f}" )
     print( f"-- spot position left: {sum([d.delta for d in spots])}")
