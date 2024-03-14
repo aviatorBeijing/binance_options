@@ -62,13 +62,15 @@ def _mp_main(contracts:str):
 @click.command()
 @click.option('--contracts')
 def main(contracts):
-    conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
+    """conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
     calc = Process( target=_mp_main, args=(contracts,) )
     conn.start()
     calc.start()
     
     conn.join()
-    calc.join() 
+    calc.join() """
+
+    _mp_main( contracts )
 
 if __name__ == '__main__':
     main()
