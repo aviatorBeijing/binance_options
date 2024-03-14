@@ -4,7 +4,10 @@ import rel,json
 import pandas as pd
 
 from butil.butils import DATADIR,DEBUG
-from butil.bsql import bidask_table_exists, init_bidask_tbl,update_bidask_tbl
+from butil.bsql import (bidask_table_exists, 
+init_bidask_tbl,
+update_bidask_tbl,
+fetch_bidask)
 
 def _maturity( symbol ):
     ds = symbol.split('-')[1]
@@ -102,6 +105,8 @@ def on_message(ws, message):
                     init_bidask_tbl(df)
                 else:
                     update_bidask_tbl(data)
+                
+                fetch_bidask( sym.upper() )
                 
 
 def on_error(ws, error):
