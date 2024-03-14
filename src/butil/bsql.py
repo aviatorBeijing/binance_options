@@ -61,7 +61,7 @@ DO UPDATE SET {','.join(kv_pairs)};
         raise e
 def fetch_bidask(contract):
     cols=f"""
-SELECT * FROM {bidask_greeks_tbl} LIMIT 0';
+SELECT * FROM {bidask_greeks_tbl} LIMIT 0;
 """
     stmt=f"""
 SELECT * FROM {bidask_greeks_tbl} WHERE contract='{contract.upper()}';
