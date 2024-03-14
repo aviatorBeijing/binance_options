@@ -60,18 +60,13 @@ DO UPDATE SET {','.join(kv_pairs)};
         print(str(e))
         raise e
 def fetch_bidask(contract):
-    cols=f"""
-SELECT * FROM {bidask_greeks_tbl} LIMIT 0;
-"""
+    cols = ["last_trade","bid","ask","bidv","askv","delta","gamma","theta",
+                        "vega","impvol","impvol_bid","impvol_ask",
+                        "ts_beijing"]
     stmt=f"""
-SELECT * FROM {bidask_greeks_tbl} WHERE contract='{contract.upper()}';
+SELECT {','.join(cols)} FROM {bidask_greeks_tbl} WHERE contract='{contract.upper()}';
 """
     with bn_mkt_engine.connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(text(cols))
-            colnames = [desc[0] for desc in conn.cursor().description]
-            print( colnames )
-
         recs = conn.execute( text(stmt)).fetchall()
-        #if recs:
-        #    dict( zip(self.DB_COLS, recs[0]))
+        if recs:
+            print( list(zip(cols, recs[0]) ) )
