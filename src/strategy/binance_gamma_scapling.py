@@ -22,8 +22,9 @@ def _main( contracts:list ):
             spot_positions += [addition]
             p1 = Asset.get_spot_price( spot_positions[0].ric ) # value positions based on a the same spot price
             profit = sum([d.value(p1) for d in spot_positions[1:]])
-            
-            print(f'    -- scaples (#{len(spot_positions)-1}): ${profit:.4f}')
+            psum = sum([d.delta for d in spot_positions[1:]])
+
+            print(f'    -- scaples (#{len(spot_positions)-1}): ${profit:.4f}, spot positions: {psum}')
             
             """spot_delta = sum([d.delta for d in spot_positions])
             option_delta = opt.greeks['delta']
