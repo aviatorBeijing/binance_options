@@ -59,17 +59,14 @@ DO UPDATE SET {','.join(kv_pairs)};
         print(stmt)
         print(str(e))
         raise e
-def fetch_bidask(contract):
+def fetch_bidask(contract) ->dict:
     cols = ["last_trade","bid","ask","bidv","askv","delta","gamma","theta",
                         "vega","impvol","impvol_bid","impvol_ask",
-                        "ts_beijing"]
+                        "ts_beijing","contract"]
     stmt=f"""
 SELECT {','.join(cols)} FROM {bidask_greeks_tbl} WHERE contract='{contract.upper()}';
 """
     with bn_mkt_engine.connect() as conn:
         recs = conn.execute( text(stmt)).fetchall()
         if recs:
-            df = pd.DataFrame.from_records(
-                [ dict(zip(cols, recs[0]) ) ]
-            )
-            print(df)
+            return dict(zip(cols, recs[0]) )
