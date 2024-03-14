@@ -150,7 +150,7 @@ class EuropeanOption(Asset):
         if abs(chg) < 1e-12: # No change
             return 0, None
         if abs(chg) < 1/1000:
-            print(f'    -- trivial: {self.init_spot} to {new_spot}, {(chg*100):.3f}%')
+            #print(f'    -- trivial: {self.init_spot} to {new_spot}, {(chg*100):.3f}%')
             return 0, None
         delta_change = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
         self.pdelta += delta_change
