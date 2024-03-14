@@ -70,3 +70,4 @@ SELECT {','.join(cols)} FROM {bidask_greeks_tbl} WHERE contract='{contract.upper
         recs = conn.execute( text(stmt)).fetchall()
         if recs:
             return dict(zip(cols, recs[0]) )
+    return {}

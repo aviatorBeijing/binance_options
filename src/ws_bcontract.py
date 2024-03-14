@@ -105,10 +105,7 @@ def on_message(ws, message):
                     init_bidask_tbl(df)
                 else:
                     update_bidask_tbl(data)
-                
-                fetch_bidask( sym.upper() )
-                
-
+            
 def on_error(ws, error):
     print('error:', error)
 

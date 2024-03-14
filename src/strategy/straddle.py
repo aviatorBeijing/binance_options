@@ -1,10 +1,11 @@
 import os,datetime,json
-import pandas as pd 
+import pandas as pd
 import click,time
 from tabulate import tabulate
 import ccxt
 import numpy  as np
 
+from butil.bsql import fetch_bidask 
 from butil.butils import ( DATADIR,DEBUG,
                 get_binance_next_funding_rate,
                 get_maturity )
@@ -186,7 +187,8 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
         print(f'-- exiting position premium: ${user_premium}, size: {vol} contract(s)')
     print('*'*75)
     print("-"*10, f' {strategy} Contracts ', '-'*10)
-    try:
+    
+    """try:
         with open(f"{DATADIR}/{left.upper()}.json", 'r') as fh:
             ldata = json.loads(fh.read())
             print( '\t',left )#, ldata )
@@ -201,6 +203,9 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
         print('*** json data conflict, wait ...')
         time.sleep(5)
         return 
+    """
+    ldata = fetch_bidask(left.upper())
+    rdata = fetch_bidask(right.upper())
     
     if not ldata:
         raise Exception(f'*** {left.upper()} contract is not found in cached dir: {DATADIR}')
