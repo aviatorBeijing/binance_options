@@ -69,4 +69,4 @@ SELECT {','.join(cols)} FROM {bidask_greeks_tbl} WHERE contract='{contract.upper
     with bn_mkt_engine.connect() as conn:
         recs = conn.execute( text(stmt)).fetchall()
         if recs:
-            print( list(zip(cols, recs[0]) ) )
+            print( dict(zip(cols, recs[0]) ) )
