@@ -67,7 +67,7 @@ def on_message(ws, message):
     for row in rows:
         row = list(row)
         sym = row[0]
-        is_updating = False
+        """is_updating = False
         val = ','.join(row[1:4] )
         if sym not in dedups:
             dedups[ sym ] = val
@@ -75,12 +75,13 @@ def on_message(ws, message):
         else:
             if dedups[sym] != val:
                 dedups[sym] = val
-                is_updating = True 
-        if is_updating:
+                is_updating = True """
+        if True: #is_updating:
             m = _maturity( sym )
             if DEBUG:
                 print( sym, m, 'trade|bid|ask|spread|spd%', row[1:] )
-            with open(f"{DATADIR}/{sym}.json", 'w') as fh:
+            #with open(f"{DATADIR}/{sym}.json", 'w') as fh:
+            if True:
                 data = {
                         "last_trade": df.iloc[0].c,
                         "bid": df.iloc[0].bo,
@@ -95,7 +96,7 @@ def on_message(ws, message):
                         "impvol_bid": df.iloc[0].impvol_bid,
                         "impvol_ask": df.iloc[0].impvol_ask,
                         }
-                json.dump(data, fh)
+                #json.dump(data, fh)
 
                 data['contract'] = sym.upper()
                 ts = datetime.datetime.utcnow()+datetime.timedelta(hours=8)
@@ -121,12 +122,17 @@ endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ti
 
 def sync_fetch_ticker( contract:str, handler=None ):
     try:
-        with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
+        """with open(f"{DATADIR}/{contract.upper()}.json", 'r') as fh:
             contract_data = json.loads(fh.read())
             if handler:
                 handler( contract_data )
             else:
-                return contract_data
+                return contract_data"""
+        contract_data = fetch_bidask( contract.upper() )
+        if handler:
+            handler( contract_data )
+        else:
+            return contract_data
     except FileNotFoundError as  e:
         print(f'*** waiting for data ({contract}) ...')
         time.sleep(5)
