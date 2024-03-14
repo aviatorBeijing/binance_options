@@ -1,4 +1,5 @@
 import os,datetime,click,time,json,ccxt
+from butil.bsql import fetch_bidask
 import pandas as pd 
 from multiprocessing import Process
 import numpy as np
@@ -72,11 +73,13 @@ def _main( contracts:list ):
             contracts = contracts.split(',')
         recs = []
         for contract in contracts:
-            fn = f"{DATADIR}/{contract.upper()}.json"
+            """fn = f"{DATADIR}/{contract.upper()}.json"
             print('-- reading:', fn)
             with open(fn, 'r') as fh:
                 contract_data = json.loads(fh.read())
-                contract_data['c'] = contract
+                contract_data['c'] = contract"""
+            contract_data = fetch_bidask( contract )
+            contract_data['c'] = contract
             df = pd.DataFrame.from_records( [ contract_data ] )
 
             df.reset_index(inplace=True,drop=True)
