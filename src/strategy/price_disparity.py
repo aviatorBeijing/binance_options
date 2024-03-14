@@ -79,6 +79,7 @@ def _main( contracts:list ):
                 contract_data = json.loads(fh.read())
                 contract_data['c'] = contract"""
             contract_data = fetch_bidask( contract )
+            contract_data.pop('contract')
             contract_data['c'] = contract
             df = pd.DataFrame.from_records( [ contract_data ] )
 
