@@ -32,7 +32,7 @@ def bidask_table_exists():
     return table_exists(bidask_greeks_tbl, _engine=bn_mkt_engine)
 
 def init_bidask_tbl(df):
-    df.to_sql(bidask_greeks_tbl, bn_mkt_engine)
+    df.to_sql(bidask_greeks_tbl, bn_mkt_engine, index=False)
     with bn_mkt_engine.connect() as conn:
         stmt =  f'ALTER TABLE {bidask_greeks_tbl} ADD PRIMARY KEY (contract);'
         conn.execute( text(stmt))
