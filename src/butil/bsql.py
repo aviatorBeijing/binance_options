@@ -41,9 +41,11 @@ def update_bidask_tbl( data:dict ):
     vals = []
     kv_pairs = []
     for k in keys.split(","):
-        vals += [ data[k] ]
         if k != 'contract':
+            vals += [ data[k] ]
             kv_pairs += [f'{k}={data[k]}']
+        else:
+            vals += [ f"'{data[k]}'" ]
     stmt = f'''
 INSERT INTO {bidask_greeks_tbl} ({keys}) VALUES ({','.join([f"{v}" for v in vals])}) ON CONFLICT (contract)
 DO UPDATE SET {','.join(kv_pairs)};
