@@ -44,7 +44,7 @@ def _mp_main(contracts:str):
     init_spot = cts[0].init_spot
     td = total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
     for o in cts:
-        bid,ask,last_trade = o.get_options_price()
+        bid,ask,last_trade = o.get_options_price(o.contract)
         print('  -- ', o.contract, bid, ask, last_trade)
     print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
