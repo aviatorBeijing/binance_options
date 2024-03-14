@@ -229,8 +229,8 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
     else: pass # keep it empty
     return resp
 
-from multiprocessing import Process
-from ws_bcontract import _main as ws_connector
+#from multiprocessing import Process
+#from ws_bcontract import _main as ws_connector
 
 def _multiprocess_main(left,right,vol,user_premium):
     while True:
@@ -252,12 +252,14 @@ def _multiprocess_main(left,right,vol,user_premium):
 def main(left,right, size,user_premium):
 
     #conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
+    #calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
     #conn.start()
-    calc.start()
+    #calc.start()
     
     #conn.join()
-    calc.join()
+    #calc.join()
+    _multiprocess_main(left,right,size,user_premium)
+
 
 
 if __name__ == '__main__':
