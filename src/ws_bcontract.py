@@ -32,12 +32,8 @@ max_volatility = None
 def on_message(ws, message):
     global max_volatility
     msg = json.loads( message )
-    #import pprint;pprint.pprint(msg)
-    fds = ['s','c', 'mp', 'bo','ao','bq','aq', 'b','a','d','g','t','vo','V','A'] #for 'ticker'
-    #print( len(msg), msg)
     df = pd.DataFrame.from_records([ msg ] )
-    #print( df[ fds ] )
-
+    
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
     
@@ -64,7 +60,7 @@ def on_message(ws, message):
         max_volatility = MaxVolatility(df['s'].values[0], vo)
     
     rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta','gamma','theta','vega','impvol','impvol_bid','impvol_ask']].to_records(index=False)
-    print( len(rows))
+    
     for row in rows:
         row = list(row)
         sym = row[0]
