@@ -141,4 +141,4 @@ def get_maturity( contract:str )->float:
     ts = datetime.datetime.strptime('20'+fds[1], '%Y%m%d')
     tnow = datetime.datetime.utcnow()
     dt = (ts-tnow).total_seconds()/3600./24
-    return dt
+    return max(0,dt)

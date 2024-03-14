@@ -80,7 +80,7 @@ class EuropeanOption(Asset):
 
         self.greeks = Asset.get_options_greeks(self.contract)
         self.underlying = get_underlying( contract)
-        self.maturity = self.get_maturity( )
+        self.maturity = self.get_maturity()
         self.nominal = nominal 
 
         self.init_spot = Asset.get_spot_price(self.underlying)
@@ -102,6 +102,7 @@ class EuropeanOption(Asset):
         return f'''
       -- {self.ric} --
     underlying: {self.underlying}
+    nominal: {self.nominal}
     strike: {self.strike}
     expiry: {self.expiry}
     maturity: {self.maturity:.4f}
@@ -110,13 +111,21 @@ class EuropeanOption(Asset):
     def get_maturity(self):
         dt = get_maturity( self.contract )
         return dt
-    def value(self):
+    
+    def intrinsic_value(self):
         if self.putcall == 'call': # value at Expiry
-            return max(0, Asset.get_spot_price(self.underlying) - self.strike ) 
+            v = max(0, Asset.get_spot_price(self.underlying) - self.strike ) 
         elif self.putcall == 'put':
-            return max(0, self.strike - Asset.get_spot_price(self.underlying) )
+            v = max(0, self.strike - Asset.get_spot_price(self.underlying) )
         else:
             raise Exception(f"Type = {self.putcall} is unkown.")
+        return v 
+    def time_value(self):
+        return  -self.maturity * self.greeks['theta'] * self.nominal*self.quantity
+
+    def value(self):
+        return self.intrinsic_value() + self.time_value()
+
     def calc_bsm_greeks(self):
         S = Asset.get_spot_price( self.ric )
         K = self.strike
@@ -161,7 +170,7 @@ if __name__ == '__main__':
     call_price = 19.5
     p0 = 40 # initial spot price when creating portfolio
 
-    contract = f'XYZ-240309-{p0}-C'
+    contract = f'XYZ-240509-{p0}-C'
     Asset.get_spot_price = lambda e: p0
     c = EuropeanOption(contract, call_price, nc, 100)
     c.greeks = {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20}
@@ -228,3 +237,4 @@ if __name__ == '__main__':
     scaples = sum( [d.value() for d in spots[1:]] ) # The first spot is to construct initial Option+Spot portfolio. 
     print( f"-- scaple profits (after reduced of theta decay): \n\t${(scaples + sum(eods)):.2f}" )
     print( f"-- spot position left: {sum([d.delta for d in spots])}")
+    print( f"-- option contract value left: ${c.value():.2f}")
