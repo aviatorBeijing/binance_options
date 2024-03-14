@@ -42,9 +42,12 @@ def _mp_main(contracts:str):
     underlying = cts[0].underlying
     init_spot = cts[0].init_spot
     td = total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
+    for o in cts:
+        bid,ask,last_trade = o.get_options_price()
+        print('  -- ', o.contract, bid, ask, last_trade)
     print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
-    print(f'-- need to upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of {underlying}')
+    print(f'-- upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of {underlying}')
     spot_positions += [ Spot(underlying,init_spot,total_option_deltas*(-1)) ]
 
     while True:

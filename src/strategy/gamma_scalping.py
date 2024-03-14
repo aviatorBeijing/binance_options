@@ -22,9 +22,13 @@ class Asset:
     @staticmethod
     def get_options_price(contract):
         contract_price = sync_fetch_ticker( contract )
+        """
+        {"last_trade": "3105", "bid": "3015", "ask": "3050", "bidv": "2.97", "askv": "1.5", "delta": "0.48350074", "gamma": "0.00004636", "theta": "-208.4755263", "vega": "43.74505017", "impvol": "0.78341722", "impvol_bid": "0.77941656", "impvol_ask": "0.78741789"}
+        """
         if contract_price:
             bid, ask = contract_price['bid'], contract_price['ask']
-            return float(bid), float(ask)
+            last_trade = contract_price['last_trade']
+            return float(bid), float(ask), float(last_trade)
         return None
 
     @staticmethod
