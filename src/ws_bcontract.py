@@ -66,7 +66,8 @@ def on_message(ws, message):
     rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta','gamma','theta','vega','impvol','impvol_bid','impvol_ask']].to_records(index=False)
     for row in rows:
         row = list(row)
-        sym = row[0]; is_updating = False
+        sym = row[0]
+        is_updating = False
         val = ','.join(row[1:4] )
         if sym not in dedups:
             dedups[ sym ] = val

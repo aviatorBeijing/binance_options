@@ -71,8 +71,8 @@ def calc_straddle(  lcontract, rcontract,
         lfee = calc_fee(lask, vol, lcontract, is_taker=True)
         rfee = calc_fee(rask, vol, rcontract, is_taker=True)
         
-        print(f'  -- buy Put @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; vol: {(float(ldata["impvol"])*100):.1f}% ); time-value left: ${timeValueL:.2f}, {timeValueLPct:.1f}%')
-        print(f'  -- buy Call @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; vol: {(float(rdata["impvol"])*100):.1f}% ); time-value left: ${timeValueR:.2f}, {timeValueRPct:.1f}%')
+        print(f'  -- buy {lcontract} @ {lask:,.2f} (greeks: {float(ldata["delta"]):.4f}, {float(ldata["gamma"]):.6f},{float(ldata["theta"]):.6f}; vol: {(float(ldata["impvol"])*100):.1f}% ); time-value left: ${timeValueL:.2f}, {timeValueLPct:.1f}%')
+        print(f'  -- buy {rcontract} @ {rask:,.2f} (greeks: {float(rdata["delta"]):.4f}, {float(rdata["gamma"]):.6f}, {float(rdata["theta"]):.6f}; vol: {(float(rdata["impvol"])*100):.1f}% ); time-value left: ${timeValueR:.2f}, {timeValueRPct:.1f}%')
     else: # maker order (usually hard to fill & sliperage is large.)
         fee_rate = 2/10000
         lfee = calc_fee(lask, vol, lcontract, is_taker=False)
