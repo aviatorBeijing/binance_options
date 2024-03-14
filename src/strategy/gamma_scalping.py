@@ -1,4 +1,5 @@
-from functools import partial 
+from functools import partial
+from subprocess import call 
 
 from butil.butils import get_maturity,get_binance_spot,get_underlying, DEBUG
 from ws_bcontract import sync_fetch_ticker
@@ -29,7 +30,7 @@ class Asset:
             bid, ask = contract_price['bid'], contract_price['ask']
             last_trade = contract_price['last_trade']
             return float(bid), float(ask), float(last_trade)
-        return None
+        return None,None,None
 
     @staticmethod
     def get_options_greeks(contract):
@@ -88,6 +89,7 @@ class EuropeanOption(Asset):
         self.nominal = nominal 
 
         self.init_spot = Asset.get_spot_price(self.underlying)
+        self.bid,self.ask,self.last_trade = Asset.get_options_price(contract)
         
         # Position delta
     def init(self):
@@ -101,6 +103,7 @@ class EuropeanOption(Asset):
 
     def update_greeks(self):
         self.greeks = Asset.get_options_greeks(self.contract)
+        self.bid,self.ask,self.last_trade = Asset.get_options_price(self.contract)
         
     def __str__(self):
         return f'''
@@ -176,11 +179,13 @@ if __name__ == '__main__':
     call_price = 19.5
     p0 = 40 # initial spot price when creating portfolio
 
+    sync_fetch_ticker = lambda c: {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20,
+    'bid': call_price, 'ask': call_price, 'last_trade': call_price,'vega': 0,
+    'impvol':0, 'impvol_bid': 0, 'impvol_ask':0}
+
     contract = f'XYZ-240509-{p0}-C'
     Asset.get_spot_price = lambda e: p0
     c = EuropeanOption(contract, call_price, nc, 100)
-    c.greeks = {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20}
-    c.update_greeks = lambda: {'delta': 0.5, 'gamma': 2.8/20, 'theta': -0.5/20} # Assume unchange
     c.init_spot = p0
     c.init()
 
