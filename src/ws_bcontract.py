@@ -64,6 +64,7 @@ def on_message(ws, message):
         max_volatility = MaxVolatility(df['s'].values[0], vo)
     
     rows = df[['s','c', 'bo','ao', 'spread','spd%', 'delta','gamma','theta','vega','impvol','impvol_bid','impvol_ask']].to_records(index=False)
+    print( len(rows))
     for row in rows:
         row = list(row)
         sym = row[0]
