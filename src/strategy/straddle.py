@@ -172,7 +172,7 @@ def calc_straddle(  lcontract, rcontract,
     return resp 
     
 
-def _main(left,right, vol, is_taker=True, user_premium=0,check_bsm_parity=False):
+def _main(left,right, vol, is_taker=True, user_premium=0,check_parity=False):
     ldata = None;rdata = None
     spot_symbol = left.split('-')[0]+'/USDT'
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
@@ -260,7 +260,7 @@ def main(left,right, size,user_premium, check_parity):
     
     #conn.join()
     #calc.join()
-    _multiprocess_main(left,right,size,user_premium, check_parity)
+    _multiprocess_main(left,right,size,user_premium,check_parity)
 
 
 
