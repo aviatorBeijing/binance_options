@@ -172,7 +172,7 @@ def calc_straddle(  lcontract, rcontract,
     return resp 
     
 
-def _main(left,right, vol, is_taker=True, user_premium=0):
+def _main(left,right, vol, is_taker=True, user_premium=0,check_bsm_parity=False):
     ldata = None;rdata = None
     spot_symbol = left.split('-')[0]+'/USDT'
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
@@ -212,7 +212,8 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
     if not rdata: 
         raise Exception(f'*** {right.upper()} contract is not found in cached dir: {DATADIR}')
     
-    check_bsm_disparity( [left,right] )
+    if check_parity:
+        check_bsm_disparity( [left,right] )
 
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
@@ -232,11 +233,11 @@ def _main(left,right, vol, is_taker=True, user_premium=0):
 #from multiprocessing import Process
 #from ws_bcontract import _main as ws_connector
 
-def _multiprocess_main(left,right,vol,user_premium):
+def _multiprocess_main(left,right,vol,user_premium,check_parity):
     while True:
         try:
             #print('*'*5, "[Taker order]")
-            _main(left,right,vol,user_premium=user_premium)
+            _main(left,right,vol,user_premium=user_premium,check_parity=check_parity)
             #print('*'*5, "[Maker order]")
             #_main(left,right,vol, is_taker=False)
             time.sleep(5)
@@ -249,7 +250,8 @@ def _multiprocess_main(left,right,vol,user_premium):
 @click.option('--right', help="right leg (OTM call option)")
 @click.option('--size', default=1.0, help="1, 0.1, ... contract size, 1=1BTC contract")
 @click.option('--user_premium', default=0., help="a fixed float value, for an existing positions.")
-def main(left,right, size,user_premium):
+@click.option('--check_parity', is_flag=True, default=False)
+def main(left,right, size,user_premium, check_parity):
 
     #conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
     #calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
@@ -258,7 +260,7 @@ def main(left,right, size,user_premium):
     
     #conn.join()
     #calc.join()
-    _multiprocess_main(left,right,size,user_premium)
+    _multiprocess_main(left,right,size,user_premium, check_parity)
 
 
 
