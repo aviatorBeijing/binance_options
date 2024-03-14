@@ -4,6 +4,7 @@ import rel,json
 import pandas as pd
 
 from butil.butils import DATADIR,DEBUG
+from butil.bsql import bidask_table_exists, init_bidask_tbl,update_bidask_tbl
 
 def _maturity( symbol ):
     ds = symbol.split('-')[1]
@@ -91,6 +92,16 @@ def on_message(ws, message):
                         "impvol_ask": df.iloc[0].impvol_ask,
                         }
                 json.dump(data, fh)
+
+                data['contract'] = sym.upper()
+                ts = datetime.datetime.utcnow()+datetime.timedelta(hours=8)
+                data['ts_beijing'] = int(ts.timestamp())
+
+                if not bidask_table_exists():
+                    df = pd.DataFrame.from_records([data])
+                    init_bidask_tbl(df)
+                else:
+                    update_bidask_tbl(data)
                 
 
 def on_error(ws, error):

@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import partial
 from subprocess import call 
 
@@ -155,8 +156,9 @@ class EuropeanOption(Asset):
         delta_change = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
         self.pdelta += delta_change
         addition = None
+        ts = datetime.datetime.utcnow().timestamp();ts = int(ts)
         if abs(delta_change)>0:
-            print(f'  -- spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if delta_change>0 else "BUY" if delta_change<0 else "STAY"} {abs(delta_change):.6f} spot')
+            print(f'  -- [{ts}] spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if delta_change>0 else "BUY" if delta_change<0 else "STAY"} {abs(delta_change):.6f} spot')
             addition = Spot(self.underlying, new_spot, -delta_change)
             #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
         
