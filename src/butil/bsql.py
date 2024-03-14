@@ -67,8 +67,10 @@ SELECT * FROM {bidask_greeks_tbl} LIMIT 0;
 SELECT * FROM {bidask_greeks_tbl} WHERE contract='{contract.upper()}';
 """
     with bn_mkt_engine.connect() as conn:
-        colnames = conn.execute(text(cols)).fetchall()
+        conn.execute(text(cols)).fetchall()
+        colnames = [desc[0] for desc in conn.description]
         print( colnames )
+        
         recs = conn.execute( text(stmt)).fetchall()
         #if recs:
         #    dict( zip(self.DB_COLS, recs[0]))
