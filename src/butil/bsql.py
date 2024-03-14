@@ -36,6 +36,7 @@ def init_bidask_tbl(df):
     with bn_mkt_engine.connect() as conn:
         stmt =  f'ALTER TABLE {bidask_greeks_tbl} ADD PRIMARY KEY (contract);'
         conn.execute( text(stmt))
+        conn.commit()
 def update_bidask_tbl( data:dict ):
     keys = ','.join( data.keys())
     vals = []
@@ -53,6 +54,7 @@ DO UPDATE SET {','.join(kv_pairs)};
     try:
         with bn_mkt_engine.connect() as conn:
             conn.execute(text(stmt))
+            conn.commit()
     except Exception as e:
         print(stmt)
         print(str(e))
