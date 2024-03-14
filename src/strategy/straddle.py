@@ -251,12 +251,12 @@ def _multiprocess_main(left,right,vol,user_premium):
 @click.option('--user_premium', default=0., help="a fixed float value, for an existing positions.")
 def main(left,right, size,user_premium):
 
-    conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
+    #conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
     calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
-    conn.start()
+    #conn.start()
     calc.start()
     
-    conn.join()
+    #conn.join()
     calc.join()
 
 
