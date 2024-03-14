@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from functools import partial
 from subprocess import call 
 
