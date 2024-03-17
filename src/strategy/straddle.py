@@ -233,6 +233,8 @@ def _main(left,right, vol, is_taker=True, user_premium=0,check_parity=False):
     return resp
 
 def _multiprocess_main(left,right,vol,user_premium,check_parity):
+    print('-- waiting to data...')
+    time.sleep(2)
     while True:
         try:
             #print('*'*5, "[Taker order]")
@@ -253,7 +255,7 @@ def _multiprocess_main(left,right,vol,user_premium,check_parity):
 def main(left,right, size,user_premium, check_parity):
 
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
+    calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium,check_parity) )
     conn.start()
     calc.start()
     
