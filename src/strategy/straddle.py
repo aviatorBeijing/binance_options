@@ -4,6 +4,7 @@ import click,time
 from tabulate import tabulate
 import ccxt
 import numpy  as np
+from multiprocessing import Process
 
 from butil.bsql import fetch_bidask 
 from butil.butils import ( DATADIR,DEBUG,
@@ -11,6 +12,7 @@ from butil.butils import ( DATADIR,DEBUG,
                 get_maturity )
 from brisk.bfee import calc_fee
 from strategy.price_disparity import _main as check_bsm_disparity
+from ws_bcontract import _main as ws_connector
 
 ex = ccxt.binance()
 
@@ -230,9 +232,6 @@ def _main(left,right, vol, is_taker=True, user_premium=0,check_parity=False):
     else: pass # keep it empty
     return resp
 
-#from multiprocessing import Process
-#from ws_bcontract import _main as ws_connector
-
 def _multiprocess_main(left,right,vol,user_premium,check_parity):
     while True:
         try:
@@ -253,14 +252,14 @@ def _multiprocess_main(left,right,vol,user_premium,check_parity):
 @click.option('--check_parity', is_flag=True, default=False)
 def main(left,right, size,user_premium, check_parity):
 
-    #conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
-    #calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
-    #conn.start()
-    #calc.start()
+    conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
+    calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium) )
+    conn.start()
+    calc.start()
     
-    #conn.join()
-    #calc.join()
-    _multiprocess_main(left,right,size,user_premium,check_parity)
+    conn.join()
+    calc.join()
+    #_multiprocess_main(left,right,size,user_premium,check_parity)
 
 
 

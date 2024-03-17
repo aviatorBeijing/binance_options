@@ -39,7 +39,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
         df = binance_kline(f"{ric.upper()}/USDT")
         startts = df.timestamp.iloc[0]
         endts = df.timestamp.iloc[-1]
-        df.to_csv(fn, index=False)
+        #df.to_csv(fn, index=False)
     else:
         df = pd.read_csv(fn)
         startts = df.timestamp.iloc[0]
