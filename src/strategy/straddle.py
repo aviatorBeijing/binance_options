@@ -233,7 +233,7 @@ def _main(left,right, vol, is_taker=True, user_premium=0,check_parity=False):
     return resp
 
 def _multiprocess_main(left,right,vol,user_premium,check_parity):
-    print('-- waiting to data...')
+    print('-- waiting data...')
     time.sleep(2)
     while True:
         try:
