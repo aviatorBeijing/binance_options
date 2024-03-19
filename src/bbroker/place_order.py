@@ -16,7 +16,7 @@ class BOrder:
         self.qty =  qty 
         self.pce = pce 
 
-        assert any([action.lower() == e for e in ['sit','sell','buy']]), f"unsuppported: {action}"
+        assert any([action.lower() == e for e in ['sit','sell-limit','buy-limit','sell-mkt','buy-mkt']]), f"unsuppported: {action}"
         assert qty>0, f'must be positive, but found {qty}'
         assert pce>0, f'must be positive, but found {pce}'
     def __repr__(self) -> str:
