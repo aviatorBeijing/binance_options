@@ -16,7 +16,10 @@ class BOrder:
         self.qty =  qty 
         self.pce = pce 
 
-        assert any([action.lower() == e for e in ['sit','sell-limit','buy-limit','sell-mkt','buy-mkt']]), f"unsuppported: {action}"
+        assert any([action.lower() == e for e in [
+            'sit',
+            'sell-limit','buy-limit',
+            'sell-mkt','buy-mkt']]), f"unsuppported: {action}"
         assert qty>0, f'must be positive, but found {qty}'
         assert pce>0, f'must be positive, but found {pce}'
     def __repr__(self) -> str:
@@ -45,7 +48,6 @@ def on_new_market_price( md, border=None ):
     last = md['last_trade']
     #print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',  datetime.datetime.fromtimestamp(int(ts))  )
 
-    print('-- ', border)
     hadd( (int(ts), float(bid), float(ask), float(bv), float(av), float(iv_bid), float(iv_ask) ) )
 
 def _main(contract, border):
