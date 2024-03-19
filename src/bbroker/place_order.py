@@ -64,8 +64,8 @@ def _main(contract, border):
 @click.command()
 @click.option('--contract')
 @click.option('--action', default='SIT', help="SIT | BUY | SELL")
-@click.option('--qty')
-@click.option('--pce')
+@click.option('--qty', default=0.)
+@click.option('--pce', default=0.)
 def main(contract,action,qty,pce):
     bo = BOrder(contract,action,qty,pce)
     conn = Process( target=ws_connector, args=(f"{contract}", "ticker",) )
