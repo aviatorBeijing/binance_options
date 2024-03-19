@@ -31,6 +31,7 @@ def on_new_market_price( md ):
     hadd( (int(ts), float(bid), float(ask), float(bv), float(av), float(iv_bid), float(iv_ask) ) )
 
 def _main(contract):
+    print(f'-- will show price range in {LHISTORY} secs')
     try:
         while True:
             try:
