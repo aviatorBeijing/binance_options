@@ -21,6 +21,8 @@ class BOrder:
         assert pce>0, f'must be positive, but found {pce}'
     def __repr__(self) -> str:
         return f"{self.action} {self.qty} {self.contract} at price {self.pce}"
+    def __str__(self) -> str:
+        return f"[{self.action} {self.qty} {self.contract} at price {self.pce}]"
 
 def hadd( new_data:tuple):
     global history
@@ -43,6 +45,7 @@ def on_new_market_price( md, border=None ):
     last = md['last_trade']
     #print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',  datetime.datetime.fromtimestamp(int(ts))  )
 
+    print('-- ', border)
     hadd( (int(ts), float(bid), float(ask), float(bv), float(av), float(iv_bid), float(iv_ask) ) )
 
 def _main(contract, border):
@@ -50,7 +53,7 @@ def _main(contract, border):
     try:
         while True:
             try:
-                sync_fetch_ticker(contract, functools.partial( on_new_market_price, border=border )
+                sync_fetch_ticker(contract, functools.partial( on_new_market_price, border=border) )
             except AssertionError as ae:
                 print('*** data outdated, wait.', str(ae))
             time.sleep(1)
