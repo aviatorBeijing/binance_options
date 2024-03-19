@@ -11,6 +11,7 @@ def hadd( new_data:tuple):
     tnow = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     tnow = int(tnow.timestamp())
     history = filter(lambda e: (tnow-e[0])<LHISTORY, history)
+    history = list(history)
 
 def on_new_market_price( md ):
     ts = md['ts_beijing']
