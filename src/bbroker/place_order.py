@@ -14,8 +14,10 @@ def hadd( new_data:tuple):
     tnow = int(tnow.timestamp())
     history = filter(lambda e: (tnow-e[0])<LHISTORY, history)
     history = list(history)
+
     bp = list(map(lambda e:e[1], history))
-    print(f'  -- bid min: {min(bp)} ~ {max(bp)}, {np.median(bp)}')
+    ap = list(map(lambda e:e[2], history))
+    print(f'  -- bid: {min(bp)} ~ {max(bp)}, {np.median(bp)} \t ask: {min(ap)} ~ {max(ap)}, {np.median(ap)}')
 
 def on_new_market_price( md ):
     ts = md['ts_beijing']
@@ -24,9 +26,9 @@ def on_new_market_price( md ):
 
     iv_bid, iv_ask = md['impvol_bid'],md['impvol_ask']
     last = md['last_trade']
-    print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',  datetime.datetime.fromtimestamp(int(ts))  )
+    #print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',  datetime.datetime.fromtimestamp(int(ts))  )
 
-    hadd( (int(ts), float(bid), float(ask), float(bv), float(av), ) )
+    hadd( (int(ts), float(bid), float(ask), float(bv), float(av), float(iv_bid), float(iv_ask) ) )
 
 def _main(contract):
     try:
