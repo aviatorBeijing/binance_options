@@ -1,12 +1,27 @@
 import datetime,os,click,time
 import pandas as pd 
 import numpy  as np
+import functools
 from multiprocessing import Process 
 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
 LHISTORY=30 # past 30 seconds
 history = [] # bid history
+
+class BOrder:
+    def __init__(self, contract,action,qty,pce) -> None:
+        self.contract = contract
+        self.action = action 
+        self.qty =  qty 
+        self.pce = pce 
+
+        assert any([action.lower() == e for e in ['sit','sell','buy']]), f"unsuppported: {action}"
+        assert qty>0, f'must be positive, but found {qty}'
+        assert pce>0, f'must be positive, but found {pce}'
+    def __repr__(self) -> str:
+        return f"{self.action} {self.qty} {self.contract} at price {self.pce}"
+
 def hadd( new_data:tuple):
     global history
     history += [new_data]
@@ -19,7 +34,7 @@ def hadd( new_data:tuple):
     ap = list(map(lambda e:e[2], history))
     print(f'  -- bid: {min(bp)} ~ {max(bp)}, {new_data[1]} \t ask: {min(ap)} ~ {max(ap)}, {new_data[2]}')
 
-def on_new_market_price( md ):
+def on_new_market_price( md, border=None ):
     ts = md['ts_beijing']
     bid,ask =  md['bid'], md['ask']
     bv,av = md['bidv'], md['askv']
@@ -30,12 +45,12 @@ def on_new_market_price( md ):
 
     hadd( (int(ts), float(bid), float(ask), float(bv), float(av), float(iv_bid), float(iv_ask) ) )
 
-def _main(contract):
+def _main(contract, border):
     print(f'-- will show price range in {LHISTORY} secs')
     try:
         while True:
             try:
-                sync_fetch_ticker(contract, on_new_market_price )
+                sync_fetch_ticker(contract, functools.partial( on_new_market_price, border=border )
             except AssertionError as ae:
                 print('*** data outdated, wait.', str(ae))
             time.sleep(1)
@@ -45,9 +60,13 @@ def _main(contract):
 
 @click.command()
 @click.option('--contract')
-def main(contract):
+@click.option('--action', default='SIT', help="SIT | BUY | SELL")
+@click.option('--qty')
+@click.option('--pce')
+def main(contract,action,qty,pce):
+    bo = BOrder(contract,action,qty,pce)
     conn = Process( target=ws_connector, args=(f"{contract}", "ticker",) )
-    calc = Process( target=_main, args=(contract,) )
+    calc = Process( target=_main, args=(contract,bo,) )
     conn.start()
     calc.start()
     
