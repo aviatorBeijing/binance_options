@@ -14,7 +14,7 @@ def hadd( new_data:tuple):
     history = filter(lambda e: (tnow-e[0])<LHISTORY, history)
     history = list(history)
     df = pd.DataFrame.from_records( history, columns=['ts','bid','ask','vb','va'])
-    print(df)
+    print(df.bid.dsecribe() )
 
 def on_new_market_price( md ):
     ts = md['ts_beijing']
