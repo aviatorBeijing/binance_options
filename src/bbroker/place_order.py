@@ -6,9 +6,10 @@ from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 def on_new_market_price( md ):
     bid,ask =  md['bid'], md['ask']
     bv,av = md['bidv'], md['askv']
+    iv_bid, iv_ask = md['impvol_bid'],md['impvol_ask']
     last = md['last_trade']
     ts = md['ts_beijing'];ts=datetime.datetime.fromtimestamp(int(ts))
-    print(  bid,ask,bv,av,last,ts  )
+    print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',ts  )
 
 def _main(contract):
     try:
