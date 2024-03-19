@@ -17,7 +17,7 @@ def hadd( new_data:tuple):
 
     bp = list(map(lambda e:e[1], history))
     ap = list(map(lambda e:e[2], history))
-    print(f'  -- bid: {min(bp)} ~ {max(bp)}, {np.median(bp)} \t ask: {min(ap)} ~ {max(ap)}, {np.median(ap)}')
+    print(f'  -- bid: {min(bp)} ~ {max(bp)}, {new_data[1]} \t ask: {min(ap)} ~ {max(ap)}, {new_data[2]}')
 
 def on_new_market_price( md ):
     ts = md['ts_beijing']
