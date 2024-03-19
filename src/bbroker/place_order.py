@@ -7,7 +7,8 @@ def on_new_market_price( md ):
     bid,ask =  md['bid'], md['ask']
     bv,av = md['bidv'], md['askv']
     last = md['last_trade']
-    print(  bid,ask,bv,av,last  )
+    ts = md['ts_beijing'];ts=datetime.datetime.fromtimestamp(int(ts))
+    print(  bid,ask,bv,av,last,ts  )
 
 def _main(contract):
     try:
