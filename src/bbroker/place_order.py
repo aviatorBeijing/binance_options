@@ -8,6 +8,7 @@ def on_new_market_price( md ):
     print(  md  )
 
 def _main(contract):
+    print('-- wait for data');time.sleep(1)
     try:
         while True:
             sync_fetch_ticker(contract, on_new_market_price )
