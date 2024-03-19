@@ -1,5 +1,6 @@
 import datetime,os,click,time
 import pandas as pd 
+import numpy  as np
 from multiprocessing import Process 
 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
@@ -13,8 +14,8 @@ def hadd( new_data:tuple):
     tnow = int(tnow.timestamp())
     history = filter(lambda e: (tnow-e[0])<LHISTORY, history)
     history = list(history)
-    df = pd.DataFrame.from_records( history, columns=['ts','bid','ask','vb','va'])
-    print(df['bid'].describe().to_list() )
+    bp = list(map(lambda e:e[1], history))
+    print(f'  -- bid min: {min(bp)} ~ {max(bp)}, {np.median(bp)}')
 
 def on_new_market_price( md ):
     ts = md['ts_beijing']
