@@ -1,4 +1,5 @@
 import datetime,os,click,time
+import pandas as pd 
 from multiprocessing import Process 
 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
@@ -12,8 +13,8 @@ def hadd( new_data:tuple):
     tnow = int(tnow.timestamp())
     history = filter(lambda e: (tnow-e[0])<LHISTORY, history)
     history = list(history)
-    for h in history:
-        print('\t',h)
+    df = pd.DataFrame.from_records( history, columns=['ts','bid','ask','vb','va'])
+    print(df)
 
 def on_new_market_price( md ):
     ts = md['ts_beijing']
