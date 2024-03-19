@@ -3,13 +3,25 @@ from multiprocessing import Process
 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
+LHISTORY=30 # past 30 seconds
+history = [] # bid history
+def hadd( new_data:tuple):
+    global history
+    history += [new_data]
+    tnow = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
+    tnow = int(tnow.timestamp())
+    history = filter(lambda e: (tnow-e[0])<LHISTORY, history)
+
 def on_new_market_price( md ):
+    ts = md['ts_beijing']
     bid,ask =  md['bid'], md['ask']
     bv,av = md['bidv'], md['askv']
+
     iv_bid, iv_ask = md['impvol_bid'],md['impvol_ask']
     last = md['last_trade']
-    ts = md['ts_beijing'];ts=datetime.datetime.fromtimestamp(int(ts))
-    print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',ts  )
+    print(  bid,ask,'\t', iv_bid,iv_ask, '\t', bv,av,'\t',  datetime.datetime.fromtimestamp(int(ts))  )
+
+    hadd( (int(ts), float(bid), float(ask), float(bv), float(av), ) )
 
 def _main(contract):
     try:
