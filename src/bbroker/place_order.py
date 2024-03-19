@@ -4,8 +4,10 @@ from multiprocessing import Process
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
 def on_new_market_price( md ):
-    #bid,ask =  md['bid'], md['ask']
-    print(  md  )
+    bid,ask =  md['bid'], md['ask']
+    bv,av = md['bidv'], md['askv']
+    last = md['last_trade']
+    print(  bid,ask,bv,av,last  )
 
 def _main(contract):
     try:
