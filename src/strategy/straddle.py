@@ -16,6 +16,8 @@ from ws_bcontract import _main as ws_connector
 
 ex = ccxt.binance()
 
+from strategy.delta_gamma import fair_call_vol,fair_put_vol
+
 def _find_breakeven(df, adhoc):
     col = 'net profit @ expiry'
     df['next_neg'] = (df[col]<0).shift(-1) # shift up
@@ -66,7 +68,6 @@ def calc_straddle(  lcontract, rcontract,
     timeValueRPct = timeValueR/rask * 100 
 
     # vols
-    from strategy.delta_gamma import fair_call_vol,fair_put_vol
     K = float(lcontract.split('-')[2])
     if lcontract.endswith('-C'):
         fairvol_bid = fair_call_vol(float(ldata["bid"]),S,K,Tl)
@@ -75,6 +76,16 @@ def calc_straddle(  lcontract, rcontract,
         fairvol_bid = fair_put_vol(float(ldata["bid"]),S,K,Tl)
         fairvol_ask = fair_put_vol(float(ldata["ask"]),S,K,Tl)
     print(f'  -- vols of {lcontract} (bid,ask,mark,fair): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask):.1f}%), {(float(ldata["impvol"])*100):.1f}%')
+
+    K = float(rcontract.split('-')[2])
+    if rcontract.endswith('-C'):
+        fairvol_bid = fair_call_vol(float(rdata["bid"]),S,K,Tr)
+        fairvol_ask = fair_call_vol(float(rdata["ask"]),S,K,Tr)
+    elif rcontract.endswith('-P'):
+        fairvol_bid = fair_put_vol(float(rdata["bid"]),S,K,Tr)
+        fairvol_ask = fair_put_vol(float(rdata["ask"]),S,K,Tr)
+    print(f'  -- vols of {rcontract} (bid,ask,mark,fair): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask):.1f}%), {(float(ldata["impvol"])*100):.1f}%')
+
 
     lfee = 0;rfee=0
     if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
