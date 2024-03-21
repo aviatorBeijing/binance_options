@@ -38,7 +38,7 @@ def gamma(S, K, T, sigma, r)->float:
 
 def fair_call_vol(c, S,K,T,r=0):
     epsilon = 999.
-    best = 70
+    best = -70
     for vol in np.arange(10,200,0.1):
         x = callprice(S,K,T,vol/100,r)
         if abs(c-x)<epsilon:
@@ -47,7 +47,7 @@ def fair_call_vol(c, S,K,T,r=0):
     return best 
 def fair_put_vol(p, S,K,T,r=0):
     epsilon = 999.
-    best = 70
+    best = -70
     for vol in np.arange(10,200,0.1):
         x = putprice(S,K,T,vol/100,r)
         if abs(p-x)<epsilon:

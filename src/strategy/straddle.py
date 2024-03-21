@@ -74,7 +74,7 @@ def calc_straddle(  lcontract, rcontract,
     elif lcontract.endswith('-P'):
         fairvol_bid = fair_put_vol(float(ldata["bid"]),S,K,Tl)
         fairvol_ask = fair_put_vol(float(ldata["ask"]),S,K,Tl)
-    print(f'  -- vols of {lcontract} (bid,ask,mark,fair): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid*100):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask*100):.1f}%), {(float(ldata["impvol"])*100):.1f}%')
+    print(f'  -- vols of {lcontract} (bid,ask,mark,fair): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask):.1f}%), {(float(ldata["impvol"])*100):.1f}%')
 
     lfee = 0;rfee=0
     if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
