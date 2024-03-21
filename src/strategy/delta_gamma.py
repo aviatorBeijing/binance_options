@@ -1,3 +1,4 @@
+from curses import putp
 import math
 import numpy as np
 import scipy as sp
@@ -25,7 +26,6 @@ def putprice(S,K,T,sigma,r)->float:
     C = callprice( S,K,T,sigma, r)
     return C + K*np.exp(-r*T) -S
 
-
 # Delta
 def deltafunc(S, K, T, sigma, r)->float:
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
@@ -35,6 +35,25 @@ def deltafunc(S, K, T, sigma, r)->float:
 def gamma(S, K, T, sigma, r)->float:
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
     return scs.norm.pdf(d1) / (S * sigma * np.sqrt(T))
+
+def fair_call_vol(c, S,K,T,r=0):
+    epsilon = 999.
+    best = 70
+    for vol in np.arange(10,200,0.1):
+        x = callprice(S,K,T,vol/100,r)
+        if abs(c-x)<epsilon:
+            epsilon  = abs(c-x)
+            best = vol
+    return best 
+def fair_put_vol(p, S,K,T,r=0):
+    epsilon = 999.
+    best = 70
+    for vol in np.arange(10,200,0.1):
+        x = putp(S,K,T,vol/100,r)
+        if abs(p-x)<epsilon:
+            epsilon  = abs(p-x)
+            best = vol
+    return best 
 
 if __name__ == '__main__':
     S0 = 100

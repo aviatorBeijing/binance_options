@@ -50,6 +50,8 @@ def calc_straddle(  lcontract, rcontract,
     print(f'-- order volumes  (P): {vol}-contract, (C): {vol}-contract')
     recs = []
     
+    adhoc = S = ex.fetch_ticker(spot_symbol)['bid'] # FIXME Binance calc the fee in a DIFFERENT way!
+    
     resp = {
             'left': lcontract, 'right': rcontract,
             'is_taker': taker_order, 'paid_premium': user_premium,
@@ -62,6 +64,15 @@ def calc_straddle(  lcontract, rcontract,
     timeValueR = -float(rdata["theta"]) * Tr
     timeValueLPct = timeValueL/lask * 100
     timeValueRPct = timeValueR/rask * 100 
+
+    # vols
+    from strategy.delta_gamma import fair_call_vol,fair_put_vol
+    K = float(lcontract.split('-')[2])
+    if lcontract.endswith('-C'):
+        fairvol_bid = fair_call_vol(float(ldata["bid"]),S,K,Tl)
+    elif lcontract.endswith('-P'):
+        fairvol_bid = fair_put_vol(float(ldata["bid"]),S,K,Tl)
+    print(f'  -- vols of {lcontract} (bid,ask,mark,fair): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid*100):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask*100):.1f}%), {(float(ldata["impvol"])*100):.1f}%')
 
     lfee = 0;rfee=0
     if taker_order: # FIXME: Caution, the fee is calculate for varying market prices of options,
@@ -81,8 +92,6 @@ def calc_straddle(  lcontract, rcontract,
         rfee = calc_fee(rask, vol, rcontract, is_taker=False)
         r = 1 + 5/1000 # A 0.5% higher than current bid price, to enhance chance of getting filled in time.
         premium = (lbid*r + rbid*r)*vol
-    
-    adhoc = ex.fetch_ticker(spot_symbol)['bid'] # FIXME Binance calc the fee in a DIFFERENT way!
     
     ts = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     
