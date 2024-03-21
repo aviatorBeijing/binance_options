@@ -49,6 +49,7 @@ def fair_put_vol(p, S,K,T,r=0):
     epsilon = 999.
     best = -70
     for vol in np.arange(10,200,0.1):
+        print(p,S,K,T,vol)
         x = putprice(S,K,T,vol/100,r)
         if abs(p-x)<epsilon:
             epsilon  = abs(p-x)
