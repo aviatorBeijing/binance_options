@@ -16,7 +16,17 @@ ex = ccxt.binance({
         'defaultType': 'option',
     }
 })
-import pprint;pprint.pprint(ex.fetch_balance())
+
+bal = ex.fetch_balance()
+balType  =  bal['info']['accountType']
+bal = bal['info']['balance']
+bdf  = pd.DataFrame.from_records(bal)
+bdf['free'] = bdf['free'].apply(float)
+bdf['locked'] = bdf['locked'].apply(float)
+bdf['ttl'] =  bdf['free'] +  bdf['ttl']
+bdf.sort_values('ttl', ascending=False, inplace=True)
+print( bdf )
+
 """
 'defaultType': 'spot',  # 'spot', 'future', 'margin', 'delivery', 'option'
 """
