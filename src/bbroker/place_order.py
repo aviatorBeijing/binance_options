@@ -13,7 +13,7 @@ ex = ccxt.binance({
     'secret': secret,
     'enableRateLimit': True,
     'options':{
-        'defaultType': 'future',
+        'defaultType': 'option',
     }
 })
 import pprint;pprint.pprint(ex.fetch_balance())
