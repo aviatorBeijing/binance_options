@@ -3,29 +3,11 @@ import pandas as pd
 import numpy  as np
 import functools
 from multiprocessing import Process 
-import ccxt 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 
-apikey = os.getenv('BINANCE_SUB01_APIKEY', None)
-secret = os.getenv('BINANCE_SUB01_SECRET', None)
-ex = ccxt.binance({
-    'apiKey': apikey,
-    'secret': secret,
-    'enableRateLimit': True,
-    'options':{
-        'defaultType': 'option',
-    }
-})
+from bbroker.check_balances import balances
 
-bal = ex.fetch_balance()
-balType  =  bal['info']['accountType']
-bal = bal['info']['balances']
-bdf  = pd.DataFrame.from_records(bal)
-bdf['free'] = bdf['free'].apply(float)
-bdf['locked'] = bdf['locked'].apply(float)
-bdf['ttl'] =  bdf['free'] +  bdf['locked']
-bdf.sort_values('ttl', ascending=False, inplace=True)
-print( bdf[bdf.ttl>0] )
+print(  balances()  )
 
 """
 'defaultType': 'spot',  # 'spot', 'future', 'margin', 'delivery', 'option'
