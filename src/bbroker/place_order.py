@@ -9,11 +9,13 @@ from ws_bcontract import _main as ws_connector, sync_fetch_ticker
 apikey = os.getenv('BINANCE_SUB01_APIKEY', None)
 secret = os.getenv('BINANCE_SUB01_SECRET', None)
 ex = ccxt.binance({
-    'defaultType': 'option',
     'apiKey': apikey,
     'secret': secret,
+    'options':{
+        'defaultType': 'option',
+    }
 })
-print(ex.fetch_balance())
+import pprint;pprint.pprint(ex.fetch_balance())
 """
 'defaultType': 'spot',  # 'spot', 'future', 'margin', 'delivery', 'option'
 """
