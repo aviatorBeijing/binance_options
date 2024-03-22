@@ -3,8 +3,20 @@ import pandas as pd
 import numpy  as np
 import functools
 from multiprocessing import Process 
-
+import ccxt 
 from ws_bcontract import _main as ws_connector, sync_fetch_ticker
+
+apikey = os.getenv('BINANCE_SUB01_APIKEY', None)
+secret = os.getenv('BINANCE_SUB01_SECRET', None)
+ex = ccxt.binance({
+    'defaultType': 'option',
+    'apiKey': apikey,
+    'secret': secret,
+})
+print(ex.fetch_balance())
+"""
+'defaultType': 'spot',  # 'spot', 'future', 'margin', 'delivery', 'option'
+"""
 
 LHISTORY=30 # past 30 seconds
 history = [] # bid history
