@@ -19,7 +19,7 @@ ex = ccxt.binance({
 
 bal = ex.fetch_balance()
 balType  =  bal['info']['accountType']
-bal = bal['info']['balance']
+bal = bal['info']['balances']
 bdf  = pd.DataFrame.from_records(bal)
 bdf['free'] = bdf['free'].apply(float)
 bdf['locked'] = bdf['locked'].apply(float)
