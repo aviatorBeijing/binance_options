@@ -18,7 +18,7 @@ ex = ccxt.binance()
 
 from strategy.delta_gamma import fair_call_vol,fair_put_vol
 
-def _find_breakeven(df, adhoc):
+def _find_breakeven(df, adhoc, epsilon=5):
     col = 'net profit @ expiry'
     df['next_neg'] = (df[col]<0).shift(-1) # shift up
     df['prev_neg'] = (df[col]<0).shift(1) # shift down
@@ -31,9 +31,9 @@ def _find_breakeven(df, adhoc):
 
     # find current spot position
     df['sd'] = df.iloc[:,0] - adhoc 
-    df['spot_vicinity'] = df.sd.apply(abs) < 5
+    df['spot_vicinity'] = df.sd.apply(abs) < epsilon
     df.drop(['sd'], axis=1, inplace=True)
-
+    
     if not DEBUG:
         df = df[ (df.break_even) | (df.spot_vicinity)]
     return df    
@@ -137,6 +137,7 @@ def calc_straddle(  lcontract, rcontract,
 
     low = adhoc*0.7
     high=adhoc*1.5
+    epsilon=5
     if not DEBUG:
         low = adhoc*0.3
         high = adhoc*2.5
@@ -157,20 +158,21 @@ def calc_straddle(  lcontract, rcontract,
         if not DEBUG: step = 1
         else: step = 5
     elif spot_symbol == 'DOGE/USDT':
-        step = 0.01
-        face = 100
+        step = 0.001
+        face = 1000
+        epsilon=0.001
     else:
         raise Exception(f"Unsupported spot symbol: {spot_symbol}.")
 
     for stock in np.arange(low,high,step): # at expiration
-        gains = max(strike_left - stock*face,0)
-        gains += max( stock*face - strike_right, 0)
-        gains *= vol
+        gains = max(strike_left - stock,0)
+        gains += max( stock - strike_right, 0)
+        gains *= vol*face
         profits = gains - premium - fee
         recs += [ ( stock, gains, profits )]
     
     df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
-    df = _find_breakeven( df, adhoc )
+    df = _find_breakeven( df, adhoc, epsilon )
 
     cost = premium + fee
     df['stradle_return'] = ( df['net profit @ expiry']) / cost
