@@ -11,8 +11,9 @@ secret = os.getenv('BINANCE_SUB01_SECRET', None)
 ex = ccxt.binance({
     'apiKey': apikey,
     'secret': secret,
+    'enableRateLimit': True,
     'options':{
-        'defaultType': 'option',
+        'defaultType': 'future',
     }
 })
 import pprint;pprint.pprint(ex.fetch_balance())
