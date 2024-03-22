@@ -25,7 +25,7 @@ bdf['free'] = bdf['free'].apply(float)
 bdf['locked'] = bdf['locked'].apply(float)
 bdf['ttl'] =  bdf['free'] +  bdf['locked']
 bdf.sort_values('ttl', ascending=False, inplace=True)
-print( bdf )
+print( bdf[bdf.ttl>0] )
 
 """
 'defaultType': 'spot',  # 'spot', 'future', 'margin', 'delivery', 'option'
