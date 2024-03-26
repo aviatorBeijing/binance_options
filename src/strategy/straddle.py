@@ -90,7 +90,7 @@ def calc_straddle(  lcontract, rcontract,
     elif lcontract.endswith('-P'):
         fairvol_bid = fair_put_vol(float(ldata["bid"]),S,K,Tl/365, r=rf)
         fairvol_ask = fair_put_vol(float(ldata["ask"]),S,K,Tl/365, r=rf)
-    print(f'  -- vols of {lcontract} (bid,ask): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask):.1f}%)')
+    print(f'  -- bsm vols of {lcontract} (bid,ask): {(fairvol_bid):.1f}% ({(float(ldata["impvol_bid"])*100):.1f}%), {(fairvol_ask):.1f}% ({(float(ldata["impvol_ask"])*100):.1f}%)')
 
     K = float(rcontract.split('-')[2])
     if rcontract.endswith('-C'):
@@ -99,7 +99,7 @@ def calc_straddle(  lcontract, rcontract,
     elif rcontract.endswith('-P'):
         fairvol_bid = fair_put_vol(float(rdata["bid"]),S,K,Tr/365, r=rf)
         fairvol_ask = fair_put_vol(float(rdata["ask"]),S,K,Tr/365, r=rf)
-    print(f'  -- vols of {rcontract} (bid,ask): {(float(ldata["impvol_bid"])*100):.1f}% ({(fairvol_bid):.1f}%), {(float(ldata["impvol_ask"])*100):.1f}% ({(fairvol_ask):.1f}%)')
+    print(f'  -- bsm vols of {rcontract} (bid,ask): {(fairvol_bid):.1f}% ({(float(ldata["impvol_bid"])*100):.1f}%), {(fairvol_ask):.1f}% ({(float(ldata["impvol_ask"])*100):.1f}%)')
 
 
     lfee = 0;rfee=0
