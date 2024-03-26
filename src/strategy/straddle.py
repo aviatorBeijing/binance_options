@@ -13,6 +13,7 @@ from butil.butils import ( DATADIR,DEBUG,
 from brisk.bfee import calc_fee
 from strategy.price_disparity import _main as check_bsm_disparity
 from ws_bcontract import _main as ws_connector
+from strategy.delta_gamma import callprice,putprice
 
 ex = ccxt.binance()
 
@@ -184,8 +185,6 @@ def calc_straddle(  lcontract, rcontract,
         profits = gains - premium - fee
         recs += [ ( stock, gains, profits )]
     
-    from strategy.delta_gamma import callprice,putprice
-
     sym = f"{spot_symbol} @ expiry"
     df = pd.DataFrame.from_records( recs, columns=[ sym,'gain', 'net profit @ expiry'])
 
