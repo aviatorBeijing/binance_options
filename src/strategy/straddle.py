@@ -18,7 +18,7 @@ ex = ccxt.binance()
 
 from strategy.delta_gamma import fair_call_vol,fair_put_vol
 
-def _find_breakeven(df, adhoc, epsilon=5):
+def _find_breakeven(df, adhoc, epsilon=5, user_premium=0.):
     col = 'net profit @ expiry'
     df['next_neg'] = (df[col]<0).shift(-1) # shift up
     df['prev_neg'] = (df[col]<0).shift(1) # shift down
@@ -33,9 +33,22 @@ def _find_breakeven(df, adhoc, epsilon=5):
     df['sd'] = df.iloc[:,0] - adhoc 
     df['spot_vicinity'] = df.sd.apply(abs) < epsilon
     df.drop(['sd'], axis=1, inplace=True)
+
+    if user_premium >0:
+        df['call_break_even'] = df['bsm_call'] - user_premium
+        #df['call_break_even'] = df['call_break_even'].apply(abs)
+        df['call_break_even'] =  df['call_break_even'] *  df['call_break_even'].shift(1)
+        df['call_break_even'] = df['call_break_even']<0
+
+        df['put_break_even'] = df['bsm_put'] - user_premium
+        df['put_break_even'] =  df['put_break_even'] *  df['put_break_even'].shift(1)
+        df['put_break_even'] = df['put_break_even']<0
     
     if not DEBUG:
-        df = df[ (df.break_even) | (df.spot_vicinity)]
+        if user_premium >0:
+            df = df[ (df.break_even) | (df.spot_vicinity) | (df.call_break_even) | (df.put_break_even) ]
+        else:
+            df = df[ (df.break_even) | (df.spot_vicinity) ]
     return df    
 
 def _v(v): return float(v)
@@ -139,8 +152,8 @@ def calc_straddle(  lcontract, rcontract,
     high=adhoc*1.5
     epsilon=5
     if not DEBUG:
-        low = adhoc*0.3
-        high = adhoc*2.5
+        low = adhoc*0.85
+        high = adhoc*1.15
     face = 1
     if spot_symbol == 'BTC/USDT':
         low = int(low/1000)*1000
@@ -171,8 +184,18 @@ def calc_straddle(  lcontract, rcontract,
         profits = gains - premium - fee
         recs += [ ( stock, gains, profits )]
     
-    df = pd.DataFrame.from_records( recs, columns=[ f"{spot_symbol} @ expiry",'gain', 'net profit @ expiry'])
-    df = _find_breakeven( df, adhoc, epsilon )
+    from strategy.delta_gamma import callprice,putprice
+
+    sym = f"{spot_symbol} @ expiry"
+    df = pd.DataFrame.from_records( recs, columns=[ sym,'gain', 'net profit @ expiry'])
+
+    # BSM prices on changing Spot
+    lvol = float(ldata["impvol"])
+    rvol = float(rdata["impvol"])
+    df['bsm_call'] =  df[sym].apply( lambda S: callprice(S,strike_right,rmaturity/365, rvol, 0) )
+    df['bsm_put'] =  df[sym].apply( lambda S: putprice(S,strike_left,lmaturity/365, lvol, 0) )
+    
+    df = _find_breakeven( df, adhoc, epsilon, user_premium/vol )
 
     cost = premium + fee
     df['stradle_return'] = ( df['net profit @ expiry']) / cost
