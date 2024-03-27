@@ -2,6 +2,7 @@ from optparse import check_builtin
 from bbroker.settings import ex
 
 def mgr(symbol,action,qty,pce, timing='limit'):
+    qty = float(qty);pce=float(pce)
     assert action in ['buy','sell'], f"Not supported action: {action}"
     assert timing in ['limit','market'], f"Not supported timing: {timing}"
     if symbol.endswith('-C'):
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     from bbroker.check_status import orders_status
 
     symbol = 'BTC-240329-24000-C'
-    buy_call(symbol, 0.01, 10)
+    buy_call(symbol, 0.01, 10.)
 
     import time
     while True:
