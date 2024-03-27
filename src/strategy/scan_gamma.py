@@ -12,7 +12,12 @@ def _multiprocess_main(contracts):
     contracts = contracts.split(',')
     while True:
         for c in contracts:
-            rec = fetch_bidask(c)
+            try:
+                rec = fetch_bidask(c)
+            except AssertionError as e:
+                print('*** waiting for data')
+                time.sleep(5)
+                continue
             print( rec['gamma'], rec['last_trade'], rec['delta'], rec['theta'], rec['impvol'] )
         time.sleep(5)
 
