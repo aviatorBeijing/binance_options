@@ -7,6 +7,8 @@ def mgr(symbol,action,qty,pce, timing='limit'):
     assert timing in ['limit','market'], f"Not supported timing: {timing}"
     if symbol.endswith('-C'):
         print( ex.market(symbol ))
+        ex.markets[symbol]['precision']['amount'] = 2
+        ex.markets[symbol]['precision']['price'] = 1
         ex.create_order(symbol,timing,action,qty,pce)
     elif symbol.endswith('-P'):
         ex.create_order(symbol,'put',action,qty,pce)
@@ -22,6 +24,5 @@ if __name__ == '__main__':
     buy_call(symbol, 0.01, 10.)
 
     import time
-    while True:
-        orders_status()
-        time.sleep(5)
+    time.sleep(5)
+    orders_status()
