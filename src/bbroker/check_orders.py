@@ -30,7 +30,7 @@ def position_status():
     df = df[['symbol','side','positionCost',
                 'entryPrice','markPrice','quantity','markValue','expiryDate']]
     df['expiry'] = df.expiryDate.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
-    df = df.sort_values('expiryDate', ascending=False)
+    df = df.sort_values(['symbol','expiryDate'], ascending=False)
     print(tabulate(df,headers="keys"))
 
 # tests
