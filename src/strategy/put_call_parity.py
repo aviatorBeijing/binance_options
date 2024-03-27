@@ -36,8 +36,8 @@ def _multiprocess_main(contracts):
                 PV = K * np.exp(rf*T)
                 # C + PV = P + S
                 # replicating
-                print('-- replicating call (buy put,long spot(or forward),short bond):', f'{call_ask:.2f}', f'{(put_ask + S - PV):.2f}' )
-                print('-- replicating  put (buy call, short spot(or forward), long bond):', f'{put_ask:.2f}', f'{(call_ask + PV -S):.2f}' )   
+                print('-- replicating call:', f'{call_ask:.2f}', f'{(put_ask + S - PV):.2f}' )
+                print('-- replicating  put:', f'{put_ask:.2f}', f'{(call_ask + PV -S):.2f}' )   
             except AssertionError as e:
                 print(f'*** waiting for data: {call}, {put}, {str(e)}')
                 time.sleep(5)
