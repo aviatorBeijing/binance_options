@@ -39,7 +39,7 @@ def _multiprocess_main(contracts):
                 print('-- replicating call (buy put,long spot(or forward),short bond):', f'{call_ask:.2f}', f'{(put_ask + S - PV):.2f}' )
                 print('-- replicating  put (buy call, short spot(or forward), long bond):', f'{put_ask:.2f}', f'{(call_ask + PV -S):.2f}' )   
             except AssertionError as e:
-                print(f'*** waiting for data: {t}')
+                print(f'*** waiting for data: {call}, {put}')
                 time.sleep(5)
                 continue
         time.sleep(5)
