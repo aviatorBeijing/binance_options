@@ -37,8 +37,8 @@ def _multiprocess_main(contracts):
                 # C + PV = P + S
                 # replicating (assuming zero risk-free rate)
                 print('--', call, put)
-                print('-- replicating call:', f'{call_ask:.2f}', f'{(put_ask + S - PV):.2f}' )
-                print('-- replicating  put:', f'{put_ask:.2f}', f'{(call_ask + PV -S):.2f}' )   
+                print('  -- replicating call:', f'{call_ask:.2f}', f'{(put_ask + S - PV):.2f}' )
+                print('  -- replicating  put:', f'{put_ask:.2f}', f'{(call_ask + PV -S):.2f}' )   
             except AssertionError as e:
                 print(f'*** waiting for data: {call}, {put}, {str(e)}')
                 time.sleep(5)
