@@ -4,20 +4,18 @@ from tabulate import tabulate
 
 from bbroker.settings import ex
 
-def orders_status(ids=[]):
+def orders_status()->pd.DataFrame:
     #tnow = datetime.datetime.utcnow().timestamp()*1000;tnow=int(tnow)
-    if ids:
-        pass 
-    else: # all
-        ods = ex.eapiPrivateGetOpenOrders()
-        df = pd.DataFrame.from_records(ods)
-        #df['dt'] = (tnow - df.updateTime.apply(int))/1000
-        df = df[['status','orderId','symbol','side','price','avgPrice','quantity','executedQty','updateTime','source','priceScale','quantityScale']]
-        df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
-        df = df.sort_values('updateTime', ascending=False)
-        print(tabulate(df,headers="keys"))
+    ods = ex.eapiPrivateGetOpenOrders()
+    df = pd.DataFrame.from_records(ods)
+    #df['dt'] = (tnow - df.updateTime.apply(int))/1000
+    df = df[['status','orderId','symbol','side','price','avgPrice','quantity','executedQty','updateTime','source','priceScale','quantityScale']]
+    df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
+    df = df.sort_values('updateTime', ascending=False)
+    print(tabulate(df,headers="keys"))
+    return df
 
-def position_status():
+def position_status()->pd.DataFrame:
     ods = ex.eapiPrivateGetPosition()
     """
     'entryPrice': '55.5', 'symbol': 'ETH-240329-3550-P', 'side': 'LONG', 
@@ -35,6 +33,8 @@ def position_status():
 
     gain = (df.markPrice.astype(float)*df.quantity.astype(float)).sum()-df.positionCost.astype(float).sum()
     print(f'-- gain (vs mark price): ${gain:.2f}' )
+
+    return df
 
 # tests
 if __name__ == '__main__':
