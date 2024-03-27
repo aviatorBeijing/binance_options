@@ -13,7 +13,7 @@ def _multiprocess_main(contracts):
     while True:
         for c in contracts:
             rec = fetch_bidask(c)
-            print( rec['gammma'], rec['last_trade'], rec['delta'], rec['theta'], rec['impvol'] )
+            print( rec['gamma'], rec['last_trade'], rec['delta'], rec['theta'], rec['impvol'] )
         time.sleep(5)
 
 @click.command()
