@@ -34,7 +34,7 @@ def position_status():
     print(tabulate(df,headers="keys"))
 
     gain = (df.markPrice.astype(float)*df.quantity.astype(float)).sum()-df.positionCost.astype(float).sum()
-    print(f'-- dollar gain (vs mark price): {gain:.2f}' )
+    print(f'-- gain (vs mark price): ${gain:.2f}' )
 
 # tests
 if __name__ == '__main__':
