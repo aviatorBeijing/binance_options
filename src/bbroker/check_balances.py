@@ -1,17 +1,7 @@
-import ccxt,os
+import os
 import pandas as pd
 
-
-apikey = os.getenv('BINANCE_SUB01_APIKEY', None)
-secret = os.getenv('BINANCE_SUB01_SECRET', None)
-ex = ccxt.binance({
-    'apiKey': apikey,
-    'secret': secret,
-    'enableRateLimit': True,
-    'options':{
-        'defaultType': 'option',
-    }
-})
+from bbroker.settings import ex
 
 def balances() -> pd.DataFrame:
     bal = ex.fetch_balance()
