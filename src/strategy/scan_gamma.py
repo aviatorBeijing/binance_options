@@ -13,12 +13,12 @@ def _multiprocess_main(contracts):
     for c in contracts.split(','):
         rec = fetch_bidask(c)
         print( rec )
-        
+
 @click.command()
 @click.option('--contracts')
 def main(contracts):
     conn = Process( target=ws_connector, args=(contracts, "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(contracts) )
+    calc = Process( target=_multiprocess_main, args=(contracts,) )
     conn.start()
     calc.start()
     
