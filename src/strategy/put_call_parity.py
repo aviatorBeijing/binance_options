@@ -35,7 +35,8 @@ def _multiprocess_main(contracts):
                 put_ask = P = float(r['ask']);put_bid = float(r['bid'])
                 PV = K * np.exp(rf*T)
                 # C + PV = P + S
-                # replicating
+                # replicating (assuming zero risk-free rate)
+                print('--', call, put)
                 print('-- replicating call:', f'{call_ask:.2f}', f'{(put_ask + S - PV):.2f}' )
                 print('-- replicating  put:', f'{put_ask:.2f}', f'{(call_ask + PV -S):.2f}' )   
             except AssertionError as e:
