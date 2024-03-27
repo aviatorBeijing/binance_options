@@ -10,7 +10,7 @@ def orders_status(ids=[]):
     else: # all
         ods = ex.eapiPrivateGetOpenOrders()
         df = pd.DataFrame.from_records(ods)
-        df = df[['orderId','symbol','side','price','avgPrice','quantity','executedQty','status','updateTime','source','clientOrderId','priceScale','quantityScale']]
+        df = df[['status','orderId','symbol','side','price','avgPrice','quantity','executedQty','updateTime','source','clientOrderId','priceScale','quantityScale']]
         print(tabulate(df,headers="keys"))
 
 # tests
