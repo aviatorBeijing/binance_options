@@ -42,12 +42,6 @@ def _multiprocess_main(contracts):
                 print('*** waiting for data')
                 time.sleep(5)
                 continue
-        df = pd.DataFrame.from_records(recs)
-        df = df[['contract','gamma','ask','last_trade','delta','theta','impvol']]
-        df.gamma = df.gamma.apply(float)
-        df.sort_values('gamma', ascending=False,inplace=True)
-        df = df.head(10)
-        print( '-- first 10:\n', tabulate(df, headers="keys") )
         time.sleep(5)
 
 @click.command()
