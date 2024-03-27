@@ -7,8 +7,9 @@ def orders_status(ids=[]):
     if ids:
         pass 
     else: # all
-        ods = ex.fetch_order_status()
-        print(ods)
+        ods = ex.eapiPrivateGetOpenOrders()
+        df = pd.DataFrame.from_records(ods)
+        print(df)
 
 # tests
 if __name__ == '__main__':
