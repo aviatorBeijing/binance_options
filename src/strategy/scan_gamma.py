@@ -1,8 +1,7 @@
-import os,datetime,json
+import time
 import pandas as pd
 import click,time
 from tabulate import tabulate
-import ccxt
 import numpy  as np
 from multiprocessing import Process
 
@@ -10,9 +9,12 @@ from butil.bsql import fetch_bidask
 from ws_bcontract import _main as ws_connector
 
 def _multiprocess_main(contracts):
-    for c in contracts.split(','):
-        rec = fetch_bidask(c)
-        print( rec )
+    contracts = contracts.split(',')
+    while True:
+        for c in contracts:
+            rec = fetch_bidask(c)
+            print( rec['gammma'], rec['last_trade'], rec['delta'], rec['theta'], rec['impvol'] )
+        time.sleep(5)
 
 @click.command()
 @click.option('--contracts')
