@@ -28,7 +28,7 @@ def position_status():
     """
     df = pd.DataFrame.from_records(ods)
     df = df[['symbol','side','positionCost','ror',
-                'entryPrice','markPrice','quantity','markValue','expiryDate']]
+            'markPrice','quantity','markValue','expiryDate']]
     df['expiry'] = df.expiryDate.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
     df = df.sort_values(['symbol','expiryDate'], ascending=False)
     print(tabulate(df,headers="keys"))
