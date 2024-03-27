@@ -6,6 +6,7 @@ def mgr(symbol,action,qty,pce, timing='limit'):
     assert action in ['buy','sell'], f"Not supported action: {action}"
     assert timing in ['limit','market'], f"Not supported timing: {timing}"
     if symbol.endswith('-C'):
+        print( ex.market(symbol ))
         ex.create_order(symbol,timing,action,qty,pce)
     elif symbol.endswith('-P'):
         ex.create_order(symbol,'put',action,qty,pce)
@@ -17,7 +18,7 @@ def buy_call(symbol,qty,pce):
 if __name__ == '__main__':
     from bbroker.check_status import orders_status
 
-    symbol = 'BTC-240329-24000-C'
+    symbol = 'BTC-240329-70000-C'
     buy_call(symbol, 0.01, 10.)
 
     import time
