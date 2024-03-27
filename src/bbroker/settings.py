@@ -10,3 +10,4 @@ ex = ccxt.binance({
         'defaultType': 'option',
     }
 })
+ex.load_markets()
