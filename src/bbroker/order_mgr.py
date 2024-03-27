@@ -5,7 +5,9 @@ def mgr(symbol,action,qty,pce, timing='limit'):
     assert action in ['long','short'], f"Not supported action: {action}"
     assert timing in ['limit','market'], f"Not supported timing: {timing}"
     if symbol.endswith('-C'):
-        ex.create_order(symbol,'call',action,qty,pce)
+        #ex.create_order(symbol,'call',action,qty,pce)
+        req = ex.create_order_request(symbol,'call',action,qty,pce,{})
+        ex.eapiPrivatePostOrder( req )
     elif symbol.endswith('-P'):
         ex.create_order(symbol,'put',action,qty,pce)
 
