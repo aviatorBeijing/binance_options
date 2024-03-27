@@ -17,6 +17,11 @@ def orders_status(ids=[]):
         df = df.sort_values('updateTime', ascending=False)
         print(tabulate(df,headers="keys"))
 
+def position_status():
+    ods = ex.eapiPrivateGetPosition()
+    print(ods)
+
 # tests
 if __name__ == '__main__':
     orders_status()
+    position_status()
