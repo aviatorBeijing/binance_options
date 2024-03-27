@@ -11,14 +11,20 @@ from ws_bcontract import _main as ws_connector
 def _multiprocess_main(contracts):
     contracts = contracts.split(',')
     while True:
+        recs = []
         for c in contracts:
             try:
                 rec = fetch_bidask(c)
+                recs += [rec]
             except AssertionError as e:
                 print('*** waiting for data')
                 time.sleep(5)
                 continue
-            print( rec['gamma'], rec['last_trade'], rec['delta'], rec['theta'], rec['impvol'] )
+        df = pd.DataFrame.from_records(recs)
+        df = df[['contract','gamma','last_trade','delta','theta','impvol']]
+        df.gamma = df.gamma.apply(float)
+        df.sort_values('gamma', ascending=False,inplace=True)
+        print( tabulate(df, headers="keys") )
         time.sleep(5)
 
 @click.command()
