@@ -30,9 +30,9 @@ def _multiprocess_main(contracts):
             rf = 0
             try:
                 r = fetch_bidask(call)
-                call_ask = C = r['ask'];call_bid = r['bid']
+                call_ask = C = float(r['ask']);call_bid = float(r['bid'])
                 r = fetch_bidask(put)
-                put_ask = P = r['ask'];put_bid = r['bid']
+                put_ask = P = float(r['ask']);put_bid = float(r['bid'])
                 PV = K * np.exp(rf*T)
                 # C + PV = P + S
                 # replicating
