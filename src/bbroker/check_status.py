@@ -31,7 +31,7 @@ def position_status()->pd.DataFrame:
     df = df.sort_values(['symbol','expiryDate'], ascending=False)
     print(tabulate(df,headers="keys"))
 
-    gain = (df.markValue.astype(float)).sum()-df.positionCost.astype(float).sum()
+    gain = df.markValue.astype(float).sum()-df.positionCost.astype(float).sum()
     print(f'-- gain (vs mark price): ${gain:.2f}' )
 
     return df
