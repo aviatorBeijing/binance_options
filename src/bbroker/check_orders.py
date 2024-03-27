@@ -32,7 +32,7 @@ def position_status():
     df['expiry'] = df.expiryDate.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
     df = df.sort_values(['symbol','expiryDate'], ascending=False)
     print(tabulate(df,headers="keys"))
-    print('-- dollar gain: ', df.positionCost.sum()-(df.entryPrice*df.quantity).sum() )
+    print('-- dollar gain: ', df.positionCost.astype(float).sum()-(df.entryPrice.astype(float)*df.quantity.astype(float)).sum() )
 
 # tests
 if __name__ == '__main__':
