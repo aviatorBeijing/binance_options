@@ -27,8 +27,8 @@ def position_status():
     'quantityScale': '2', 'optionSide': 'PUT', 'quoteAsset': 'USDT', 'time': '1711500354804'
     """
     df = pd.DataFrame.from_records(ods)
-    df = df[['status','orderId','symbol','side','positionCost',
-                'entryPrice','markPrice','quantity','markValue','updateTime','expiryDate']]
+    df = df[['symbol','side','positionCost',
+                'entryPrice','markPrice','quantity','markValue','time','expiryDate']]
     df['datetime'] = df.time.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
     df = df.sort_values('time', ascending=False)
     print(tabulate(df,headers="keys"))
