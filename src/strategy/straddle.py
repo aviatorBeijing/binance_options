@@ -172,6 +172,8 @@ def calc_straddle(  lcontract, rcontract,
         if not DEBUG: step = 1
         else: step = 5
     elif spot_symbol == 'DOGE/USDT':
+        low = adhoc*0.75
+        high = adhoc*1.25
         step = 0.001
         face = 1000
         epsilon=0.001
