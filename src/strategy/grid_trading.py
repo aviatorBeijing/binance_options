@@ -67,7 +67,7 @@ def paper_trading(df, max_pos):
 def main(ric,span,test,max_pos,nominal):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     recs = []
-    for span in ['1h','1d']:
+    for span in ['1h','8h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
             df = binance_kline(ric, span=span)
