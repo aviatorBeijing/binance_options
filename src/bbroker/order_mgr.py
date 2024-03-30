@@ -1,4 +1,3 @@
-from optparse import check_builtin
 from bbroker.settings import ex
 
 def mgr(symbol,action,qty,pce, timing='limit'):
