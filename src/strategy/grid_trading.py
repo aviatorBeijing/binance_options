@@ -29,8 +29,10 @@ def paper_trading(df, max_pos):
     df.loc[df.prev_down, 'buy'] = 0 # sell
     #print(df)
 
+    fee = 1e-3
+
     pos = 0;portfolio = []; profits = [];vol=0.0
-    buys = 0;sells=0
+    buys = 0;sells=0;max_cost=0.0
     for i,row in df.iterrows():
         profit = 0
         if row.buy > 0 and pos < max_pos:
@@ -45,18 +47,24 @@ def paper_trading(df, max_pos):
             vol += row.sell
             sells+=1
         profits += [(i, profit)]
-        #print( pos, profit )
+        fund_occupied = np.sum(portfolio)*(1+fee)
+        if max_cost < fund_occupied: max_cost = fund_occupied
     
     res = 0.
     if portfolio:
         res = len(portfolio)*df.iloc[-1].close - np.sum(portfolio) 
 
-    fee = 1e-3
     fee = vol*fee + len(portfolio)*df.iloc[-1].close*fee
     ttl = np.sum(list( map(lambda e: e[1],profits)) )
     net_ttl =  ttl + res - fee
     
-    return buys,sells,res,fee,ttl,net_ttl
+    return buys,sells,res,fee,ttl,net_ttl,max_cost
+
+def _dt(t1,t2):
+    import datetime 
+    t1 = pd.Timestamp(t1)
+    t2 = pd.Timestamp(t2)
+    return (t2-t1).days+1
 
 @click.command()
 @click.option('--ric', default="BTC/USDT")
@@ -67,7 +75,7 @@ def paper_trading(df, max_pos):
 def main(ric,span,test,max_pos,nominal):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     recs = []
-    for span in ['1h','8h','1d']:
+    for span in ['1m', '1h','4h','8h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
             df = binance_kline(ric, span=span)
@@ -81,20 +89,26 @@ def main(ric,span,test,max_pos,nominal):
         for n in [0,100,300,400]:
             #print('--', f'span={span},', df.iloc[n].timestamp, '~', df.iloc[n+550].timestamp)
             idf = df.copy()[n:n+550]
-            buys,sells,res,fee,ttl,net_ttl = paper_trading(idf,max_pos)
+            buys,sells,res,fee,ttl,net_ttl,max_cost = paper_trading(idf,max_pos)
             #print( '--', f'span={span},', df.iloc[n].timestamp, '~', df.iloc[n+550].timestamp, f'\t{buys}:{sells} \t res= ${res:,.0f} \tfee= ${fee:,.0f} \tcash= ${ttl:,.0f} \tnet= ${net_ttl:,.0f} \t{(fee/(fee+net_ttl)*100):.1f}%')
-            recs += [(span,df.iloc[n].timestamp,df.iloc[n+550].timestamp,buys,sells,res,fee,ttl,net_ttl)]
-        buys,sells,res,fee,ttl,net_ttl =  paper_trading(df,max_pos)
-        recs += [(span,df.iloc[0].timestamp,df.iloc[-1].timestamp,buys,sells,res,fee,ttl,net_ttl)]
+            t1,t2 = df.iloc[n].timestamp,df.iloc[n+550].timestamp
+            recs += [(span,t1,t2,buys,sells,res,fee,ttl,net_ttl,max_cost,_dt(t1,t2))]
+        buys,sells,res,fee,ttl,net_ttl,max_cost =  paper_trading(df,max_pos)
+        t1,t2 = df.iloc[0].timestamp,df.iloc[-1].timestamp
+        recs += [(span,t1,t2,buys,sells,res,fee,ttl,net_ttl,max_cost,_dt(t1,t2))]
         #print( '--', f'span={span},', df.iloc[0].timestamp, '~', df.iloc[-1].timestamp, f'\t{buys}:{sells} \t res= ${res:,.0f} \tfee= ${fee:,.0f} \tcash= ${ttl:,.0f} \tnet= ${net_ttl:,.0f} \t{(fee/(fee+net_ttl)*100):.1f}%')
 
     df = pd.DataFrame.from_records( recs )
-    df.columns='span,t1,t2,buys,sells,res,fee,ttl,net_ttl'.split(',')
+    df.columns='span,t1,t2,buys,sells,res,fee,ttl,net_ttl,max_cost,days'.split(',')
+    df['daily_net_ttl'] = df.net_ttl/df.days
     df['fee%'] = df.fee/(df.fee+df.net_ttl)*100
-    for col in 'res,fee,ttl,net_ttl'.split(','):
+    df['net_ttl%'] = df.net_ttl/df.max_cost*100 / (df.days/365)
+    for col in 'res,fee,ttl,net_ttl,max_cost,daily_net_ttl'.split(','):
         df[col] = df[col].apply(lambda v: v*nominal)
-    for col in 'res,fee,ttl,net_ttl,fee%'.split(','):
-        df[col] = df[col].apply(lambda s: f"{s:,.0f}" if col != 'fee%' else f"{s:.1f}%")
+    for col in 'res,fee,ttl,net_ttl,max_cost,daily_net_ttl'.split(','):
+        df[col] = df[col].apply(lambda s: f"{s:,.0f}")
+    for col in 'net_ttl%,fee%'.split(','):
+        df[col] = df[col].apply(lambda s: f"{s:.1f}%")
     print(tabulate(df, headers="keys"))
 if __name__ == '__main__':
     main()
