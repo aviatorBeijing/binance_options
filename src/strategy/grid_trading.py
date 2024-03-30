@@ -62,8 +62,9 @@ def paper_trading(df, max_pos):
 @click.option('--ric', default="BTC/USDT")
 @click.option('--span', default='1h')
 @click.option('--test', default=False, is_flag=True)
-@click.option('--max_pos', default=10)
+@click.option('--max_pos', default=50)
 def main(ric,span,test,max_pos):
+    print('-- max pos:',max_pos, ' (i.e., sizing)')
     recs = []
     for span in ['1h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
