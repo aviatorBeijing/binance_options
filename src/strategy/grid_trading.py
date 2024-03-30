@@ -63,7 +63,8 @@ def paper_trading(df, max_pos):
 @click.option('--span', default='1h')
 @click.option('--test', default=False, is_flag=True)
 @click.option('--max_pos', default=50)
-def main(ric,span,test,max_pos):
+@click.option('--nominal', default=1.0, help="scale up or down the trading size for small valued assets")
+def main(ric,span,test,max_pos,nominal):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     recs = []
     for span in ['1h','1d']:
@@ -90,6 +91,8 @@ def main(ric,span,test,max_pos):
     df = pd.DataFrame.from_records( recs )
     df.columns='span,t1,t2,buys,sells,res,fee,ttl,net_ttl'.split(',')
     df['fee%'] = df.fee/(df.fee+df.net_ttl)*100
+    for col in 'res,fee,ttl,net_ttl'.split(','):
+        df[col] = df[col].apply(lambda v: v*nominal)
     for col in 'res,fee,ttl,net_ttl,fee%'.split(','):
         df[col] = df[col].apply(lambda s: f"{s:,.0f}" if col != 'fee%' else f"{s:.1f}%")
     print(tabulate(df, headers="keys"))
