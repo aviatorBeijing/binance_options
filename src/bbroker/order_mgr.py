@@ -5,9 +5,9 @@ def mgr(symbol,action,qty,pce, timing='limit'):
     assert action in ['buy','sell'], f"Not supported action: {action}"
     assert timing in ['limit','market'], f"Not supported timing: {timing}"
     if symbol.endswith('-C'):
-        print( ex.market(symbol ))
-        ex.markets[symbol]['precision']['amount'] = 2
-        ex.markets[symbol]['precision']['price'] = 1
+        #print( ex.market(symbol ))
+        #ex.markets[symbol]['precision']['amount'] = 2
+        #ex.markets[symbol]['precision']['price'] = 1
         ex.create_order(symbol,timing,action,qty,pce)
     elif symbol.endswith('-P'):
         ex.create_order(symbol,'put',action,qty,pce)
