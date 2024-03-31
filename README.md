@@ -30,6 +30,7 @@ export BINANCE_DEBUG=1
 
 Example#3 (Spot/Forward grid trading):
 ```
+(The beauty of the grid trading is in general, the choice of trading price at the moment is NOT sensitive. AVG(ohlc) is chosed in algo.)
 cd src
 python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=0               (realtime data)
 python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=0 --test        (using cached data)
