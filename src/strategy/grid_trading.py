@@ -1,5 +1,6 @@
+from time import tzname
 import pandas as pd 
-import click,os
+import click,os,datetime
 import numpy as np 
 from tabulate import tabulate
 
@@ -103,7 +104,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
-    for span in ['1m', '1h','4h','8h','1d']:
+    for span in ['1m','30m','1h','4h','8h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
             df = binance_kline(ric, span=span)
@@ -120,18 +121,18 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
             idf = df.copy()[n:n+550]
             close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl = paper_trading(idf,max_pos,stop_loss)
             t1,t2 = df.iloc[n].timestamp,df.iloc[n+550].timestamp
-            dt = pd.Timestamp(t2)-pd.Timestamp(action['ts'])
-            act = action['ts']+ f" ({dt}) " + action['action']+" "+f"{action['price']:.6f}"
+            #dt = pd.Timestamp(t2)-pd.Timestamp(action['ts'])
+            act = f"({action['ts']}) " + action['action']+" "+f"{action['price']:.6f}"
             recs += [(span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl)]
         close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl =  paper_trading(df,max_pos,stop_loss)
         t1,t2 = df.iloc[0].timestamp,df.iloc[-1].timestamp
-        dt = pd.Timestamp(t2)-pd.Timestamp(action['ts'])
-        act = action['ts']+ f" ({dt}) " + action['action']+" "+f"{action['price']:.6f} *"
+        #dt = pd.Timestamp(t2)-pd.Timestamp(action['ts'])
+        act = f"({action['ts']}) " + action['action']+" "+f"{action['price']:.6f} *"
 
         recs += [(f"{span} *",t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl)]
         
     df = pd.DataFrame.from_records( recs )
-    df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,action(w.r.t. t2),stop_loss'.split(',')
+    df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,latest_action,stop_loss'.split(',')
     df['daily_net_ttl'] = df.net_ttl/df.days
     df['fee%'] = df.fee/(df.fee+df.net_ttl)*100
     df['net_ttl%'] = df.net_ttl/df.max_cost*100 / (df.days/365)
@@ -143,7 +144,14 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
         df[col] = df[col].apply(lambda s: f"{s:.1f}%")
     for col in 'max_down'.split(','):
         df[col] = df[col].apply(lambda s: f"{(s*100):.0f}% {(-1/s):.1f}")
+    
+    tnow = datetime.datetime.utcnow()
+    def _t(b):
+        x = tnow-datetime.datetime.strptime( b[:19].replace('T',' '), '%Y-%m-%d %H:%M:%S' )
+        return f'{x.days}d {int(x.seconds/3600)}h {int(x.seconds%3600/60)}m ago'
+    df['age (last candle)'] = df['t2'].apply(lambda t: _t(t) )
+
     print(tabulate(df['span,t1,t2,close,buys,sells,fee,stop_loss,asset,cash_gain,net_ttl,max_cost,max_down,days,daily_net_ttl'.split(',')], headers="keys"))
-    print(tabulate(df['span,t1,t2,close,net_ttl,max_cost,max_down,days,action(w.r.t. t2)'.split(',')], headers="keys"))
+    print(tabulate(df['t1,t2,close,net_ttl,max_cost,max_down,days,span,age (last candle),latest_action'.split(',')], headers="keys"))
 if __name__ == '__main__':
     main()
