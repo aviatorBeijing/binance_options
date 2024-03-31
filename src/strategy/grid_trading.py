@@ -14,6 +14,7 @@ def  _max_down( portfolio, close ):
     return 0
 
 def paper_trading(df, max_pos,stop_loss):
+    df = df.copy()
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
     # trading price
@@ -37,6 +38,7 @@ def paper_trading(df, max_pos,stop_loss):
 
     fee = 1e-3
 
+    df['cost'] = 0.;df['asset_n'] = 0.;df['profit'] = 0.
     pos = 0;portfolio = []; profits = [];vol=0.0
     buys = 0;sells=0;sl=0;max_cost=0.0;max_down = 0.0
     action = []
@@ -75,15 +77,27 @@ def paper_trading(df, max_pos,stop_loss):
         profits += [(i, profit)]
         fund_occupied = np.sum(portfolio)*(1+fee)
         if max_cost < fund_occupied: max_cost = fund_occupied
+        df.loc[i,'cost'] = np.sum( portfolio )
+        df.loc[i,'asset_n'] = pos
+        df.loc[i,'profit'] = profit
     
     res = 0.
     if portfolio:
         res = len(portfolio)*df.iloc[-1].close - np.sum(portfolio) 
 
-    fee = vol*fee + len(portfolio)*df.iloc[-1].close*fee
+    fee = vol*fee + len(portfolio)*df.iloc[-1].close*fee # liquidation fee included
     ttl = np.sum(list( map(lambda e: e[1],profits)) )
     net_ttl =  ttl + res - fee
     
+    df.profit = df.profit.cumsum()
+    df['cash'] = max_cost - df['cost'] + df['profit']
+    df['portfolio'] = df['cash'] + df['asset_n']*df['close']
+    #print( df.iloc[-1].portfolio - max_cost )
+    df['portfolio'] = df['portfolio'].pct_change().cumsum()
+    df['ref'] = df['close'].pct_change().cumsum()
+    
+    #import matplotlib.pyplot as plt 
+    #df[['portfolio','ref']].plot();plt.show()
     return df.iloc[-1].close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down, action[-1], sl
 
 def _dt(t1,t2):
@@ -101,6 +115,8 @@ def _dt(t1,t2):
 @click.option('--stop_loss',default=-0.15)
 @click.option('--random_sets', is_flag=True, default=False)
 def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
+    ric = ric.upper()
+    print('\n--', ric)
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
@@ -114,6 +130,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
             #print('-- reading:',fn)
             df = pd.read_csv( fn )
         
+        df['timestamp'] = df['timestamp'].apply(pd.Timestamp)
         df.set_index('timestamp', inplace=True)
         df['timestamp'] = df.index
         # subsets
@@ -147,7 +164,8 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
     
     tnow = datetime.datetime.utcnow()
     def _t(b):
-        x = tnow-datetime.datetime.strptime( b[:19].replace('T',' '), '%Y-%m-%d %H:%M:%S' )
+        b = datetime.datetime.strftime( b.to_pydatetime(), '%Y-%m-%d %H:%M:%S' )
+        x = tnow-datetime.datetime.strptime( b, '%Y-%m-%d %H:%M:%S' )
         return f'{x.days}d {int(x.seconds/3600)}h {int(x.seconds%3600/60)}m ago'
     df['age (last candle)'] = df['t2'].apply(lambda t: _t(t) )
 
