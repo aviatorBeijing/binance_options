@@ -7,7 +7,12 @@ from butil.butils import binance_kline
 
 # Toy strategy
 
-def paper_trading(df, max_pos):
+def  _max_down( portfolio, close ):
+    if portfolio:
+        return (np.mean( portfolio) - close )/close
+    return 0
+
+def paper_trading(df, max_pos,stop_loss):
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
     # trading price
@@ -15,7 +20,7 @@ def paper_trading(df, max_pos):
     df['sell'] = df.avg
     
     # significance
-    df['insignificant'] = ((df.close-df.open).apply(abs).rolling(60).rank(pct=True)<0.75).shift(1)
+    df['insignificant'] = ((df.close-df.open).apply(abs).rolling(60).rank(pct=True)<0.6).shift(1)
     #df['insignificant'] =( ( (df.close-df.open)/(df.high-df.low)).apply(abs) < 0.6 ).shift(1)
 
     df['prev_up'] = (df['close'] > df['open']).shift(1)
@@ -32,20 +37,40 @@ def paper_trading(df, max_pos):
     fee = 1e-3
 
     pos = 0;portfolio = []; profits = [];vol=0.0
-    buys = 0;sells=0;max_cost=0.0
+    buys = 0;sells=0;sl=0;max_cost=0.0;max_down = 0.0
+    action = []
     for i,row in df.iterrows():
         profit = 0
-        if row.buy > 0 and pos < max_pos:
+        mdd = _max_down( portfolio, row.close )
+        if mdd < max_down: max_down = mdd 
+        dump_all=False
+        # stop-loss & stop-win
+        if stop_loss !=0 and mdd < stop_loss:# or mdd > 10/100:
+            action += [{'action': 'sell_all','price': row.close, 'ts': i}]
+            dump_all = True
+            sold = portfolio.pop()
+            sl += 1
+            while sold:
+                pos -=1
+                profit = sold - row.close
+                vol += row.close
+                sells+=1
+                if portfolio: sold = portfolio.pop()
+                else: break
+
+        if row.buy > 0 and pos < max_pos and not dump_all:
             portfolio+= [ row.buy ]
             vol += row.buy
             pos +=1
             buys+=1
+            action += [{'action': 'buy ','price': row.buy, 'ts': i}]
         elif row.sell > 0 and portfolio:
             sold = portfolio.pop()
             pos -=1
             profit = sold - row.sell
             vol += row.sell
             sells+=1
+            action += [{'action': 'sell','price': row.sell, 'ts': i}]
         profits += [(i, profit)]
         fund_occupied = np.sum(portfolio)*(1+fee)
         if max_cost < fund_occupied: max_cost = fund_occupied
@@ -58,7 +83,7 @@ def paper_trading(df, max_pos):
     ttl = np.sum(list( map(lambda e: e[1],profits)) )
     net_ttl =  ttl + res - fee
     
-    return buys,sells,res,fee,ttl,net_ttl,max_cost
+    return df.iloc[-1].close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down, action[-1], sl
 
 def _dt(t1,t2):
     import datetime 
@@ -72,8 +97,11 @@ def _dt(t1,t2):
 @click.option('--test', default=False, is_flag=True)
 @click.option('--max_pos', default=50)
 @click.option('--nominal', default=1.0, help="scale up or down the trading size for small valued assets")
-def main(ric,span,test,max_pos,nominal):
+@click.option('--stop_loss',default=-0.15)
+@click.option('--random_sets', is_flag=True, default=False)
+def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
+    print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
     for span in ['1m', '1h','4h','8h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
@@ -85,30 +113,37 @@ def main(ric,span,test,max_pos,nominal):
             #print('-- reading:',fn)
             df = pd.read_csv( fn )
         
+        df.set_index('timestamp', inplace=True)
+        df['timestamp'] = df.index
         # subsets
-        for n in [0,100,300,400]:
-            #print('--', f'span={span},', df.iloc[n].timestamp, '~', df.iloc[n+550].timestamp)
+        for n in [0,100,300,400] if random_sets else []:
             idf = df.copy()[n:n+550]
-            buys,sells,res,fee,ttl,net_ttl,max_cost = paper_trading(idf,max_pos)
-            #print( '--', f'span={span},', df.iloc[n].timestamp, '~', df.iloc[n+550].timestamp, f'\t{buys}:{sells} \t res= ${res:,.0f} \tfee= ${fee:,.0f} \tcash= ${ttl:,.0f} \tnet= ${net_ttl:,.0f} \t{(fee/(fee+net_ttl)*100):.1f}%')
+            close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl = paper_trading(idf,max_pos,stop_loss)
             t1,t2 = df.iloc[n].timestamp,df.iloc[n+550].timestamp
-            recs += [(span,t1,t2,buys,sells,res,fee,ttl,net_ttl,max_cost,_dt(t1,t2))]
-        buys,sells,res,fee,ttl,net_ttl,max_cost =  paper_trading(df,max_pos)
+            dt = pd.Timestamp(t2)-pd.Timestamp(action['ts'])
+            act = action['ts']+ f" ({dt}) " + action['action']+" "+f"{action['price']:.6f}"
+            recs += [(span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl)]
+        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl =  paper_trading(df,max_pos,stop_loss)
         t1,t2 = df.iloc[0].timestamp,df.iloc[-1].timestamp
-        recs += [(span,t1,t2,buys,sells,res,fee,ttl,net_ttl,max_cost,_dt(t1,t2))]
-        #print( '--', f'span={span},', df.iloc[0].timestamp, '~', df.iloc[-1].timestamp, f'\t{buys}:{sells} \t res= ${res:,.0f} \tfee= ${fee:,.0f} \tcash= ${ttl:,.0f} \tnet= ${net_ttl:,.0f} \t{(fee/(fee+net_ttl)*100):.1f}%')
+        dt = pd.Timestamp(t2)-pd.Timestamp(action['ts'])
+        act = action['ts']+ f" ({dt}) " + action['action']+" "+f"{action['price']:.6f} *"
 
+        recs += [(f"{span} *",t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl)]
+        
     df = pd.DataFrame.from_records( recs )
-    df.columns='span,t1,t2,buys,sells,res,fee,ttl,net_ttl,max_cost,days'.split(',')
+    df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,action(w.r.t. t2),stop_loss'.split(',')
     df['daily_net_ttl'] = df.net_ttl/df.days
     df['fee%'] = df.fee/(df.fee+df.net_ttl)*100
     df['net_ttl%'] = df.net_ttl/df.max_cost*100 / (df.days/365)
-    for col in 'res,fee,ttl,net_ttl,max_cost,daily_net_ttl'.split(','):
+    for col in 'asset,fee,cash_gain,net_ttl,max_cost,daily_net_ttl'.split(','):
         df[col] = df[col].apply(lambda v: v*nominal)
-    for col in 'res,fee,ttl,net_ttl,max_cost,daily_net_ttl'.split(','):
+    for col in 'asset,fee,cash_gain,net_ttl,max_cost,daily_net_ttl'.split(','):
         df[col] = df[col].apply(lambda s: f"{s:,.0f}")
     for col in 'net_ttl%,fee%'.split(','):
         df[col] = df[col].apply(lambda s: f"{s:.1f}%")
-    print(tabulate(df, headers="keys"))
+    for col in 'max_down'.split(','):
+        df[col] = df[col].apply(lambda s: f"{(s*100):.0f}% {(-1/s):.1f}")
+    print(tabulate(df['span,t1,t2,close,buys,sells,fee,stop_loss,asset,cash_gain,net_ttl,max_cost,max_down,days,daily_net_ttl'.split(',')], headers="keys"))
+    print(tabulate(df['span,t1,t2,close,net_ttl,max_cost,max_down,days,action(w.r.t. t2)'.split(',')], headers="keys"))
 if __name__ == '__main__':
     main()
