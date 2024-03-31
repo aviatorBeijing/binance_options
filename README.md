@@ -28,6 +28,17 @@ Debug mode:
 export BINANCE_DEBUG=1
 ```
 
+Example#3 (Spot/Forward grid trading):
+```
+cd src
+python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=0               (realtime data)
+python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=0 --test        (using cached data)
+python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=0 --random_sets (try a few subsets of data)
+
+python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=-0.2            (stop-loss -20%)
+python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=-0.2 --max_pos=100   (use max_pos to mimic sizing)
+```
+
 Notes:
 ```
 Only support BTC,BNB, and DOGE contracts, for now.
