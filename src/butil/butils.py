@@ -156,6 +156,7 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     df = pd.concat( dfs, axis=0)
     df = df.sort_values('timestamp', ascending=True).drop_duplicates().reset_index(drop=True)
     
+    # Validate data
     xdf = df[['timestamp']].copy()
     xdf['ts'] = xdf.timestamp.apply(pd.Timestamp)
     xdf['dt'] = xdf.ts.diff() # The adjacent data should have SAME time differences, o.w., missing data is possible.

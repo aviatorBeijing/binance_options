@@ -144,7 +144,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
-    for span in ['30m','1h','4h','8h','1d']:
+    for span in ['30m','1h','4h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
             df = binance_kline(ric, span=span)
