@@ -135,7 +135,7 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
         td = 3600
 
     for i in range(1,10):
-        from_ts = tnow - td*1000 *999*i
+        from_ts = tnow - td*1000 *990*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
         for ohlcv in ohlcvs:
