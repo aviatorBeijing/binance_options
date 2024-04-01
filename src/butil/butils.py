@@ -142,7 +142,7 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
         raise Exception( f"Unsupported span type: {span}")
 
     for i in range(1,10):
-        from_ts = tnow - tsecs*1000 *900*i
+        from_ts = tnow - tsecs*1000 *990*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
         for ohlcv in ohlcvs:
@@ -160,7 +160,7 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     xdf['ts'] = xdf.timestamp.apply(pd.Timestamp)
     xdf['dt'] = xdf.ts.diff() # The adjacent data should have SAME time differences, o.w., missing data is possible.
     td = set(list(xdf.dt))
-    assert len( set(list(xdf.dt))) ==2, f'Missing data? symbol={symbol}, span={span}, td: {td} \n {df}'
+    assert len( set(list(xdf.dt))) ==2, f'Missing data? symbol={symbol}, span={span}, td: {td} \n {xdf.sort_values("dt", ascending=False)} \n{df}'
 
     return df
 
