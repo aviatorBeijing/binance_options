@@ -2,7 +2,7 @@ import os,datetime
 import ccxt
 import pandas as pd
 
-DEBUG = os.getenv("BINANCE_DEBUG", None)
+DEBUG = os.getenv("expo", None)
 
 DATADIR=os.getenv('USER_HOME','/home/ubuntu')+'/data/binance/options'
 if not os.path.exists( DATADIR):
