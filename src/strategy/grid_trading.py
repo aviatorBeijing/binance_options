@@ -187,7 +187,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
     for span in spans.split(','):
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
-            df = binance_kline(ric, span=span,grps=30)
+            df = binance_kline(ric, span=span,grps=10)
             df.to_csv(fn)
             print('-- saved:', fn)
         else:
