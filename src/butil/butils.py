@@ -150,10 +150,9 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     
     xdf = df[['timestamp']].copy()
     xdf['ts'] = xdf.timestamp.apply(pd.Timestamp)
-    xdf['dt'] = xdf.ts.diff().diff()
-    xdf['dt'] = xdf.dt.apply(lambda e: e)
+    xdf['dt'] = xdf.ts.diff()
+    xdf['dt'] = xdf.dt.apply(lambda e: e.days)
     print(xdf)
-    print( xdf[xdf.ts==pd.NaT])
     return df
 
 
