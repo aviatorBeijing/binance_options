@@ -167,8 +167,8 @@ def get_maturity( contract:str )->float:
 
 #tests
 if __name__ == '__main__':
-    df = binance_kline(span='1d')
-    print(df)
+    #df = binance_kline(span='1d')
+    #print(df)
 
     df = binance_kline(span='1h')
     print(df)
