@@ -153,7 +153,8 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     xdf['dt'] = xdf.ts.diff()
     xdf['dd'] = xdf.dt.apply(lambda e: e.days)
     xdf['dh'] = xdf.dt.apply(lambda e: e.seconds)
-    print(xdf)
+    print(xdf[(xdf.dd>1)|(xdf.dh>3600)])
+
     return df
 
 
