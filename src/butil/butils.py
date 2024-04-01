@@ -147,8 +147,12 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
         print(df.shape, df.iloc[0].timestamp, df.iloc[-1].timestamp)
     df = pd.concat( dfs, axis=0)
     df = df.sort_values('timestamp', ascending=True).drop_duplicates().reset_index()
-    ts = df.timestamp.apply(pd.Timestamp).diff()
-    print(set(list(ts)))
+    
+    xdf = df[['timestamp']].copy()
+    xdf.timestamp = xdf.timestamp.apply(pd.Timestamp).diff()
+    xdf['dt'] = xdf.timestamp.diff()
+    xdf['dt'] = xdf.dt.apply(lambda e: e)
+    print(xdf)
     return df
 
 
