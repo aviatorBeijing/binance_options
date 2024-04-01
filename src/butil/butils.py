@@ -127,7 +127,7 @@ def get_underlying(contract):
 def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     tnow = int(datetime.datetime.utcnow().timestamp()*1000)
     dfs = []
-    for i in [1,2]:
+    for i in range(1,10):
         from_ts = tnow - 24*3600*1000 *999*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
@@ -137,8 +137,9 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
             recs += [(ts,vals[0], vals[1],vals[2], vals[3],vals[4])]
         df = pd.DataFrame.from_records( recs, columns = ['timestamp','open','high','low','close','volume'] )
         dfs += [ df ]
-    df = pd.concat( dfs, axis=1).sort_values('timestamp', ascending=True)
-    print(df[950:1050])
+        print(df.shape, df.iloc[0].timestamp, df.iloc[-1].timestamp)
+    df = pd.concat( dfs, axis=0)
+    df = df.sort_values('timestamp', ascending=True).drop_duplicates()
     return df
 
 
