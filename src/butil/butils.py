@@ -125,13 +125,20 @@ def get_underlying(contract):
     return f"{fds[0]}/USDT"
 
 def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
-    ohlcvs = ex_binance.fetch_ohlcv(symbol, span,limit=1000)
-    recs = []
-    for ohlcv in ohlcvs:
-        ts = ex_binance.iso8601(ohlcv[0])
-        vals = ohlcv[1:]
-        recs += [(ts,vals[0], vals[1],vals[2], vals[3],vals[4])]
-    df = pd.DataFrame.from_records( recs, columns = ['timestamp','open','high','low','close','volume'] )
+    tnow = int(datetime.datetime.utcnow().timestamp()*1000)
+    dfs = []
+    for i in [1,2]:
+        from_ts = tnow - 24*3600*1000 *999*i
+        ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
+        recs = []
+        for ohlcv in ohlcvs:
+            ts = ex_binance.iso8601(ohlcv[0])
+            vals = ohlcv[1:]
+            recs += [(ts,vals[0], vals[1],vals[2], vals[3],vals[4])]
+        df = pd.DataFrame.from_records( recs, columns = ['timestamp','open','high','low','close','volume'] )
+        dfs += [ df ]
+    df = pd.concat( dfs, axis=1).sort_values('timestamp', ascending=True)
+    print(df[950:1050])
     return df
 
 
@@ -142,3 +149,7 @@ def get_maturity( contract:str )->float:
     tnow = datetime.datetime.utcnow()
     dt = (ts-tnow).total_seconds()/3600./24
     return max(0,dt)
+
+#tests
+if __name__ == '__main__':
+    df = binance_kline()

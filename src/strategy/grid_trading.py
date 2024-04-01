@@ -4,6 +4,7 @@ import click,os,datetime
 import numpy as np 
 from tabulate import tabulate
 
+from butil.portfolio_stats import sharpe,sortino,max_drawdowns,annual_returns
 from butil.butils import binance_kline
 
 # Toy strategy
@@ -38,12 +39,12 @@ def paper_trading(df, max_pos,stop_loss):
 
     fee = 1e-3
 
-    df['cost'] = 0.;df['asset_n'] = 0.;df['profit'] = 0.
+    df['cost'] = 0.;df['asset_n'] = 0.;df['profit'] = 0.;df['fee_i'] = 0.
     pos = 0;portfolio = []; profits = [];vol=0.0
     buys = 0;sells=0;sl=0;max_cost=0.0;max_down = 0.0
     action = []
     for i,row in df.iterrows():
-        profit = 0
+        profit = 0.
         mdd = _max_down( portfolio, row.close )
         if mdd < max_down: max_down = mdd 
         dump_all=False
@@ -53,6 +54,7 @@ def paper_trading(df, max_pos,stop_loss):
             dump_all = True
             sold = portfolio.pop()
             sl += 1
+            df.loc[i,'fee_i'] = len(portfolio)*row.close*fee
             while sold:
                 pos -=1
                 profit = sold - row.close
@@ -62,18 +64,22 @@ def paper_trading(df, max_pos,stop_loss):
                 else: break
 
         if row.buy > 0 and pos < max_pos and not dump_all:
-            portfolio+= [ row.buy ]
-            vol += row.buy
+            pce= row.buy
+            portfolio+= [ pce ]
+            vol += pce
             pos +=1
             buys+=1
-            action += [{'action': 'buy ','price': row.buy, 'ts': i}]
+            action += [{'action': 'buy ','price': pce, 'ts': i}]
+            df.loc[i,'fee_i'] = pce*fee
         elif row.sell > 0 and portfolio:
+            pce = row.sell
             sold = portfolio.pop()
             pos -=1
-            profit = sold - row.sell
-            vol += row.sell
+            profit = sold - pce
+            vol += pce
             sells+=1
-            action += [{'action': 'sell','price': row.sell, 'ts': i}]
+            action += [{'action': 'sell','price': pce, 'ts': i}]
+            df.loc[i,'fee_i'] = pce*fee
         profits += [(i, profit)]
         fund_occupied = np.sum(portfolio)*(1+fee)
         if max_cost < fund_occupied: max_cost = fund_occupied
@@ -88,17 +94,35 @@ def paper_trading(df, max_pos,stop_loss):
     fee = vol*fee + len(portfolio)*df.iloc[-1].close*fee # liquidation fee included
     ttl = np.sum(list( map(lambda e: e[1],profits)) )
     net_ttl =  ttl + res - fee
-    
-    df.profit = df.profit.cumsum()
-    df['cash'] = max_cost - df['cost'] + df['profit']
+
+    df['cash'] = max_cost - df['cost'] - df['fee_i'].cumsum() + df['profit'].cumsum()
     df['portfolio'] = df['cash'] + df['asset_n']*df['close']
-    #print( df.iloc[-1].portfolio - max_cost )
-    df['portfolio'] = df['portfolio'].pct_change().cumsum()
-    df['ref'] = df['close'].pct_change().cumsum()
+    
+    df['portfolio'] = df['portfolio'].pct_change().fillna(0)
+    df['ref'] = df['close'].pct_change().fillna(0)
+
+    rsharpe = sharpe( df.ref)
+    psharpe = sharpe( df.portfolio)
+    rsortino = sortino( df.ref)
+    psortino = sortino( df.portfolio)
+    rmax_drawdowns = max_drawdowns( df.ref)*100
+    pmax_drawdowns = max_drawdowns( df.portfolio)*100
+    rrtn = annual_returns(df.ref)*100
+    prtn = annual_returns(df.portfolio)*100
+    print( f'{rrtn:.1f}%', f'{prtn:.1f}%', 
+    '\t', f'{rsortino:.1f}', f'{psortino:.1f}', 
+    '\t', f'{rsharpe:.1f}', f'{psharpe:.1f}', 
+    '\t', f'{rmax_drawdowns:.1f}%', f'{pmax_drawdowns:.1f}%')
+
+    df['portfolio'] = df['portfolio'].cumsum()
+    df['ref'] = df['ref'].cumsum()
     
     #import matplotlib.pyplot as plt 
     #df[['portfolio','ref']].plot();plt.show()
-    return df.iloc[-1].close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down, action[-1], sl
+    
+    return df.iloc[-1].close,buys,sells,\
+            res,fee,ttl,net_ttl,\
+            max_cost,max_down, action[-1], sl
 
 def _dt(t1,t2):
     import datetime 
@@ -120,7 +144,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
-    for span in ['1m','30m','1h','4h','8h','1d']:
+    for span in ['30m','1h','4h','8h','1d']:
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
             df = binance_kline(ric, span=span)
@@ -134,6 +158,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets):
         df.set_index('timestamp', inplace=True)
         df['timestamp'] = df.index
         # subsets
+        print( span )
         for n in [0,100,300,400] if random_sets else []:
             idf = df.copy()[n:n+550]
             close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl = paper_trading(idf,max_pos,stop_loss)
