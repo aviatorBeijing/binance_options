@@ -152,7 +152,7 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     xdf['ts'] = xdf.timestamp.apply(pd.Timestamp)
     xdf['dt'] = xdf.ts.diff()
     xdf['dd'] = xdf.dt.apply(lambda e: e.days)
-    xdf['dh'] = xdf.dt.apply(lambda e: e.hours)
+    xdf['dh'] = xdf.dt.apply(lambda e: e.seconds)
     print(xdf)
     return df
 
