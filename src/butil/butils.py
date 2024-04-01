@@ -131,7 +131,7 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     span = span.lower()
     tnow = int(datetime.datetime.utcnow().timestamp()*1000)
     dfs = []
-    td = 24*3600
+    tsecs = -1
     if span.endswith('d'):
         tsecs = 24*3600 * int(span.split('d')[0])
     elif span.endswith('h'):
@@ -151,7 +151,8 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
             recs += [(ts,vals[0], vals[1],vals[2], vals[3],vals[4])]
         df = pd.DataFrame.from_records( recs, columns = ['timestamp','open','high','low','close','volume'] )
         dfs += [ df ]
-        print(df.shape, df.iloc[0].timestamp, df.iloc[-1].timestamp)
+        if DEBUG:
+            print(df.shape, df.iloc[0].timestamp, df.iloc[-1].timestamp)
     df = pd.concat( dfs, axis=0)
     df = df.sort_values('timestamp', ascending=True).drop_duplicates().reset_index(drop=True)
     
