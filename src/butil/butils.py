@@ -125,10 +125,17 @@ def get_underlying(contract):
     return f"{fds[0]}/USDT"
 
 def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
+    span = span.lower()
     tnow = int(datetime.datetime.utcnow().timestamp()*1000)
     dfs = []
+    td = 24*3600
+    if span == '1d':
+        td = 24*3600
+    elif span == '1h':
+        td = 3600
+
     for i in range(1,10):
-        from_ts = tnow - 24*3600*1000 *999*i
+        from_ts = tnow - td*1000 *999*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
         for ohlcv in ohlcvs:
@@ -153,5 +160,8 @@ def get_maturity( contract:str )->float:
 
 #tests
 if __name__ == '__main__':
-    df = binance_kline()
+    df = binance_kline(span='1d')
+    print(df)
+
+    df = binance_kline(span='1h')
     print(df)
