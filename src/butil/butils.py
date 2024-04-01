@@ -124,18 +124,25 @@ def get_underlying(contract):
     fds = contract.split('-')
     return f"{fds[0]}/USDT"
 
-def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
+def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
+    """
+    @param grps (int): how many sets of data needed? Each set contains the "limit" by exchange limit, 1000.
+    """
     span = span.lower()
     tnow = int(datetime.datetime.utcnow().timestamp()*1000)
     dfs = []
     td = 24*3600
-    if span == '1d':
-        td = 24*3600
-    elif span == '1h':
-        td = 3600
+    if span.endswith('d'):
+        tsecs = 24*3600 * int(span.split('d')[0])
+    elif span.endswith('h'):
+        tsecs = 3600 * int(span.split('d')[0])
+    elif span.endswith('m'):
+        tsecs = 60 * int(span.split('d')[0])
+    else:
+        raise Exception( f"Unsupported span type: {span}")
 
     for i in range(1,10):
-        from_ts = tnow - td*1000 *990*i
+        from_ts = tnow - tsecs*1000 *990*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
         for ohlcv in ohlcvs:
