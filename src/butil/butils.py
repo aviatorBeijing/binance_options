@@ -150,11 +150,8 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     
     xdf = df[['timestamp']].copy()
     xdf['ts'] = xdf.timestamp.apply(pd.Timestamp)
-    xdf['dt'] = xdf.ts.diff()
-    xdf['dd'] = xdf.dt.apply(lambda e: e.days)
-    xdf['dh'] = xdf.dt.apply(lambda e: e.seconds)
-    print( set(list(xdf.dd)), set(list(xdf.dh)), )
-    print(xdf[(xdf.dd>1)|(xdf.dh>3600)])
+    xdf['dt'] = xdf.ts.diff() # The adjacent data should have SAME time differences, o.w., missing data is possible.
+    assert len( set(list(xdf.dt))) ==2, f'Missing data? symbol={symbol}, span={span}\n {df}'
 
     return df
 
