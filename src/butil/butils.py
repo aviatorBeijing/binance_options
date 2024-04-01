@@ -135,9 +135,9 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     if span.endswith('d'):
         tsecs = 24*3600 * int(span.split('d')[0])
     elif span.endswith('h'):
-        tsecs = 3600 * int(span.split('d')[0])
+        tsecs = 3600 * int(span.split('h')[0])
     elif span.endswith('m'):
-        tsecs = 60 * int(span.split('d')[0])
+        tsecs = 60 * int(span.split('m')[0])
     else:
         raise Exception( f"Unsupported span type: {span}")
 
