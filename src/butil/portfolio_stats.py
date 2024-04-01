@@ -56,6 +56,7 @@ def _perf(returns: pd.Series, metric, rule='24/360'):
 
     if metric == 'sortino':
         downside = np.sqrt((returns[returns < 0] ** 2).sum() / len(returns))
+        #downside = returns[returns<0].std(ddof=1)
         if downside == 0:
             #return np.nan # NaN causing JSON (front end) failutre: jsonify() failed on server side.
             return 0

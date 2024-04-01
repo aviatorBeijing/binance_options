@@ -19,7 +19,7 @@ class Metrics:
         self.days = nd
 
     def __str__(self) -> str:
-        return f"sortino = {self.sortino:.2f}, max_dd = {self.max_drawdown:.1f}% annual_rtn = {self.annual_return:.1f}% ({self.days} days)"
+        return f"sortino = {self.sortino:.2f}, sharpe = {self.sharpe:.2f}, max_dd = {self.max_drawdown:.1f}% annual_rtn = {self.annual_return:.1f}% ({self.days} days)"
 
 def  _max_down( portfolio, close ):
     if portfolio:
@@ -38,7 +38,7 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
     df['market_vol'] = df['close'].pct_change().fillna(0).rolling(120).apply(np.std).rank(pct=True)
     # significance
     df['insignificant'] = (df.close-df.open).apply(abs).rolling(60).rank(pct=True)
-    df['insignificant'] = df['insignificant']<0.95#df.market_vol
+    df['insignificant'] = df['insignificant']<0.95 #<df['market_vol'] #<0.95
     df['insignificant'] = df['insignificant'].shift(1)
     #df['insignificant'] =( ( (df.close-df.open)/(df.high-df.low)).apply(abs) < 0.6 ).shift(1)
 
@@ -62,7 +62,7 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
     for i,row in df.iterrows():
         profit = 0.
         mdd = _max_down( portfolio, row.close )
-        #print('### ', stop_loss, mdd, max_down, mdd<stop_loss, row.market_vol)
+        #print('### ', i, stop_loss, mdd, max_down, mdd<stop_loss, row.market_vol)
         if mdd < max_down: max_down = mdd 
         
         # stop-loss & stop-win
@@ -187,7 +187,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
     for span in spans.split(','):
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
-            df = binance_kline(ric, span=span,grps=10)
+            df = binance_kline(ric, span=span)
             df.to_csv(fn)
             print('-- saved:', fn)
         else:
