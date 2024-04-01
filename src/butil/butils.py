@@ -154,3 +154,4 @@ def get_maturity( contract:str )->float:
 #tests
 if __name__ == '__main__':
     df = binance_kline()
+    print(df)
