@@ -153,6 +153,7 @@ def binance_kline(symbol='BTC/USDT', span="1d") -> pd.DataFrame:
     xdf['dt'] = xdf.ts.diff()
     xdf['dt'] = xdf.dt.apply(lambda e: e)
     print(xdf)
+    print( xdf[xdf.ts==pd.NaT])
     return df
 
 
