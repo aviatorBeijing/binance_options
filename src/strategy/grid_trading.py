@@ -35,8 +35,11 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
     df['buy'] = df.avg
     df['sell'] = df.avg
     
+    df['market_vol'] = df['close'].pct_change().fillna(0).rolling(120).apply(np.std).rank(pct=True)
     # significance
-    df['insignificant'] = ((df.close-df.open).apply(abs).rolling(21).rank(pct=True)<0.95).shift(1)
+    df['insignificant'] = (df.close-df.open).apply(abs).rolling(60).rank(pct=True)
+    df['insignificant'] = df['insignificant']<0.95#df.market_vol
+    df['insignificant'] = df['insignificant'].shift(1)
     #df['insignificant'] =( ( (df.close-df.open)/(df.high-df.low)).apply(abs) < 0.6 ).shift(1)
 
     df['prev_up'] = (df['close'] > df['open']).shift(1)
@@ -54,15 +57,17 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
 
     df['cost'] = 0.;df['asset_n'] = 0.;df['profit'] = 0.;df['fee_i'] = 0.
     pos = 0;portfolio = []; profits = [];vol=0.0
-    buys = 0;sells=0;sl=0;max_cost=0.0;max_down = 0.0
+    buys = 0;sells=0;sl=0;max_cost=0.0;max_down = 999.
     action = []
     for i,row in df.iterrows():
         profit = 0.
         mdd = _max_down( portfolio, row.close )
+        #print('### ', stop_loss, mdd, max_down, mdd<stop_loss, row.market_vol)
         if mdd < max_down: max_down = mdd 
         
         # stop-loss & stop-win
-        if (stop_loss !=0 and mdd < stop_loss):# or mdd > 150/100:
+        if (stop_loss !=0 and mdd < stop_loss):# or mdd > 30/100:
+            #print('liq')
             action += [{'action': 'sell_all','price': row.close, 'ts': i}]
             sold = portfolio.pop()
             sl += 1
@@ -164,6 +169,7 @@ def _dt(t1,t2):
 def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
     ric = ric.upper()
     print('\n--', ric)
+    print('-- spans:', spans.split(','))
     print('-- max pos:',max_pos, ' (i.e., sizing)')
     print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
@@ -181,7 +187,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
     for span in spans.split(','):
         fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         if not test:
-            df = binance_kline(ric, span=span)
+            df = binance_kline(ric, span=span,grps=30)
             df.to_csv(fn)
             print('-- saved:', fn)
         else:
@@ -211,7 +217,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
     for col in 'net_ttl%,fee%,cagr%'.split(','):
         df[col] = df[col].apply(lambda s: f"{s:.1f}%")
     for col in 'max_down'.split(','):
-        df[col] = df[col].apply(lambda s: f"{(s*100):.0f}% {(-1/s):.1f}")
+        df[col] = df[col].apply(lambda s: f"{(s*100):.0f}% {(np.floor(-1/s) if s!=0 else 0):.0f}")
     
     tnow = datetime.datetime.utcnow()
     def _t(b):
