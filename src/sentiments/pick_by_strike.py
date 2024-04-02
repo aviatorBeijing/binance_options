@@ -50,8 +50,10 @@ def main(underlying, strike,date4):
     cdf = pd.DataFrame.from_records( recs )
     cdf.columns = 'spot_ric,T,K,ctype,contract'.split(',')
 
-    print( odf )
-    print( cdf )
+    odf.set_index('symbol', inplace=True, drop=True)
+    cdf.set_index('contract', inplace=True, drop=True)
+    df = cdf.merge(odf,left_index=True,right_index=True)
+    print(df)
 
 if __name__ == '__main__':
     main()
