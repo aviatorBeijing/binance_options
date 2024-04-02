@@ -57,6 +57,7 @@ def main(underlying, strike,date4):
     odf.set_index('symbol', inplace=True, drop=True)
     cdf.set_index('contract', inplace=True, drop=True)
     df = cdf.merge(odf,left_index=True,right_index=True)
+    df.sort_values('K', ascending=False, inplace=True)
     print(df)
 
 if __name__ == '__main__':
