@@ -40,7 +40,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
     spot_symbol = contracts[0].split('-')[0]+'/USDT'
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
 
-    for i in range(0,3):
+    while True:
         recs = []
         for c in contracts:
             K = float(c.split('-')[2]);cp=c.split('-')[-1]
