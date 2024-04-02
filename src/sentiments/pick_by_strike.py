@@ -19,6 +19,7 @@ def get_contracts_around( strike, df, datestr=None ):
         df = df[df.symbol.str.contains(datestr)]
     df['distance'] = abs(df.strikePrice-float(strike))
     recs = {}
+    print('  -- first 3 pairs of contracts')
     for expiry in sorted( list(set(df.expiryDate.values))):
         edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
         recs[expiry] = list(edf.head(6).symbol.values)
