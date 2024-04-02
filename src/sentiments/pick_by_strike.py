@@ -37,6 +37,9 @@ def main(underlying, strike,date4):
     df.to_csv(fn)
     print('-- written:',fn)
 
+    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
+    print(f'-- bid: {bid}, ask: {ask}')
+
     cs = get_contracts_around(strike,df,datestr=date4)
     ois=[];recs=[];expDates=[]
     for expiry, contracts in cs.items():
