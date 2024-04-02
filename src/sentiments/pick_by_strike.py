@@ -21,7 +21,7 @@ def get_contracts_around( strike, df, datestr=None ):
     recs = {}
     for expiry in sorted( list(set(df.expiryDate.values))):
         edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
-        recs[expiry] = list(edf.head(4).symbol.values)
+        recs[expiry] = list(edf.head(6).symbol.values)
     return recs 
 
 @click.command()
