@@ -44,6 +44,7 @@ def check_market( contracts:str):
         recs = []
         for c in contracts:
             cdata = fetch_bidask(c.upper())
+            print(cdata)
             bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
             recs += [(c, bid,ask,bvol,avol)]
         df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol'])
