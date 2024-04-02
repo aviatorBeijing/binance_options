@@ -32,8 +32,8 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
     # trading price
-    df['buy'] = df.avg
-    df['sell'] = df.avg
+    df['buy'] = df.open
+    df['sell'] = df.open
     
     df['market_vol'] = df['close'].pct_change().fillna(0).rolling(120).apply(np.std).rank(pct=True)
     
