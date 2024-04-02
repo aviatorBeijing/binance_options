@@ -5,10 +5,16 @@ import click,time
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
+from multiprocessing import Process
 
 from butil.butils import binance_spot
 from strategy.price_disparity import extract_specs
 from sentiments.atms import fetch_oi,fetch_contracts
+from ws_bcontract import _main as ws_connector
+from butil.bsql import fetch_bidask 
+from butil.butils import ( DATADIR,DEBUG,
+                get_binance_next_funding_rate,
+                get_maturity )
 
 def get_contracts_around( strike, df, datestr=None ):
     df = df.copy()
@@ -24,6 +30,25 @@ def get_contracts_around( strike, df, datestr=None ):
         edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
         recs[expiry] = list(edf.head(6).symbol.values)
     return recs 
+
+def _v(v): return float(v)
+
+def check_market( contracts:str):
+    print('-- wait for data ...')
+    time.sleep(5)
+    contracts = contracts.split(',')
+    spot_symbol = contracts[0].split('-')[0]+'/USDT'
+    annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
+
+    recs = []
+    for c in contracts:
+        cdata = fetch_bidask(c.upper())
+        bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
+        recs += [(c, bid,ask,bvol,avol)]
+    df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol'])
+    print('\n')
+    print(f'-- funding: {(annual*100):.1f}%')
+    print( tabulate(df, headers="keys"))
 
 @click.command()
 @click.option('--underlying', default="BTC")
@@ -60,6 +85,15 @@ def main(underlying, strike,date4):
     df = cdf.merge(odf,left_index=True,right_index=True)
     df.sort_values('K', ascending=False, inplace=True)
     print(df)
+
+    contracts = ','.join(list(df.index))
+    conn = Process( target=ws_connector, args=(contracts, "ticker",) )
+    calc = Process( target=check_market, args=(contracts) )
+    conn.start()
+    calc.start()
+    
+    conn.join()
+    calc.join()
 
 if __name__ == '__main__':
     main()
