@@ -47,7 +47,7 @@ def check_market( contracts:str):
         recs += [(c, bid,ask,bvol,avol)]
     df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol'])
     print('\n')
-    print(f'-- funding: {(annual*100):.1f}%')
+    print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
     print( tabulate(df, headers="keys"))
 
 @click.command()
