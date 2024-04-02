@@ -88,7 +88,7 @@ def main(underlying, strike,date4):
 
     contracts = ','.join(list(df.index))
     conn = Process( target=ws_connector, args=(contracts, "ticker",) )
-    calc = Process( target=check_market, args=(contracts) )
+    calc = Process( target=check_market, args=(contracts,) )
     conn.start()
     calc.start()
     
