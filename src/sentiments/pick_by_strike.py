@@ -33,7 +33,7 @@ def get_contracts_around( strike, df, datestr=None ):
 
 def _v(v): return float(v)
 
-def check_market( contracts:str):
+def check_market( contracts:str, spot_bid,spot_ask):
     print('-- wait for data ...')
     time.sleep(5)
     contracts = contracts.split(',')
@@ -43,15 +43,21 @@ def check_market( contracts:str):
     for i in range(0,3):
         recs = []
         for c in contracts:
+            K = float(c.split('-')[2]);cp=c.split('-')[-1]
+            dp = (K-spot_bid)/spot_bid;ep=1/100
+            out_in = 'OTM'
+            if cp=='C': out_in = 'ITM' if dp<-ep else 'OTM' if dp>ep else 'ATM'
+            if cp=='P': out_in = 'OTM' if dp<-ep else 'ITM' if dp>ep else 'ATM'
             cdata = fetch_bidask(c.upper())
             bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
             delta,gamma,theta,iv,ivbid,ivask = _v(cdata['delta']),_v(cdata['gamma']),_v(cdata['theta']),_v(cdata['impvol']),_v(cdata['impvol_bid']),_v(cdata['impvol_ask'])
-            recs += [(c, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
-        df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
+            recs += [(c, out_in, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
+        df = pd.DataFrame.from_records(recs, columns=['contract','state','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
         print( tabulate(df, headers="keys"))
         time.sleep(5)
+    print('-- done')
 
 @click.command()
 @click.option('--underlying', default="BTC")
@@ -91,7 +97,7 @@ def main(underlying, strike,date4):
 
     contracts = ','.join(list(df.index))
     conn = Process( target=ws_connector, args=(contracts, "ticker",) )
-    calc = Process( target=check_market, args=(contracts,) )
+    calc = Process( target=check_market, args=(contracts,bid,ask,) )
     conn.start()
     calc.start()
     
