@@ -40,15 +40,17 @@ def check_market( contracts:str):
     spot_symbol = contracts[0].split('-')[0]+'/USDT'
     annual, funding_rate, ts = get_binance_next_funding_rate( spot_symbol)
 
-    recs = []
-    for c in contracts:
-        cdata = fetch_bidask(c.upper())
-        bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
-        recs += [(c, bid,ask,bvol,avol)]
-    df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol'])
-    print('\n')
-    print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
-    print( tabulate(df, headers="keys"))
+    for i in range(0,3):
+        recs = []
+        for c in contracts:
+            cdata = fetch_bidask(c.upper())
+            bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
+            recs += [(c, bid,ask,bvol,avol)]
+        df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol'])
+        print('\n')
+        print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
+        print( tabulate(df, headers="keys"))
+        time.sleep(5)
 
 @click.command()
 @click.option('--underlying', default="BTC")
