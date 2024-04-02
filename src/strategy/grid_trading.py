@@ -32,8 +32,8 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
     # trading price
-    df['buy'] = df.open
-    df['sell'] = df.open
+    df['buy'] = df.close
+    df['sell'] = df.close
     
     df['market_vol'] = df['close'].pct_change().fillna(0).rolling(120).apply(np.std).rank(pct=True)
     
@@ -258,7 +258,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans,short_al
         return f'{x.days}d {int(x.seconds/3600)}h {int(x.seconds%3600/60)}m ago'
     df['age (last candle)'] = df['t2'].apply(lambda t: _t(t) )
 
-    print(tabulate(df['span,t1,t2,close,buys,sells,fee,stop_loss,asset,cash_gain,net_ttl,max_cost,max_down,cagr%,days,daily_net_ttl'.split(',')], headers="keys"))
-    print(tabulate(df['t1,t2,close,net_ttl,max_cost,max_down,days,span,age (last candle),last_action'.split(',')], headers="keys"))
+    print(tabulate(df['span,t2,close,buys,sells,fee,stop_loss,asset,cash_gain,net_ttl,max_cost,max_down,cagr%,days,daily_net_ttl'.split(',')], headers="keys"))
+    print(tabulate(df['t2,close,net_ttl,max_cost,max_down,days,span,age (last candle),last_action'.split(',')], headers="keys"))
 if __name__ == '__main__':
     main()
