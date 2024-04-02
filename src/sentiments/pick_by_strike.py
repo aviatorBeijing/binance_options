@@ -44,7 +44,6 @@ def check_market( contracts:str):
         recs = []
         for c in contracts:
             cdata = fetch_bidask(c.upper())
-            print(cdata)
             bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
             delta,gamma,theta,iv,ivbid,ivask = _v(cdata['delta']),_v(cdata['gamma']),_v(cdata['theta']),_v(cdata['impvol']),_v(cdata['impvol_bid']),_v(cdata['impvol_ask'])
             recs += [(c, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
