@@ -15,7 +15,7 @@ def get_contracts_around( strike, df, datestr=None ):
     if datestr:
         assert len(datestr)==4, f'Wrong format of the datestr, ex. 0401. Found: {datestr}'
         datestr = f'{year}{datestr}'
-        df = df[df.expiryDate==datestr]
+        df = df[df.symbol.contains(datestr)]
     df['distance'] = abs(df.strikePrice-float(strike))
     recs = {}
     for expiry in sorted( list(set(df.expiryDate.values))):
@@ -37,14 +37,15 @@ def main(underlying, strike,date4):
     print('-- written:',fn)
 
     cs = get_contracts_around(strike,df,datestr=date4)
-    ois=[];recs=[]
+    ois=[];recs=[];expDates=[]
     for expiry, contracts in cs.items():
-        oi = fetch_oi(expiry,underlying.upper())
-        ois += [ oi ]
         for c in contracts:
-            contracts += [c]
+            expDates += [ c.split('-')[1]]
             spot_ric, T,K,ctype = extract_specs( c )
             recs += [ (spot_ric, T,K,ctype, c,)]
+    for expiry in list(set(expDates)):
+        oi = fetch_oi(expiry,underlying.upper())
+        ois += [ oi ]
     odf = pd.concat( ois, axis=0)
     cdf = pd.DataFrame.from_records( recs )
     cdf.columns = 'spot_ric,T,K,ctype,contract'.split(',')
