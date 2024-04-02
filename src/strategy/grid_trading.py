@@ -27,7 +27,7 @@ def  _max_down( portfolio, close ):
         return ( close - avg_cost )/avg_cost
     return 0
 
-def paper_trading(df, max_pos,stop_loss, do_plot=False):
+def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
     df = df.copy()
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
@@ -36,9 +36,10 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
     df['sell'] = df.avg
     
     df['market_vol'] = df['close'].pct_change().fillna(0).rolling(120).apply(np.std).rank(pct=True)
+    
     # significance
     df['insignificant'] = (df.close-df.open).apply(abs).rolling(60).rank(pct=True)
-    df['insignificant'] = df['insignificant']<0.95 #<df['market_vol'] #<0.95
+    df['insignificant'] = df['insignificant']<0.95#<df['market_vol'] #<0.95
     df['insignificant'] = df['insignificant'].shift(1)
     #df['insignificant'] =( ( (df.close-df.open)/(df.high-df.low)).apply(abs) < 0.6 ).shift(1)
 
@@ -47,18 +48,19 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
     
     # Pseudo-trading
     df = df.dropna()
-    df.loc[df.insignificant, 'sell'] = 0
-    df.loc[df.insignificant, 'buy'] = 0
+    df.loc[df.insignificant, 'sell'] = 0;df.loc[df.insignificant, 'buy'] = 0
+
     df.loc[df.prev_up, 'sell'] = 0 # buy
     df.loc[df.prev_down, 'buy'] = 0 # sell
     #print(df)
 
     fee = 1e-3
 
-    df['cost'] = 0.;df['asset_n'] = 0.;df['profit'] = 0.;df['fee_i'] = 0.
-    pos = 0;portfolio = []; profits = [];vol=0.0
+    df['cost'] = 0.;df['asset_n'] = 0.;df['neg_asset_n'] = 0.;df['short_avg_entry']=df['close'];df['profit'] = 0.;df['fee_i'] = 0.
+    portfolio = [];short_portfolio=[];profits = [];vol=0.0
     buys = 0;sells=0;sl=0;max_cost=0.0;max_down = 999.
     action = []
+    wins = 0;losses=0
     for i,row in df.iterrows():
         profit = 0.
         mdd = _max_down( portfolio, row.close )
@@ -73,47 +75,75 @@ def paper_trading(df, max_pos,stop_loss, do_plot=False):
             sl += 1
             df.loc[i,'fee_i'] = len(portfolio)*row.close*fee
             while sold:
-                pos -=1
                 profit = sold - row.close
+                if profit>0: wins+=1
+                else: losses+=1
                 vol += row.close
                 sells+=1
                 if portfolio: sold = portfolio.pop()
                 else: break
         else: # not stop 
-            if row.buy > 0 and pos < max_pos:
+            if row.buy > 0:
                 pce= row.buy
-                portfolio+= [ pce ]
-                vol += pce
-                pos +=1
-                buys+=1
-                action += [{'action': 'buy ','price': pce, 'ts': i}]
-                df.loc[i,'fee_i'] = pce*fee
-            elif row.sell > 0 and portfolio:
+                if short_portfolio: # canceling naked shorts
+                    short = short_portfolio.pop()
+                    profit = short - pce # sell high buy low, ideally
+                    if profit>0: wins+=1
+                    else: losses+=1
+                    vol += pce 
+                    buys+=1
+                    action += [{'action': 'long_buy','price': pce, 'ts': i}]
+                    df.loc[i,'fee_i'] = pce*fee
+                    #print('level shorts:', profit)
+                elif len(portfolio) < max_pos-1: # long
+                    portfolio+= [ pce ]
+                    vol += pce
+                    buys+=1
+                    action += [{'action': 'buy ','price': pce, 'ts': i}]
+                    df.loc[i,'fee_i'] = pce*fee
+            elif row.sell > 0:
                 pce = row.sell
-                sold = portfolio.pop()
-                pos -=1
-                profit = sold - pce
-                vol += pce
-                sells+=1
-                action += [{'action': 'sell','price': pce, 'ts': i}]
-                df.loc[i,'fee_i'] = pce*fee
+                if portfolio: # sell holding
+                    sold = portfolio.pop()
+                    profit = sold - pce
+                    if profit>0: wins+=1
+                    else: losses+=1
+                    vol += pce
+                    sells+=1
+                    action += [{'action': 'sell','price': pce, 'ts': i}]
+                    df.loc[i,'fee_i'] = pce*fee
+                elif short_allowed and len(short_portfolio)< max_pos-1: # naked shorting
+                    #print('shorting...')
+                    short_portfolio += [pce]
+                    vol += pce
+                    sells += 1
+                    action += [{'action': 'short_sell ','price': pce, 'ts': i}]
+                    df.loc[i,'fee_i'] = pce*fee
+                    df.loc[i,'short_avg_entry'] = np.mean( short_portfolio )
+
         profits += [(i, profit)]
-        fund_occupied = np.sum(portfolio)*(1+fee)
+        leverage = 2. # assumed no leverage used
+        fund_occupied = np.sum(portfolio)*(1+fee) + ( np.sum(short_portfolio)/leverage + np.sum(short_portfolio)*fee )
         if max_cost < fund_occupied: max_cost = fund_occupied
-        df.loc[i,'cost'] = np.sum( portfolio )
-        df.loc[i,'asset_n'] = pos
+        df.loc[i,'cost'] = np.sum( portfolio ) + np.sum( short_portfolio )/leverage
+        df.loc[i,'asset_n'] = len(portfolio)
+        df.loc[i,'neg_asset_n'] = len(short_portfolio)
         df.loc[i,'profit'] = profit
-    
+
+        #print( '###', len(portfolio), len(short_portfolio))
+    print(f'-- wins: {wins}, losses: {losses}, win rate: {(wins/(wins+losses)*100):.1f}%')
     res = 0.
     if portfolio:
-        res = len(portfolio)*df.iloc[-1].close - np.sum(portfolio) 
-
-    fee = vol*fee + len(portfolio)*df.iloc[-1].close*fee # liquidation fee included
+        res += len(portfolio)*df.iloc[-1].close - np.sum(portfolio)
+    if short_portfolio:
+        res += np.sum(short_portfolio) - len(short_portfolio)*df.iloc[-1].close
+    
+    fee = vol*fee + ( len(portfolio) + len(short_portfolio) )*df.iloc[-1].close*fee # liquidation fee included
     ttl = np.sum(list( map(lambda e: e[1],profits)) )
     net_ttl =  ttl + res - fee
 
     df['cash'] = max_cost - df['cost'] - df['fee_i'].cumsum() + df['profit'].cumsum()
-    df['portfolio'] = df['cash'] + df['asset_n']*df['close']
+    df['portfolio'] = df['cash'] + df['asset_n']*df['close'] + ( df['short_avg_entry'] - df['close'] ) * df['neg_asset_n']
     
     df['portfolio'] = df['portfolio'].pct_change().fillna(0)
     df['ref'] = df['close'].pct_change().fillna(0)
@@ -166,16 +196,18 @@ def _dt(t1,t2):
 @click.option('--random_sets', is_flag=True, default=False)
 @click.option('--plot', is_flag=True, default=False)
 @click.option('--spans', default='30m,1h,4h,1d')
-def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
+@click.option('--short_allowed', is_flag=True, default=False)
+def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans,short_allowed):
     ric = ric.upper()
     print('\n--', ric)
     print('-- spans:', spans.split(','))
     print('-- max pos:',max_pos, ' (i.e., sizing)')
+    print('-- short ', f'{"enabled" if short_allowed else "disabled"}')
     print('-- stop loss:', f'{(stop_loss*100):.0f}%' if stop_loss!=0 else 'disabled')
     recs = []
 
-    def _paper_trading(adf, recs, do_plot=False):
-        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl, pmet, rmet = paper_trading(adf,max_pos,stop_loss,do_plot=do_plot)
+    def _paper_trading(adf, recs, short_allowed=False, do_plot=False):
+        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl, pmet, rmet = paper_trading(adf,max_pos,stop_loss,short_allowed=short_allowed,do_plot=do_plot)
         t1,t2 = adf.iloc[0].timestamp,adf.iloc[-1].timestamp
         is_last_candle = t2 == df.iloc[-1].timestamp
         is_now = t2 == action['ts']
@@ -202,8 +234,8 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans):
         for rs in gen_random_sets(0,df.shape[0],df.shape[0]//5, 5) if random_sets else []:
             istart = rs[0]; iend=rs[-1]
             idf = df.copy()[istart:iend]
-            _paper_trading( idf,recs)
-        _paper_trading(df,recs, plot)
+            _paper_trading( idf,recs,short_allowed=short_allowed)
+        _paper_trading(df,recs,short_allowed=short_allowed, do_plot=plot)
         
     df = pd.DataFrame.from_records( recs )
     df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,last_action,stop_loss,cagr%'.split(',')
