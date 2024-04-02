@@ -38,7 +38,7 @@ def main(underlying, strike,date4):
     print('-- written:',fn)
 
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
-    print(f'-- bid: {bid}, ask: {ask}')
+    print(f'-- [spot] bid: {bid}, ask: {ask}')
 
     cs = get_contracts_around(strike,df,datestr=date4)
     ois=[];recs=[];expDates=[]
