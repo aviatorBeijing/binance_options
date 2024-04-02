@@ -11,6 +11,7 @@ from strategy.price_disparity import extract_specs
 from sentiments.atms import fetch_oi,fetch_contracts
 
 def get_contracts_around( strike, df, datestr=None ):
+    df = df.copy()
     year = datetime.datetime.today().date().year%100
     if datestr:
         assert len(datestr)==4, f'Wrong format of the datestr, ex. 0401. Found: {datestr}'
