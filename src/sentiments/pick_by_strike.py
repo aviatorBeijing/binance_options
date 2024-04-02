@@ -46,8 +46,9 @@ def check_market( contracts:str):
             cdata = fetch_bidask(c.upper())
             print(cdata)
             bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
-            recs += [(c, bid,ask,bvol,avol)]
-        df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol'])
+            delta,gamma,theta,iv,ivbid,ivask = _v(cdata['delta']),_v(cdata['gamma']),_v(cdata['theta']),_v(cdata['impvol']),_v(cdata['impvol_bid']),_v(cdata['impvol_ask'])
+            recs += [(c, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
+        df = pd.DataFrame.from_records(recs, columns=['contract','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
         print( tabulate(df, headers="keys"))
