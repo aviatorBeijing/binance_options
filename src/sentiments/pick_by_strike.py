@@ -15,7 +15,7 @@ def get_contracts_around( strike, df, datestr=None ):
     if datestr:
         assert len(datestr)==4, f'Wrong format of the datestr, ex. 0401. Found: {datestr}'
         datestr = f'{year}{datestr}'
-        df = df[df.symbol.contains(datestr)]
+        df = df[df.symbol.str.contains(datestr)]
     df['distance'] = abs(df.strikePrice-float(strike))
     recs = {}
     for expiry in sorted( list(set(df.expiryDate.values))):
