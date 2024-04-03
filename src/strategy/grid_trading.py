@@ -32,27 +32,24 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
     # trading price
-    df['buy'] = df.close
+    df['buy'] = df.open
     df['sell'] = df.close
-    
-    df['market_vol'] = df['close'].pct_change().fillna(0).rolling(120).apply(np.std).rank(pct=True)
     
     # significance
     df['insignificant'] = (df.close-df.open).apply(abs).rolling(60).rank(pct=True)
-    df['insignificant'] = df['insignificant']<0.95#<df['market_vol'] #<0.95
+    df['insignificant'] = df['insignificant']<0.95
     df['insignificant'] = df['insignificant'].shift(1)
-    #df['insignificant'] =( ( (df.close-df.open)/(df.high-df.low)).apply(abs) < 0.6 ).shift(1)
 
     df['prev_up'] = (df['close'] > df['open']).shift(1)
     df['prev_down'] = (df['close'] < df['open']).shift(1)
     
-    # Pseudo-trading
+    # Pseudo-trading filters signals
     df = df.dropna()
-    df.loc[df.insignificant, 'sell'] = 0;df.loc[df.insignificant, 'buy'] = 0
+    df.loc[df.insignificant, 'sell'] = 0;df.loc[df.insignificant, 'buy'] = 0 
 
+    # trading signals
     df.loc[df.prev_up, 'sell'] = 0 # buy
     df.loc[df.prev_down, 'buy'] = 0 # sell
-    #print(df)
 
     fee = 1e-3
 
@@ -64,7 +61,6 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
     for i,row in df.iterrows():
         profit = 0.
         mdd = _max_down( portfolio, row.close )
-        #print('### ', i, stop_loss, mdd, max_down, mdd<stop_loss, row.market_vol)
         if mdd < max_down: max_down = mdd 
         
         # stop-loss & stop-win
