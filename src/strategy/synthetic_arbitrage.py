@@ -50,7 +50,7 @@ def main(contracts):
     cs = []
     for c in contracts.split(','):
         cs += [c[:-1]]
-        cs = list(set(cs))
+    cs = list(set(cs))
 
     conn = Process( target=ws_connector, args=(contracts, "ticker",) )
     calc = Process( target=_multiprocess_main, args=(cs,) )
