@@ -29,16 +29,18 @@ def _multiprocess_main(contracts:list):
             recs = []
             for c in cs:
                 spot_symbol, T,K, ctype = extract_specs( c+'C' )
+                T = get_maturity(c+'C')/365
                 _,S = binance_spot(spot_symbol)
                 call = fetch_bidask( c+'C' )
                 C = float(call['ask'])
                 put = fetch_bidask( c+'P' )
                 P = float(put['ask'])
-                recs += [ {'call': C, 'put': P, 'spot': S, 'strike': K}]
+                recs += [ {'call': C, 'put': P, 'spot': S, 'strike': K, 'maturity': T}]
             df = pd.DataFrame.from_records( recs )
             
             df['C+PV'] = df['call'] + df['strike']
             df['P+S']  = df['put'] + df['spot']
+            df['implied_rate'] = -np.log( (df['P+S'] - df['call'])/df['strike'] )/df['maturity']
 
             print( tabulate(df,headers='keys'))
         except AssertionError as e:
