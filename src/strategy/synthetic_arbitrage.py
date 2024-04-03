@@ -22,12 +22,8 @@ def _multiprocess_main(contracts:list):
     
     while True:
         try:
-            cs = []
-            for c in contracts:
-                cs += [c[:-1]]
-            cs = list(set(cs))
             recs = []
-            for c in cs:
+            for c in contracts:
                 spot_symbol, T,K, ctype = extract_specs( c+'C' )
                 T = get_maturity(c+'C')/365
                 _,S = binance_spot(spot_symbol)
@@ -51,8 +47,13 @@ def _multiprocess_main(contracts:list):
 @click.command()
 @click.option('--contracts')
 def main(contracts):
+    cs = []
+    for c in contracts.split(','):
+        cs += [c[:-1]]
+        cs = list(set(cs))
+
     conn = Process( target=ws_connector, args=(contracts, "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(contracts.split(','),) )
+    calc = Process( target=_multiprocess_main, args=(cs,) )
     conn.start()
     calc.start()
     
