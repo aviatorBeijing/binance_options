@@ -36,7 +36,8 @@ def _multiprocess_main(contracts:list):
             
             df['C+PV'] = df['call'] + df['strike']
             df['P+S']  = df['put'] + df['spot']
-            df['implied_rate'] = -np.log( (df['P+S'] - df['call'])/df['strike'] )/df['maturity']
+            df['implied_rate'] = -np.log( (df['P+S'] - df['call'])/df['strike'] )/df['maturity'];df.implied_rate=df.implied_rate.apply(lambda v: f"{(v*100):.1f}%")
+            df['disparity'] = ((df['C+PV'] - df['P+S'])/df['P+S']*100);df.disparity = df.disparity.apply(lambda v: f"{v:.1f}%")
 
             print( tabulate(df,headers='keys'))
         except AssertionError as e:
