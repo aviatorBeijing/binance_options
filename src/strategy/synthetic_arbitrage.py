@@ -17,13 +17,24 @@ from butil.butils import ( DATADIR,DEBUG,
                 get_maturity )
 
 
-def _multiprocess_main(contracts:list):
-    spot = contracts[0].split('-')[0] + '/USDT'
-    bid,S = binance_spot(spot)
 
+def _multiprocess_main(contracts:list):
+    cs = []
     for c in contracts:
-        d = fetch_bidask( c )
-        print(d)
+        cs += [c[:-1]]
+    cs = list(set(cs))
+    recs = []
+    for c in cs:
+        spot_symbol, T,K, ctype = extract_specs( c+'C' )
+        _,S = binance_spot(spot_symbol)
+        call = fetch_bidask( c+'C' )
+        C = call['ask']
+        put = fetch_bidask( c+'P' )
+        P = put['ask']
+        recs += [ {'call': C, 'put': P, 'spot': S, 'strike': K}]
+    df = pd.DataFrame.from_records( recs )
+    print( tabulate(df,headers='keys'))
+
 
 @click.command()
 @click.option('--contracts')
