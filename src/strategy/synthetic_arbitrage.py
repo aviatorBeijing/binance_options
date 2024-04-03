@@ -36,6 +36,10 @@ def _multiprocess_main(contracts:list):
                 P = put['ask']
                 recs += [ {'call': C, 'put': P, 'spot': S, 'strike': K}]
             df = pd.DataFrame.from_records( recs )
+            
+            df['C+PV'] = df['C'] + df['strike']
+            df['P+S']  = df['P'] + df['spot']
+
             print( tabulate(df,headers='keys'))
         except AssertionError as e:
             print('waiting for data:', contracts)
