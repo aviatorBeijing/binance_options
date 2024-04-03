@@ -85,7 +85,7 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
         else: # not stop 
             if row.buy > 0:
                 pce= row.buy
-                if short_portfolio: # canceling naked shorts
+                if short_portfolio: # [canceling naked shorts]
                     short = short_portfolio.pop()
                     profit = short - pce # sell high buy low, ideally
                     if profit>0: wins+=1
@@ -94,8 +94,7 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
                     buys+=1
                     action += [{'action': 'long_buy','price': pce, 'ts': i}]
                     df.loc[i,'fee_i'] = pce*fee
-                    #print('level shorts:', profit)
-                elif len(portfolio) < max_pos-1: # long
+                elif len(portfolio) < max_pos-1: # [buy]
                     portfolio+= [ pce ]
                     vol += pce
                     buys+=1
@@ -103,16 +102,28 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
                     df.loc[i,'fee_i'] = pce*fee
             elif row.sell > 0:
                 pce = row.sell
-                if portfolio: # sell holding
+                if portfolio: # [sell]
                     sold = portfolio.pop()
-                    profit = sold - pce
-                    if profit>0: wins+=1
-                    else: losses+=1
-                    vol += pce
-                    sells+=1
-                    action += [{'action': 'sell','price': pce, 'ts': i}]
-                    df.loc[i,'fee_i'] = pce*fee
-                elif short_allowed and len(short_portfolio)< max_pos-1: # naked shorting
+                    if False: # [sell all] tested, not good. Patience is virtue in trading.
+                        while sold:
+                            profit = sold - pce
+                            if profit>0: wins+=1
+                            else: losses+=1
+                            vol += pce
+                            sells+=1
+                            action += [{'action': 'sell','price': pce, 'ts': i}]
+                            df.loc[i,'fee_i'] = pce*fee
+                            if portfolio: sold = portfolio.pop()
+                            else: break
+                    else: # [sell one]
+                        profit = sold - pce
+                        if profit>0: wins+=1
+                        else: losses+=1
+                        vol += pce
+                        sells+=1
+                        action += [{'action': 'sell','price': pce, 'ts': i}]
+                        df.loc[i,'fee_i'] = pce*fee
+                elif short_allowed and len(short_portfolio)< max_pos-1: # [naked shorting]
                     #print('shorting...')
                     short_portfolio += [pce]
                     vol += pce
@@ -231,7 +242,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,random_sets,plot,spans,short_al
         df['timestamp'] = df.index
         # subsets
         print( span )
-        for rs in gen_random_sets(0,df.shape[0],df.shape[0]//5, 5) if random_sets else []:
+        for rs in gen_random_sets(0,df.shape[0],df.shape[0]//5, 10) if random_sets else []:
             istart = rs[0]; iend=rs[-1]
             idf = df.copy()[istart:iend]
             _paper_trading( idf,recs,short_allowed=short_allowed)
