@@ -35,7 +35,7 @@ def _multiprocess_main(contracts:list):
                 C = float(call['ask'])
                 put = fetch_bidask( c+'P' )
                 P = float(put['ask'])
-                recs += [ {'call': C, 'put': P, 'spot': S, 'strike': K, 'maturity': T}]
+                recs += [ {'contract': c[:-1],'call': C, 'put': P, 'spot': S, 'strike': K, 'maturity': T}]
             df = pd.DataFrame.from_records( recs )
             
             df['C+PV'] = df['call'] + df['strike']
