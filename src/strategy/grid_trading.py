@@ -32,7 +32,7 @@ def paper_trading(df, max_pos,stop_loss, short_allowed=False, do_plot=False):
     df['avg'] = (df.open+df.close+df.high+df.low)/4
     
     # trading price
-    df['buy'] = df.open
+    df['buy'] = df.close
     df['sell'] = df.close
     
     # significance
