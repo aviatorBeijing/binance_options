@@ -28,9 +28,9 @@ def _multiprocess_main(contracts:list):
                 T = get_maturity(c+'C')/365
                 _,S = binance_spot(spot_symbol)
                 call = fetch_bidask( c+'C' )
-                C = float(call['ask'])
+                C = float(call['ask']) + float(call['bid']); C*=.5
                 put = fetch_bidask( c+'P' )
-                P = float(put['ask'])
+                P = float(put['ask']) + float(put['bid']); P*=.5
                 recs += [ {'contract': c[:-1],'call': C, 'put': P, 'spot': S, 'strike': K, 'maturity': T}]
             df = pd.DataFrame.from_records( recs )
             
