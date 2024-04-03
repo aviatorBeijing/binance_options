@@ -141,7 +141,7 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     else:
         raise Exception( f"Unsupported span type: {span}")
 
-    for i in range(1,grps):
+    for i in range(1,grps+1):
         from_ts = tnow - tsecs*1000 *990*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
