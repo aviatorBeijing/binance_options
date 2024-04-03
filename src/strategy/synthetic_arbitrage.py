@@ -19,6 +19,7 @@ from butil.butils import ( DATADIR,DEBUG,
 
 
 def _multiprocess_main(contracts:list):
+    time.sleep(5)
     cs = []
     for c in contracts:
         cs += [c[:-1]]
