@@ -31,9 +31,9 @@ def _multiprocess_main(contracts:list):
                 spot_symbol, T,K, ctype = extract_specs( c+'C' )
                 _,S = binance_spot(spot_symbol)
                 call = fetch_bidask( c+'C' )
-                C = call['ask']
+                C = float(call['ask'])
                 put = fetch_bidask( c+'P' )
-                P = put['ask']
+                P = float(put['ask'])
                 recs += [ {'call': C, 'put': P, 'spot': S, 'strike': K}]
             df = pd.DataFrame.from_records( recs )
             
