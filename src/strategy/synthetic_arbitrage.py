@@ -18,7 +18,7 @@ from butil.butils import ( DATADIR,DEBUG,
 
 
 def _multiprocess_main(contracts:list):
-    spot = c[0].split('-')[0] + '/USDT'
+    spot = contracts[0].split('-')[0] + '/USDT'
     bid,S = binance_spot(spot)
 
     for c in contracts:
