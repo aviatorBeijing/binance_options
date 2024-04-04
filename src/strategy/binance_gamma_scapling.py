@@ -8,6 +8,8 @@ from butil.butils import DATADIR,get_binance_next_funding_rate,DEBUG
 from brisk.bfee import calc_fee
 from strategy.gamma_scalping import EuropeanOption, Asset, Spot 
 
+TEST = True
+
 spot_positions = [] # TODO Need a storage method, to track the scraple history. FIXME
 
 def _main( contracts:list ):
@@ -24,7 +26,7 @@ def _main( contracts:list ):
             profit = sum([d.value(p1) for d in spot_positions[1:]])
             psum = sum([d.delta for d in spot_positions[1:]])
 
-            print(f'    -- scaples (#{len(spot_positions)-1}): ${profit:.4f}, spot positions: {psum:.6f}')
+            print(f'    -- scaples (#spots={len(spot_positions)-1}): profit = ${profit:.4f}, spot positions: {psum:.6f}')
             
             """spot_delta = sum([d.delta for d in spot_positions])
             option_delta = opt.greeks['delta']
@@ -36,28 +38,49 @@ def _mp_main(contracts:str):
 
     cts = []
     qty = 1.
+    entry = 1_500
     nominal = 1.
     for contract in contracts.split(','):
-        opt = EuropeanOption(contract, 1500, qty, nominal).init()
+        opt = EuropeanOption(contract, entry, qty, nominal).init()
         cts += [ opt ]
     underlying = cts[0].underlying
     init_spot = cts[0].init_spot
     td = total_option_deltas = sum( [o.greeks['delta'] for o in cts] )
     for o in cts:
-        bid,ask,last_trade = o.get_options_price(o.contract)
+        bid,ask,last_trade = Asset.get_options_price(o.contract)
         print('  -- ', o.contract, bid, ask, last_trade)
     print('-- initial spot:', init_spot)
     print('-- initial option delta:', total_option_deltas)
     print(f'-- upfront {"SHORT" if td>0 else "LONG" if td<0 else "STAY"} {abs(td)*nominal} share of {underlying}')
     spot_positions += [ Spot(underlying,init_spot,total_option_deltas*(-1)) ]
 
-    while True:
-        try:
-            _main(cts)
-            time.sleep(5)
-        except KeyboardInterrupt as e:
-            print("-- Exiting --")
-            break
+    if TEST:
+        i = 0
+        for i in range(0,10):
+            try:
+                _main(cts)
+                test_setting(i);i+=1
+            except KeyboardInterrupt as e:
+                print("-- Exiting --")
+                break
+    else:
+        while True:
+            try:
+                _main(cts)
+                time.sleep(5)
+            except KeyboardInterrupt as e:
+                print("-- Exiting --")
+                break
+
+def test_setting(i:int):
+    deltas = [0.48,0.56,0.9,0.01,0.5]
+    spot = [65000,68000,69000,65000,61000]
+    gammas = [0.0003] * 5
+
+    j = (i+1)%5
+    Asset.get_options_greeks = lambda e: {'delta': deltas[j], 'gamma': gammas[j]}
+    Asset.get_spot_price = lambda e: spot[j]
+    Asset.get_options_price = lambda e: (1200.00,1800.00, 650.00,)
 
 @click.command()
 @click.option('--contracts')
@@ -70,6 +93,8 @@ def main(contracts):
     conn.join()
     calc.join() """
 
+    if TEST:
+        test_setting(0)
     _mp_main( contracts )
 
 if __name__ == '__main__':

@@ -26,16 +26,8 @@ class Metrics:
     def __str__(self) -> str:
         return f"sortino = {self.sortino:.2f}, sharpe = {self.sharpe:.2f}, max_dd = {self.max_drawdown:.1f}% annual_rtn = {self.annual_return:.1f}% ({self.days} days)"
 
-def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_plot=False):
-    df = df.copy()
-    df['avg'] = (df.open+df.close+df.high+df.low)/4
-    
-    # trading price
-    df['buyp'] = df.open
-    df['sellp'] = df.close
-    df['buy'] = 0.;df['sell'] = 0.
-    
-    """                 - Algo (start) -              """
+def griding(df):
+    df =  df.copy()           
     # significance
     df['insignificant'] = (df.close-df.open).apply(abs).rolling(60).rank(pct=True)
     df['insignificant'] = df['insignificant']<0.99
@@ -52,7 +44,44 @@ def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_pl
     df.loc[(df.prev_down), 'sell'] = df.sellp
     df.loc[df.insignificant, 'sell'] = 0
     df.loc[df.insignificant, 'buy'] = 0
-    """                 - (end) -              """
+    return df
+
+def needles( df ):
+    df = df.copy()
+    df['volume_nontrivial'] = df.volume.rolling(14).rank(pct=True) > 0.9
+    df['oc/hl'] = (df['open']-df['close']).apply(abs)/(df['high']-df['low']) < 50/100 # needle found
+
+    df['hc'] = (df['high'] - df['close'])/df['high'] < 5/10000 # high,close are nearyby
+    df['ho'] = (df['high'] -  df['open'])/df['high'] < 5/10000   # high,open are nearyby
+    df['needle_below'] = False 
+    df.loc[(df.hc | df.ho) & df['oc/hl'], 'needle_below' ] = True
+    df.needle_below = df.needle_below.shift(1)
+    
+    df['hc'] = (df['close'] - df['low'])/df['low'] < 5/10000 # low,close are nearyby
+    df['ho'] = (df['open']  - df['low'])/df['low'] < 5/10000   # low,open are nearyby
+    df['needle_up'] = False 
+    df.loc[(df.hc | df.ho) & df['oc/hl'], 'needle_up' ] = True
+    df.needle_up = df.needle_up.shift(1)
+
+    df = df.dropna()
+    df.loc[df.needle_below & df.volume_nontrivial, 'buy'] = df.buyp
+    df.loc[df.needle_up & df.volume_nontrivial, 'sell'] = df.sellp
+
+    print(df[df.needle_up])
+    print(df[df.needle_below])
+    return df 
+
+def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_plot=False):
+    df = df.copy()
+    df['avg'] = (df.open+df.close+df.high+df.low)/4
+    
+    # trading price
+    df['buyp'] = df.open
+    df['sellp'] = df.open
+    df['buy'] = 0.;df['sell'] = 0.
+    
+    #df = griding(df)
+    df = needles(df)
 
     fee = 1e-3
 
