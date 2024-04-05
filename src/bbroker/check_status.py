@@ -41,5 +41,8 @@ def position_status()->pd.DataFrame:
 
 # tests
 if __name__ == '__main__':
+    print('*'*30, ' Order Status', '*'*30)
     orders_status()
+
+    print('*'*30, ' Existing Positions', '*'*30)
     position_status()
