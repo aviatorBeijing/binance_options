@@ -25,7 +25,12 @@ def sell_(symbol,qty,pce):
         raise Exception(f"You don't have existing {symbol} for sale.")
     assert df.shape[0] == 1, f"Why more than 1 rows exists for: {symbol}"
     
-    assert pce*qty > float(df.iloc[0].positionCost), '\n*** Sell low, take the loss? ***'
+    # existing position
+    cost = float(df.iloc[0].positionCost)
+    amount = float(df.iloc[0].quantity)
+    avg_cost = cost/amount 
+
+    assert pce > avg_cost, '\n*** Sell low, take the loss? ***'
     #mgr(symbol,'sell', qty,pce,timing='limit')
 
 @click.command()
