@@ -50,9 +50,11 @@ def calc_(position_df):
     while True:
         try:
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
+            position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
         except Exception as e:
             print('*** waiting data:', cs )
-        print( position_df )
+        else:
+            print( position_df )
         time.sleep(5)
 
 if __name__ == '__main__':
