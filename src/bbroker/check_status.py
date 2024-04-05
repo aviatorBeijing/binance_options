@@ -24,6 +24,9 @@ def position_status()->pd.DataFrame:
     'positionCost': '5.55', 'expiryDate': '1711699200000', 'priceScale': '1', 
     'quantityScale': '2', 'optionSide': 'PUT', 'quoteAsset': 'USDT', 'time': '1711500354804'
     """
+    if not ods:
+        print('-- no outstanding positions')
+        return
     df = pd.DataFrame.from_records(ods)
     df = df[['symbol','side','positionCost','ror',
             'quantity','markValue','expiryDate']]
