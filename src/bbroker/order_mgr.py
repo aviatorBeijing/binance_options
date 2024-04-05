@@ -28,12 +28,17 @@ def main( contract, price, qty, execute ):
     assert price>0, 'Price must be >0'
     assert qty>0, 'Quantity (qty) must be >0'
 
-    if contract[-1] == 'C':
-        buy_call( contract, qty, price )
-    
-    import time
-    time.sleep(5)
-    orders_status()
+    if execute:
+        print('-- [executing] --')
+        if contract[-1] == 'C':
+            buy_call( contract, qty, price )
+        
+        import time
+        time.sleep(5)
+        orders_status()
+    else:
+        print('-- [checking] --')
+        print(f'-- cost: ${(price * qty):.2f}')
 
 if __name__ == '__main__':
     main()
