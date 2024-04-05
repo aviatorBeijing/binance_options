@@ -24,6 +24,11 @@ def validate_sell(symbol,qty,pce):
     if df.empty:
         raise Exception(f"You don't have existing {symbol} for sale.")
     assert df.shape[0] == 1, f"Why more than 1 rows exists for: {symbol}"
+
+    print('-- existing orders')
+    odf = orders_status()
+    print(odf)
+
     
     # existing position
     cost = float(df.iloc[0].positionCost)
