@@ -31,6 +31,9 @@ def sell_(symbol,qty,pce):
     avg_cost = cost/amount 
 
     assert pce > avg_cost, '\n*** Sell low, take the loss? ***'
+    potential_gain = (pce-avg_cost) * qty 
+    rt = potential_gain/(avg_cost*qty)
+    print(f'-- potential gain (if filled): ${potential_gain}, {rt}%')
     #mgr(symbol,'sell', qty,pce,timing='limit')
 
 @click.command()
