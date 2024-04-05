@@ -51,6 +51,7 @@ def main( action,contract, price, qty, execute ):
         print('-- [checking] --')
         print(f'-- {action} {qty} {contract} at price ${price}')
         print(f'-- {"cost" if action=="buy" else "gain"}: ${(price * qty):.2f}')
+        print('-- use "--execute" to send order.')
 
 if __name__ == '__main__':
     main()
