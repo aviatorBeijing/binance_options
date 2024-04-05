@@ -29,7 +29,7 @@ def sell_(symbol,qty,pce):
 def main( action,contract, price, qty, execute ):
     action = action.lower()
     contract = contract.upper()
-    
+
     assert action == 'buy' or action == 'sell', "buy|sell, must be provided."
     assert len(contract) == len('BTC-240329-70000-C'), 'Wrong contract.'
     assert contract.split('-')[0] == 'BTC', 'Only support BTC contracts.'
@@ -49,7 +49,8 @@ def main( action,contract, price, qty, execute ):
         orders_status()
     else:
         print('-- [checking] --')
-        print(f'-- cost: ${(price * qty):.2f}')
+        print(f'-- {action} {qty} {contract} at price ${price}')
+        print(f'-- {"cost" if action=="buy" else "gain"}: ${(price * qty):.2f}')
 
 if __name__ == '__main__':
     main()
