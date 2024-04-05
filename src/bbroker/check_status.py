@@ -1,4 +1,4 @@
-import os,datetime
+import os,datetime,time
 import pandas as pd
 from tabulate import tabulate
 
@@ -40,9 +40,36 @@ def position_status()->pd.DataFrame:
     return df
 
 # tests
+def calc_(position_df):
+    from butil.bsql import fetch_bidask 
+    from butil.butils import ( DATADIR,DEBUG,
+                get_binance_next_funding_rate,
+                get_maturity )  
+
+    cs = list(position_df.symbol.values)
+    while True:
+        try:
+            position_df['bid'] = position_df.symbol.apply(fetch_bidask)
+        except Exception as e:
+            print('*** waiting data:', cs )
+        print( position_df )
+        time.sleep(5)
+
 if __name__ == '__main__':
     print('*'*30, ' Order Status', '*'*30)
     orders_status()
 
     print('*'*30, ' Existing Positions', '*'*30)
-    position_status()
+    df = position_status()
+    contracts = list(df.symbol.values)
+
+    from multiprocessing import Process
+    from ws_bcontract import _main as ws_connector
+
+    conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
+    calc = Process( target=calc_, args=(df,) )
+    conn.start()
+    calc.start()
+    
+    conn.join()
+    calc.join()
