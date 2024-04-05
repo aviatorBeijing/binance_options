@@ -33,7 +33,7 @@ def validate_sell(symbol,qty,pce):
         existing_position = abs( float(df.iloc[0].quantity) )
         existing_sell_qty = abs( float(odf.iloc[0].quantity) )
         if existing_position < (existing_sell_qty + qty):
-            raise Exception(f"\n***\nExisting sell order qty: {existing_sell_qty};\nposition for sell {existing_position};\nrequesting sell qty {qty} is too much.")
+            raise Exception(f"\n***\n\texisting sell order qty: {existing_sell_qty};\n\tposition for sell {existing_position};\n\trequesting sell qty {qty} is too much.")
 
     
     # existing position
