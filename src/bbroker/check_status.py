@@ -51,6 +51,9 @@ def calc_(position_df):
         try:
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
             position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
+            position_df['liq_value'] = (position_df.bid *position_df.quantity) - position_df.positionCost.astype(float)
+            position_df['liq_value%'] = (position_df.liq_value / position_df.positionCost.astype(float))*100
+            position_df['liq_value%'] = position_df['liq_value%'].apply(lambda s: f"{s:.2f}%")
         except Exception as e:
             print('*** waiting data:', cs )
         else:
