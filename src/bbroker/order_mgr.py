@@ -52,11 +52,11 @@ def cancel_(symbol, oid):
     df = orders_status()
     df = df[df.symbol==symbol]
     if df.empty:
-        print(f'-- No existing order found for: {symbol}')
+        print(f'*** No existing order found for: {symbol}')
         return 
     df = df[df.orderId == oid]
     if df.empty:
-        print(f'-- No existing order id: {oid}')
+        print(f'*** No existing order id: {oid}')
         return 
     
     print('-- to be cancelled:\n',df)
