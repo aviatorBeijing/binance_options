@@ -48,12 +48,11 @@ def calc_(position_df):
     cs = list(position_df.symbol.values)
     cnt = 0
     while True:
-        if cnt%10 == 0:
-            spot =  get_binance_spot('BTC/USDT')
         try:
             position_df['spot'] = 0.
             if cnt%10 == 0:
                 position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) )[0])
+            cnt +=1
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
             position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
             position_df['gain'] = (position_df.bid *position_df.quantity.astype(float)) - position_df.positionCost.astype(float)
@@ -77,7 +76,7 @@ if __name__ == '__main__':
     df = position_status()
     contracts = list(df.symbol.values)
     print('\n\n')
-    
+
     from multiprocessing import Process
     from ws_bcontract import _main as ws_connector
 
