@@ -76,7 +76,8 @@ if __name__ == '__main__':
     print('*'*30, ' Existing Positions', '*'*30)
     df = position_status()
     contracts = list(df.symbol.values)
-
+    print('\n\n')
+    
     from multiprocessing import Process
     from ws_bcontract import _main as ws_connector
 
