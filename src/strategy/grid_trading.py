@@ -56,7 +56,7 @@ def griding(df):
 def needles( df ):
     df = df.copy()
     df['volume_nontrivial'] = df.volume.rolling(14).rank(pct=True) > 0.3
-    df['oc/hl'] = (df['open']-df['close']).apply(abs)/(df['high']-df['low']) < 0.5 # needle found
+    df['oc/hl'] = (df['open']-df['close']).apply(abs)/(df['high']-df['low']) < 0.3 # needle found
 
     cn = 2 # consecutive buys (or sells)
     df['hc'] = (df['high'] - df['close'])/df['high'] < 5/10000 # high,close are nearyby
