@@ -37,7 +37,7 @@ def validate_sell(symbol,qty,pce):
 
 def sell_(symbol,qty,pce):
     validate_sell(symbol,qty,pce)
-    #mgr(symbol,'sell', qty,pce,timing='limit')
+    mgr(symbol,'sell', qty,pce,timing='limit')
 
 @click.command()
 @click.option('--action',default="", help="buy or sell")
