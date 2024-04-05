@@ -19,6 +19,7 @@ def buy_(symbol,qty,pce):
 
 def sell_(symbol,qty,pce):
     df = position_status()
+    print('-- existing positions:\n',df)
     df = df[df.symbol==symbol] # Binance doesn't allow naked sell for non-marketmaker users.
     if df.empty:
         raise Exception(f"You don't have existing {symbol} for sale.")
