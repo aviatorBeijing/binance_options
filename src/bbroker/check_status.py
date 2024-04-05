@@ -46,10 +46,9 @@ def calc_(position_df):
 
 
     cs = list(position_df.symbol.values)
-    cnt = 0
+    position_df['spot'] = 0.;cnt = 0
     while True:
         try:
-            position_df['spot'] = 0.
             if cnt%10 == 0:
                 position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) )[0])
             cnt +=1
