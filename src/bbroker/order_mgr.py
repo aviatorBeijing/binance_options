@@ -48,15 +48,34 @@ def sell_(symbol,qty,pce):
     validate_sell(symbol,qty,pce)
     mgr(symbol,'sell', qty,pce,timing='limit')
 
+def cancel_(symbol, oid):
+    df = orders_status()
+    df = df[df.symbol==symbol]
+    if df.empty:
+        print(f'-- No existing order found for: {symbol}')
+        return 
+    df = df[df.orderId == oid]
+    if df.empty:
+        print(f'-- No existing order id: {oid}')
+        return 
+    
+    print('-- to be cancelled:\n',df)
+
 @click.command()
 @click.option('--action',default="", help="buy or sell")
 @click.option('--contract')
 @click.option('--price', default=0.0)
 @click.option('--qty',default=0.0)
+@click.option('--cancel_order_id',default='')
 @click.option('--execute', is_flag=True, default=False, help="Send to exchange? O.w., only checking info.")
-def main( action,contract, price, qty, execute ):
+def main( action,contract, price, qty, cancel_order_id, execute ):
     action = action.lower()
     contract = contract.upper()
+
+    if cancel_order_id:
+        print('-- [cancelling]')
+        cancel_(contract, cancel_order_id)
+        return 
 
     assert action == 'buy' or action == 'sell', "buy|sell, must be provided."
     assert len(contract) == len('BTC-240329-70000-C'), 'Wrong contract.'
