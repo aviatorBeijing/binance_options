@@ -1,6 +1,7 @@
+import multiprocessing
 from time import tzname
 import pandas as pd 
-import click,os,datetime
+import click,os,datetime,functools
 import numpy as np 
 from tabulate import tabulate
 
@@ -228,6 +229,18 @@ def _dt(t1,t2):
     t2 = pd.Timestamp(t2)
     return (t2-t1).days+1
 
+def _paper_trading(adf, span='', df=None,max_pos=0,stop_loss=0,take_profit=0,short_allowed=False, do_plot=False):
+        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl,tp,pmet, rmet = paper_trading(adf,max_pos,stop_loss,take_profit,short_allowed=short_allowed,do_plot=do_plot)
+        t1,t2 = adf.iloc[0].timestamp,adf.iloc[-1].timestamp
+        is_last_candle = t2 == df.iloc[-1].timestamp
+        if action:
+            is_now = t2 == action['ts']
+            act = f"({action['ts']}, {_t(action['ts'])}) " + action['action']+" "+f"{action['price']:.6f} {'*' if is_last_candle else ''} {'@' if is_now else ''}"
+        else:
+            act = "no trades"
+        return (span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl,tp,
+                    pmet.annual_return)
+
 @click.command()
 @click.option('--ric', default="BTC/USDT")
 @click.option('--span', default='1h')
@@ -250,17 +263,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
     print('-- take profit:', f'{(take_profit*100):.0f}%' if take_profit!=0 else 'disabled')
     recs = []
 
-    def _paper_trading(adf, short_allowed=False, do_plot=False):
-        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl,tp,pmet, rmet = paper_trading(adf,max_pos,stop_loss,take_profit,short_allowed=short_allowed,do_plot=do_plot)
-        t1,t2 = adf.iloc[0].timestamp,adf.iloc[-1].timestamp
-        is_last_candle = t2 == df.iloc[-1].timestamp
-        if action:
-            is_now = t2 == action['ts']
-            act = f"({action['ts']}, {_t(action['ts'])}) " + action['action']+" "+f"{action['price']:.6f} {'*' if is_last_candle else ''} {'@' if is_now else ''}"
-        else:
-            act = "no trades"
-        return (span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl,tp,
-                    pmet.annual_return)
+    
     
     #for span in ['30m','1h','4h','1d']:
     for span in spans.split(','):
@@ -276,15 +279,24 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
         df['timestamp'] = df['timestamp'].apply(pd.Timestamp)
         df.set_index('timestamp', inplace=True)
         df['timestamp'] = df.index
-        # subsets
+        
         print( span, df.shape[0] )
+        idfs = []
         for rs in gen_random_sets(0,df.shape[0],df.shape[0]//5, random_sets) if random_sets>0 else []:
             istart = rs[0]; iend=rs[-1]
             idf = df.copy()[istart:iend]
-            rec = _paper_trading( idf,short_allowed=short_allowed)
-            recs += [ rec ]
-        rec =  _paper_trading(df,short_allowed=short_allowed, do_plot=plot)
-        recs += [ rec ]
+            idfs += [idf]
+        if not plot: idfs += [df]
+        with multiprocessing.Pool(6) as pool:
+            recs = pool.map( functools.partial(_paper_trading, span=span,df=df,max_pos=max_pos,stop_loss=stop_loss,take_profit=take_profit,short_allowed=short_allowed, ),
+                        idfs )
+            pool.close()
+            pool.join()
+        #rec =  _paper_trading(df,span,df,max_pos,stop_loss,take_profit,short_allowed=short_allowed, do_plot=plot)
+        #recs += [ rec ]
+        if plot: # Do an extra run
+            rec = _paper_trading(df,span,df,max_pos,stop_loss,take_profit,short_allowed=short_allowed, do_plot=True)
+            recs += [rec]
         
     df = pd.DataFrame.from_records( recs )
     df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,last_action,sl,tp,cagr%'.split(',')
