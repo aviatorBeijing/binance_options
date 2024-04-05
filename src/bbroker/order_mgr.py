@@ -1,6 +1,6 @@
 import click,datetime 
 from bbroker.settings import ex
-from bbroker.check_status import orders_status
+from bbroker.check_status import orders_status,position_status
 
 def mgr(symbol,action,qty,pce, timing='limit'):
     qty = float(qty);pce=float(pce)
@@ -18,7 +18,12 @@ def buy_(symbol,qty,pce):
     mgr(symbol,'buy', qty,pce,timing='limit')
 
 def sell_(symbol,qty,pce):
-    mgr(symbol,'buy', qty,pce,timing='limit')
+    df = position_status()
+    df = df[df.symbol==symbol] # Binance doesn't allow naked sell for non-marketmaker users.
+    if df.empty:
+        raise Exception(f"You don't have existing {symbol} for sale.")
+    
+    #mgr(symbol,'buy', qty,pce,timing='limit')
 
 @click.command()
 @click.option('--action',default="", help="buy or sell")
