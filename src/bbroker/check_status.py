@@ -41,14 +41,19 @@ def position_status()->pd.DataFrame:
 
 # tests
 def calc_(position_df):
-    from butil.bsql import fetch_bidask 
-    from butil.butils import ( DATADIR,DEBUG,
-                get_binance_next_funding_rate,
-                get_maturity )  
+    from butil.bsql import fetch_bidask
+    from butil.butils import get_maturity,get_binance_spot,get_underlying, DEBUG
+
 
     cs = list(position_df.symbol.values)
+    cnt = 0
     while True:
+        if cnt%10 == 0:
+            spot =  get_binance_spot('BTC/USDT')
         try:
+            position_df['spot'] = 0.
+            if cnt%10 == 0:
+                position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) ))
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
             position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
             position_df['gain'] = (position_df.bid *position_df.quantity.astype(float)) - position_df.positionCost.astype(float)
