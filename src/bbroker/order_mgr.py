@@ -14,15 +14,23 @@ def mgr(symbol,action,qty,pce, timing='limit'):
     elif symbol.endswith('-P'):
         ex.create_order(symbol,'put',action,qty,pce)
 
-def buy_call(symbol,qty,pce):
+def buy_(symbol,qty,pce):
+    mgr(symbol,'buy', qty,pce,timing='limit')
+
+def sell_(symbol,qty,pce):
     mgr(symbol,'buy', qty,pce,timing='limit')
 
 @click.command()
+@click.option('--action',default="", help="buy or sell")
 @click.option('--contract')
 @click.option('--price', default=0.0)
 @click.option('--qty',default=0.0)
 @click.option('--execute', is_flag=True, default=False, help="Send to exchange? O.w., only checking info.")
-def main( contract, price, qty, execute ):
+def main( action,contract, price, qty, execute ):
+    action = action.lower()
+    contract = contract.upper()
+    
+    assert action == 'buy' or action == 'sell', "buy|sell, must be provided."
     assert len(contract) == len('BTC-240329-70000-C'), 'Wrong contract.'
     assert contract.split('-')[0] == 'BTC', 'Only support BTC contracts.'
     assert price>0, 'Price must be >0'
@@ -30,9 +38,12 @@ def main( contract, price, qty, execute ):
 
     if execute:
         print('-- [executing] --')
-        if contract[-1] == 'C':
-            buy_call( contract, qty, price )
+        if action == 'buy':
+            buy_( contract, qty, price )
+        elif action == 'sell':
+            sell_(contract, qty, price)
         
+        print('-- checking status --')
         import time
         time.sleep(5)
         orders_status()
