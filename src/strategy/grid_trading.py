@@ -170,7 +170,10 @@ def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_pl
         df.loc[i,'profit'] = profit
 
         #print( '###', len(portfolio), len(short_portfolio))
-    print(f'-- wins: {wins}, losses: {losses}, win rate: {(wins/(wins+losses)*100):.1f}%')
+    if (wins+losses) == 0:
+        print('-- no trades')
+    else:
+        print(f'-- wins: {wins}, losses: {losses}, win rate: {(wins/(wins+losses)*100):.1f}%')
     res = 0.
     if portfolio:
         res += len(portfolio)*df.iloc[-1].close - np.sum(portfolio)
@@ -216,7 +219,7 @@ def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_pl
     
     return df.iloc[-1].close,buys,sells,\
             res,fee,ttl,net_ttl,\
-            max_cost,max_down, action[-1], sl, tp, \
+            max_cost,max_down, action[-1] if action else None, sl, tp, \
                 pmetrics, rmetrics
 
 def _dt(t1,t2):
@@ -233,7 +236,7 @@ def _dt(t1,t2):
 @click.option('--nominal', default=1.0, help="scale up or down the trading size for small valued assets")
 @click.option('--stop_loss',default=-0.2, help="if average holding cost is too high, sl. (set to 0 to disable)")
 @click.option('--take_profit',default=0.05, help="if profit is good, tp. (set to 0 to disable)")
-@click.option('--random_sets', is_flag=True, default=False)
+@click.option('--random_sets', default=0)
 @click.option('--plot', is_flag=True, default=False)
 @click.option('--spans', default='30m,1h,4h,1d')
 @click.option('--short_allowed', is_flag=True, default=False)
@@ -247,14 +250,17 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
     print('-- take profit:', f'{(take_profit*100):.0f}%' if take_profit!=0 else 'disabled')
     recs = []
 
-    def _paper_trading(adf, recs, short_allowed=False, do_plot=False):
+    def _paper_trading(adf, short_allowed=False, do_plot=False):
         close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl,tp,pmet, rmet = paper_trading(adf,max_pos,stop_loss,take_profit,short_allowed=short_allowed,do_plot=do_plot)
         t1,t2 = adf.iloc[0].timestamp,adf.iloc[-1].timestamp
         is_last_candle = t2 == df.iloc[-1].timestamp
-        is_now = t2 == action['ts']
-        act = f"({action['ts']}, {_t(action['ts'])}) " + action['action']+" "+f"{action['price']:.6f} {'*' if is_last_candle else ''} {'@' if is_now else ''}"
-        recs += [(span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl,tp,
-                    pmet.annual_return)]
+        if action:
+            is_now = t2 == action['ts']
+            act = f"({action['ts']}, {_t(action['ts'])}) " + action['action']+" "+f"{action['price']:.6f} {'*' if is_last_candle else ''} {'@' if is_now else ''}"
+        else:
+            act = "no trades"
+        return (span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl,tp,
+                    pmet.annual_return)
     
     #for span in ['30m','1h','4h','1d']:
     for span in spans.split(','):
@@ -271,12 +277,14 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
         df.set_index('timestamp', inplace=True)
         df['timestamp'] = df.index
         # subsets
-        print( span )
-        for rs in gen_random_sets(0,df.shape[0],df.shape[0]//5, 10) if random_sets else []:
+        print( span, df.shape[0] )
+        for rs in gen_random_sets(0,df.shape[0],df.shape[0]//5, random_sets) if random_sets>0 else []:
             istart = rs[0]; iend=rs[-1]
             idf = df.copy()[istart:iend]
-            _paper_trading( idf,recs,short_allowed=short_allowed)
-        _paper_trading(df,recs,short_allowed=short_allowed, do_plot=plot)
+            rec = _paper_trading( idf,short_allowed=short_allowed)
+            recs += [ rec ]
+        rec =  _paper_trading(df,short_allowed=short_allowed, do_plot=plot)
+        recs += [ rec ]
         
     df = pd.DataFrame.from_records( recs )
     df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,last_action,sl,tp,cagr%'.split(',')
