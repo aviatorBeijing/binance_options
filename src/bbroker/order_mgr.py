@@ -23,8 +23,10 @@ def sell_(symbol,qty,pce):
     df = df[df.symbol==symbol] # Binance doesn't allow naked sell for non-marketmaker users.
     if df.empty:
         raise Exception(f"You don't have existing {symbol} for sale.")
+    assert df.shape[0] == 1, f"Why more than 1 rows exists for: {symbol}"
     
-    #mgr(symbol,'buy', qty,pce,timing='limit')
+    assert pce*qty > float(df.iloc[0].positionCost), 'Sell low, take the loss?'
+    #mgr(symbol,'sell', qty,pce,timing='limit')
 
 @click.command()
 @click.option('--action',default="", help="buy or sell")
