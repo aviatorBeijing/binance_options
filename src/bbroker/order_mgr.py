@@ -6,16 +6,11 @@ def mgr(symbol,action,qty,pce, timing='limit'):
     qty = float(qty);pce=float(pce)
     assert action in ['buy','sell'], f"Not supported action: {action}"
     assert timing in ['limit','market'], f"Not supported timing: {timing}"
-    if symbol.endswith('-C'):
+    #if symbol.endswith('-C'):
         #print( ex.market(symbol ))
         #ex.markets[symbol]['precision']['amount'] = 2
         #ex.markets[symbol]['precision']['price'] = 1
-        ex.create_order(symbol,timing,action,qty,pce)
-    elif symbol.endswith('-P'):
-        ex.create_order(symbol,'put',action,qty,pce)
-
-def buy_(symbol,qty,pce):
-    mgr(symbol,'buy', qty,pce,timing='limit')
+    ex.create_order(symbol,timing,action,qty,pce)
 
 def validate_sell(symbol,qty,pce):
     print('-- existing positions:')
@@ -45,6 +40,9 @@ def validate_sell(symbol,qty,pce):
     potential_gain = (pce-avg_cost) * qty 
     rt = potential_gain/(avg_cost*qty)*100
     print(f'-- potential gain (if filled): ${potential_gain}, {rt:.2f}%')
+
+def buy_(symbol,qty,pce):
+    mgr(symbol,'buy', qty,pce,timing='limit')
 
 def sell_(symbol,qty,pce):
     validate_sell(symbol,qty,pce)
