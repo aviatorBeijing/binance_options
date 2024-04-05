@@ -1,4 +1,4 @@
-import click,datetime 
+import click,datetime,time
 from bbroker.settings import ex
 from bbroker.check_status import orders_status,position_status
 
@@ -60,6 +60,10 @@ def cancel_(symbol, oid):
         return 
     
     print('-- to be cancelled:\n',df)
+    ex.cancel_order(oid,symbol)
+    
+    time.sleep(2)
+    orders_status()
 
 @click.command()
 @click.option('--action',default="", help="buy or sell")
@@ -71,15 +75,21 @@ def cancel_(symbol, oid):
 def main( action,contract, price, qty, cancel_order_id, execute ):
     action = action.lower()
     contract = contract.upper()
-
+    assert len(contract) == len('BTC-240329-70000-C'), 'Wrong contract.'
+    assert contract.split('-')[0] == 'BTC', 'Only support BTC contracts.'
+    
+    # Cancel order
     if cancel_order_id:
         print('-- [cancelling]')
         cancel_(contract, cancel_order_id)
+        
+        print('-- checking status...')
+        time.sleep(5)
+        orders_status()
         return 
 
+    # Making orders
     assert action == 'buy' or action == 'sell', "buy|sell, must be provided."
-    assert len(contract) == len('BTC-240329-70000-C'), 'Wrong contract.'
-    assert contract.split('-')[0] == 'BTC', 'Only support BTC contracts.'
     assert price>0, 'Price must be >0'
     assert qty>0, 'Quantity (qty) must be >0'
 
@@ -90,8 +100,7 @@ def main( action,contract, price, qty, cancel_order_id, execute ):
         elif action == 'sell':
             sell_(contract, qty, price)
         
-        print('-- checking status --')
-        import time
+        print('-- checking status...')
         time.sleep(5)
         orders_status()
     else:
