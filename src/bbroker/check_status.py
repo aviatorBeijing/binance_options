@@ -3,6 +3,8 @@ import pandas as pd
 from tabulate import tabulate
 
 from bbroker.settings import ex
+from strategy.price_disparity import extract_specs
+from strategy.delta_gamma import callprice, deltafunc,putprice
 
 def orders_status()->pd.DataFrame:
     #tnow = datetime.datetime.utcnow().timestamp()*1000;tnow=int(tnow)
@@ -49,12 +51,22 @@ def calc_(position_df):
     position_df['spot'] = 0.;cnt = 0
     while True:
         try:
-            if cnt%10 == 0:
+            if cnt%5 == 0:
                 orders_status()
                 position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) )[0])
             cnt +=1
-            position_df['bid'] = position_df.symbol.apply(fetch_bidask)
-            position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
+            position_df['spec'] = position_df.symbol.apply(lambda s: extract_specs( s ) )
+            position_df['K'] = position_df.spec.apply(lambda e: e[2])
+            position_df['T'] = position_df.spec.apply(lambda e: e[1]/365)
+            position_df['spread'] = position_df.symbol.apply(fetch_bidask)
+            position_df['bid'] = position_df.spread.apply(lambda e: float(e['bid']))
+            position_df['ask'] = position_df.spread.apply(lambda e: float(e['ask']))
+            position_df['impvol'] = position_df.spread.apply(lambda e: float(e['impvol']))
+            #putprice(spot_price, K, T/365, sigma, r )
+
+
+            position_df = position_df.drop(['spread','spec',],axis=1)
+            
             position_df['gain'] = (position_df.bid *position_df.quantity.astype(float)) - position_df.positionCost.astype(float)
             position_df['gain%'] = (position_df.gain / position_df.positionCost.astype(float))*100
             
