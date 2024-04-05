@@ -52,7 +52,7 @@ def calc_(position_df):
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
             position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
             position_df['gain'] = (position_df.bid *position_df.quantity.astype(float)) - position_df.positionCost.astype(float)
-            position_df['gain%'] = (position_df.liq_value / position_df.positionCost.astype(float))*100
+            position_df['gain%'] = (position_df.gain / position_df.positionCost.astype(float))*100
             
             position_df['bid'] = position_df['bid'].apply(lambda v: f"$ {v}")
             position_df['gain'] = position_df['gain'].apply(lambda v: f"$ {v:,.2f}")
