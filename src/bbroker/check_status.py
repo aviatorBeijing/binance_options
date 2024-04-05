@@ -53,7 +53,7 @@ def calc_(position_df):
         try:
             position_df['spot'] = 0.
             if cnt%10 == 0:
-                position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) ))
+                position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) )[0])
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
             position_df['bid'] = position_df.bid.apply(lambda e: float(e['bid']))
             position_df['gain'] = (position_df.bid *position_df.quantity.astype(float)) - position_df.positionCost.astype(float)
