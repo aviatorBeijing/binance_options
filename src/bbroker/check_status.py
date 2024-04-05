@@ -50,6 +50,7 @@ def calc_(position_df):
     while True:
         try:
             if cnt%10 == 0:
+                orders_status()
                 position_df['spot'] = position_df.symbol.apply(lambda c: get_binance_spot( get_underlying(c) )[0])
             cnt +=1
             position_df['bid'] = position_df.symbol.apply(fetch_bidask)
