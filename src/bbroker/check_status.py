@@ -28,7 +28,7 @@ def position_status()->pd.DataFrame:
     """
     if not ods:
         print('-- no outstanding positions')
-        return
+        return pd.DataFrame()
     df = pd.DataFrame.from_records(ods)
     df = df[['symbol','side','positionCost','ror',
             'quantity','markValue','expiryDate']]
@@ -86,16 +86,19 @@ if __name__ == '__main__':
 
     print('*'*30, ' Existing Positions', '*'*30)
     df = position_status()
-    contracts = list(df.symbol.values)
-    print('\n\n')
+    if df.empty:
+        print('-- no outstanding positions')
+    else:
+        contracts = list(df.symbol.values)
+        print('\n\n')
 
-    from multiprocessing import Process
-    from ws_bcontract import _main as ws_connector
+        from multiprocessing import Process
+        from ws_bcontract import _main as ws_connector
 
-    conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
-    calc = Process( target=calc_, args=(df,) )
-    conn.start()
-    calc.start()
-    
-    conn.join()
-    calc.join()
+        conn = Process( target=ws_connector, args=(",".join(contracts), "ticker",) )
+        calc = Process( target=calc_, args=(df,) )
+        conn.start()
+        calc.start()
+        
+        conn.join()
+        calc.join()
