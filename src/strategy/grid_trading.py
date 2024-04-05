@@ -171,10 +171,13 @@ def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_pl
         df.loc[i,'profit'] = profit
 
         #print( '###', len(portfolio), len(short_portfolio))
+    
+    wr = 0
     if (wins+losses) == 0:
         print('-- no trades')
     else:
-        print(f'-- wins: {wins}, losses: {losses}, win rate: {(wins/(wins+losses)*100):.1f}%')
+        wr = wins/(wins+losses)*100
+        print(f'-- wins: {wins}, losses: {losses}, win rate: {wr:.1f}%')
     res = 0.
     if portfolio:
         res += len(portfolio)*df.iloc[-1].close - np.sum(portfolio)
@@ -221,7 +224,7 @@ def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_pl
     return df.iloc[-1].close,buys,sells,\
             res,fee,ttl,net_ttl,\
             max_cost,max_down, action[-1] if action else None, sl, tp, \
-                pmetrics, rmetrics
+                pmetrics, rmetrics, wr
 
 def _dt(t1,t2):
     import datetime 
@@ -230,7 +233,7 @@ def _dt(t1,t2):
     return (t2-t1).days+1
 
 def _paper_trading(adf, span='', df=None,max_pos=0,stop_loss=0,take_profit=0,short_allowed=False, do_plot=False):
-        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl,tp,pmet, rmet = paper_trading(adf,max_pos,stop_loss,take_profit,short_allowed=short_allowed,do_plot=do_plot)
+        close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,action,sl,tp,pmet, rmet, wr = paper_trading(adf,max_pos,stop_loss,take_profit,short_allowed=short_allowed,do_plot=do_plot)
         t1,t2 = adf.iloc[0].timestamp,adf.iloc[-1].timestamp
         is_last_candle = t2 == df.iloc[-1].timestamp
         if action:
@@ -239,7 +242,7 @@ def _paper_trading(adf, span='', df=None,max_pos=0,stop_loss=0,take_profit=0,sho
         else:
             act = "no trades"
         return (span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl,tp,
-                    pmet.annual_return)
+                    pmet.annual_return, wr)
 
 @click.command()
 @click.option('--ric', default="BTC/USDT")
@@ -299,7 +302,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
             recs += [rec]
         
     df = pd.DataFrame.from_records( recs )
-    df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,last_action,sl,tp,cagr%'.split(',')
+    df.columns='span,t1,t2,close,buys,sells,asset,fee,cash_gain,net_ttl,max_cost,max_down,days,last_action,sl,tp,cagr%,wr'.split(',')
     df['daily_net_ttl'] = df.net_ttl/df.days
     df['fee%'] = df.fee/(df.fee+df.net_ttl)*100
     df['net_ttl%'] = df.net_ttl/df.max_cost*100 / (df.days/365)
@@ -307,7 +310,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
         df[col] = df[col].apply(lambda v: v*nominal)
     for col in 'asset,fee,cash_gain,net_ttl,max_cost,daily_net_ttl'.split(','):
         df[col] = df[col].apply(lambda s: f"{s:,.0f}")
-    for col in 'net_ttl%,fee%,cagr%'.split(','):
+    for col in 'net_ttl%,fee%,cagr%,wr'.split(','):
         df[col] = df[col].apply(lambda s: f"{s:.1f}%")
     for col in 'max_down'.split(','):
         df[col] = df[col].apply(lambda s: f"{(s*100):.0f}% {(np.floor(-1/s) if s!=0 else 0):.0f}")
@@ -315,6 +318,15 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
     df['age (last candle)'] = df['t2'].apply(lambda t: _t(t) )
 
     print(tabulate(df['span,t2,close,buys,sells,fee,sl,tp,asset,cash_gain,net_ttl,max_cost,max_down,cagr%,days,daily_net_ttl'.split(',')].sort_values('t2',ascending=True), headers="keys"))
-    print(tabulate(df['t2,close,net_ttl,max_cost,max_down,days,span,age (last candle),last_action'.split(',')].sort_values('t2',ascending=True), headers="keys"))
+    print(tabulate(df['t2,close,wr,net_ttl,max_cost,max_down,days,span,age (last candle),last_action'.split(',')].sort_values('t2',ascending=True), headers="keys"))
+    if df.shape[0]>1:
+        recs = []
+        recs += [  list(df['net_ttl'][:-1].apply(lambda s: s.replace(',','')).astype(float).describe()) ]
+        recs += [  list(df['max_down'][:-1].apply(lambda s: s.replace('%','').split(' ')[0]).astype(float).describe()) ]
+        recs += [  list(df['cagr%'][:-1].apply(lambda s: s.replace('%','')).astype(float).describe()) ]
+        recs += [  list(df['wr'][:-1].apply(lambda s: s.replace('%','')).astype(float).describe()) ]
+        df = pd.DataFrame.from_records(recs, columns='count,mean,std,min,25%,50%,75%,max'.split(','))
+        df.index=['net_ttl ($)','max_down%','cagr%','wr%']
+        print(tabulate(df,headers="keys"))
 if __name__ == '__main__':
     main()
