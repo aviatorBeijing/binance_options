@@ -8,6 +8,12 @@ from butil.portfolio_stats import sharpe,sortino,max_drawdowns,annual_returns
 from butil.butils import binance_kline
 from butil.bmath import gen_random_sets
 
+def _t(b):
+        tnow = datetime.datetime.utcnow()
+        b = datetime.datetime.strftime( b.to_pydatetime(), '%Y-%m-%d %H:%M:%S' )
+        x = tnow-datetime.datetime.strptime( b, '%Y-%m-%d %H:%M:%S' )
+        return f'{x.days}d {int(x.seconds/3600)}h {int(x.seconds%3600/60)}m ago'
+
 """
 Toy algorithm (Don't use for real trading!!!)
 """
@@ -48,27 +54,26 @@ def griding(df):
 
 def needles( df ):
     df = df.copy()
-    df['volume_nontrivial'] = df.volume.rolling(14).rank(pct=True) > 0.9
-    df['oc/hl'] = (df['open']-df['close']).apply(abs)/(df['high']-df['low']) < 50/100 # needle found
+    df['volume_nontrivial'] = df.volume.rolling(14).rank(pct=True) > 0.3
+    df['oc/hl'] = (df['open']-df['close']).apply(abs)/(df['high']-df['low']) < 0.5 # needle found
 
+    cn = 2 # consecutive buys (or sells)
     df['hc'] = (df['high'] - df['close'])/df['high'] < 5/10000 # high,close are nearyby
     df['ho'] = (df['high'] -  df['open'])/df['high'] < 5/10000   # high,open are nearyby
-    df['needle_below'] = False 
-    df.loc[(df.hc | df.ho) & df['oc/hl'], 'needle_below' ] = True
-    df.needle_below = df.needle_below.shift(1)
+    df['needle_below'] = 0 
+    df.loc[(df.hc | df.ho) & df['oc/hl'], 'needle_below' ] = 1
+    df.needle_below = (df.needle_below.rolling(cn).sum()>0).shift(1)
     
-    df['hc'] = (df['close'] - df['low'])/df['low'] < 5/10000 # low,close are nearyby
-    df['ho'] = (df['open']  - df['low'])/df['low'] < 5/10000   # low,open are nearyby
-    df['needle_up'] = False 
-    df.loc[(df.hc | df.ho) & df['oc/hl'], 'needle_up' ] = True
-    df.needle_up = df.needle_up.shift(1)
+    df['lc'] = (df['close'] - df['low'])/df['low'] < 5/10000 # low,close are nearyby
+    df['lo'] = (df['open']  - df['low'])/df['low'] < 5/10000   # low,open are nearyby
+    df['needle_up'] = 0 
+    df.loc[(df.lc | df.lo) & df['oc/hl'], 'needle_up' ] = 1
+    df.needle_up = (df.needle_up.rolling(cn).sum()>0).shift(1)
 
     df = df.dropna()
     df.loc[df.needle_below & df.volume_nontrivial, 'buy'] = df.buyp
     df.loc[df.needle_up & df.volume_nontrivial, 'sell'] = df.sellp
 
-    print(df[df.needle_up])
-    print(df[df.needle_below])
     return df 
 
 def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_plot=False):
@@ -102,7 +107,7 @@ def paper_trading(df, max_pos,stop_loss, take_profit, short_allowed=False, do_pl
         stoploss = (stop_loss !=0 and mdd < stop_loss)
         takeprofit = (take_profit !=0 and mdd > take_profit)
         if stoploss or takeprofit:
-            action += [{'action': 'sell_all','price': row.close, 'ts': i}]
+            action += [{'action': 'sl' if stoploss else 'tp','price': row.close, 'ts': i}]
             if stoploss: sl += 1
             elif takeprofit: tp+= 1
             pn = len(portfolio)
@@ -247,7 +252,7 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
         t1,t2 = adf.iloc[0].timestamp,adf.iloc[-1].timestamp
         is_last_candle = t2 == df.iloc[-1].timestamp
         is_now = t2 == action['ts']
-        act = f"({action['ts']}) " + action['action']+" "+f"{action['price']:.6f} {'*' if is_last_candle else ''} {'@' if is_now else ''}"
+        act = f"({action['ts']}, {_t(action['ts'])}) " + action['action']+" "+f"{action['price']:.6f} {'*' if is_last_candle else ''} {'@' if is_now else ''}"
         recs += [(span,t1,t2,close,buys,sells,res,fee,ttl,net_ttl,max_cost,max_down,_dt(t1,t2),act,sl,tp,
                     pmet.annual_return)]
     
@@ -287,11 +292,6 @@ def main(ric,span,test,max_pos,nominal,stop_loss,take_profit,random_sets,plot,sp
     for col in 'max_down'.split(','):
         df[col] = df[col].apply(lambda s: f"{(s*100):.0f}% {(np.floor(-1/s) if s!=0 else 0):.0f}")
     
-    tnow = datetime.datetime.utcnow()
-    def _t(b):
-        b = datetime.datetime.strftime( b.to_pydatetime(), '%Y-%m-%d %H:%M:%S' )
-        x = tnow-datetime.datetime.strptime( b, '%Y-%m-%d %H:%M:%S' )
-        return f'{x.days}d {int(x.seconds/3600)}h {int(x.seconds%3600/60)}m ago'
     df['age (last candle)'] = df['t2'].apply(lambda t: _t(t) )
 
     print(tabulate(df['span,t2,close,buys,sells,fee,sl,tp,asset,cash_gain,net_ttl,max_cost,max_down,cagr%,days,daily_net_ttl'.split(',')].sort_values('t2',ascending=True), headers="keys"))
