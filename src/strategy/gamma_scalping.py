@@ -54,6 +54,9 @@ class Asset:
 
 class Spot(Asset):
     def __init__(self, ric, entry_price, quantity) -> None:
+        """
+        @param quantity: if <0, indicates taking short position.
+        """
         super().__init__(ric, entry_price, quantity)
     def value(self, current_price=None ): # dollar value
         if not current_price: # If not provided by caller
@@ -150,18 +153,17 @@ class EuropeanOption(Asset):
         chg = (new_spot-self.init_spot)/self.init_spot
         if abs(chg) < 1e-12: # No change
             return 0, None
-        if abs(chg) < 1/1000:
-            #print(f'    -- trivial: {self.init_spot} to {new_spot}, {(chg*100):.3f}%')
+        if abs(chg) < 50/1000:
+            print(f'*** trivial: {self.init_spot} to {new_spot}, {(chg*100):.3f}%')
             return 0, None
         delta_change = self.on_spot_change( self.init_spot, new_spot) # delta chg from spot price change
         self.pdelta += delta_change
         addition = None
         ts = datetime.datetime.utcnow().timestamp();ts = int(ts)
         if abs(delta_change)>0:
-            print(f'  -- [{ts}] spot ${self.init_spot} to ${new_spot}, {(chg*100):.3f}%,  {"SELL" if delta_change>0 else "BUY" if delta_change<0 else "STAY"} {abs(delta_change):.6f} spot')
+            #print(f'  -- [{ts}] spot change: {(chg*100):.3f}%,  {"SELL" if delta_change>0 else "BUY" if delta_change<0 else "STAY"} {abs(delta_change):.6f} @ ${new_spot} {self.underlying}')
             addition = Spot(self.underlying, new_spot, -delta_change)
-            #print(f'    -- delta change: {"+" if dd>0 else ""}{dd}, option delta: {self.pdelta}; need to {"SELL" if dd>0 else "BUY" if dd<0 else "STAY"} {abs(dd)} spot')
-        
+            
         self.init_spot = new_spot # Reset mark price after rebalnced
         return delta_change, addition
     

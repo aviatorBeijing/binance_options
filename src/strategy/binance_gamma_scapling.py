@@ -10,12 +10,9 @@ from strategy.gamma_scalping import EuropeanOption, Asset, Spot
 
 TEST = True
 
-spot_positions = [] # TODO Need a storage method, to track the scraple history. FIXME
-
-def _main( contracts:list ):
-    global spot_positions
+def _main( contracts:list, spot_positions:list ):
     for opt in contracts:
-        _, addition = opt.on_market_move()
+        delta_change, addition = opt.on_market_move()
         if addition:
             """delta = opt.greeks['delta']
             gamma = opt.greeks['gamma']
@@ -23,18 +20,19 @@ def _main( contracts:list ):
             
             spot_positions += [addition]
             p1 = Asset.get_spot_price( spot_positions[0].ric ) # value positions based on a the same spot price
-            profit = sum([d.value(p1) for d in spot_positions[1:]])
-            psum = sum([d.delta for d in spot_positions[1:]])
+            #for s in spot_positions:print(s)
+            profit = sum([d.value(p1) for d in spot_positions])
+            psum = sum([d.delta for d in spot_positions])
 
-            print(f'    -- scaples (#spots={len(spot_positions)-1}): profit = ${profit:.4f}, spot positions: {psum:.6f}')
-            
+            dt = 'SELL' if delta_change>0 else 'BUY ' if delta_change<0 else 'STAY'
+            print(f'-- {dt} {opt.underlying} {abs(delta_change)} @ ${p1} scaples (#spots={len(spot_positions)-1}): profit = ${profit:.4f}, spot positions: {psum:.6f}')
             """spot_delta = sum([d.delta for d in spot_positions])
             option_delta = opt.greeks['delta']
             option_pdelta = opt.position_delta
             print(spot_delta, option_delta, option_pdelta, spot_delta + option_pdelta)"""
     
 def _mp_main(contracts:str):
-    global spot_positions
+    spot_positions = []
 
     cts = []
     qty = 1.
@@ -56,9 +54,9 @@ def _mp_main(contracts:str):
 
     if TEST:
         i = 0
-        for i in range(0,10):
+        for i in range(0,1000):
             try:
-                _main(cts)
+                _main(cts, spot_positions)
                 test_setting(i);i+=1
             except KeyboardInterrupt as e:
                 print("-- Exiting --")
@@ -66,18 +64,22 @@ def _mp_main(contracts:str):
     else:
         while True:
             try:
-                _main(cts)
+                _main(cts, spot_positions)
                 time.sleep(5)
             except KeyboardInterrupt as e:
                 print("-- Exiting --")
                 break
 
 def test_setting(i:int):
-    deltas = [0.48,0.56,0.9,0.01,0.5]
-    spot = [65000,68000,69000,65000,61000]
-    gammas = [0.0003] * 5
+    fn =os.getenv('USER_HOME','')+f'/tmp/btc-usdt_1h.csv'
+    df = pd.read_csv( fn )
+    closes = df.close.values
 
-    j = (i+1)%5
+    deltas = [0.48] * len(closes)
+    spot = closes
+    gammas = [0.0003] * len(closes)
+
+    j = (i+1)%len(closes)
     Asset.get_options_greeks = lambda e: {'delta': deltas[j], 'gamma': gammas[j]}
     Asset.get_spot_price = lambda e: spot[j]
     Asset.get_options_price = lambda e: (1200.00,1800.00, 650.00,)
