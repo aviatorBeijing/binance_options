@@ -57,7 +57,7 @@ def calc_(position_df):
         except Exception as e:
             print('*** waiting data:', cs )
         else:
-            print( position_df )
+            print( tabulate(position_df,headers="keys") )
         time.sleep(5)
 
 if __name__ == '__main__':
