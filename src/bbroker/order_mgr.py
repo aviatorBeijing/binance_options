@@ -17,7 +17,7 @@ def mgr(symbol,action,qty,pce, timing='limit'):
 def buy_(symbol,qty,pce):
     mgr(symbol,'buy', qty,pce,timing='limit')
 
-def sell_(symbol,qty,pce):
+def validate_sell(symbol,qty,pce):
     print('-- existing positions:')
     df = position_status()
     df = df[df.symbol==symbol] # Binance doesn't allow naked sell for non-marketmaker users.
@@ -34,6 +34,9 @@ def sell_(symbol,qty,pce):
     potential_gain = (pce-avg_cost) * qty 
     rt = potential_gain/(avg_cost*qty)*100
     print(f'-- potential gain (if filled): ${potential_gain}, {rt:.2f}%')
+
+def sell_(symbol,qty,pce):
+    validate_sell(symbol,qty,pce)
     #mgr(symbol,'sell', qty,pce,timing='limit')
 
 @click.command()
@@ -66,8 +69,11 @@ def main( action,contract, price, qty, execute ):
     else:
         print('-- [checking] --')
         print(f'-- {action} {qty} {contract} at price ${price}')
-        print(f'-- {"cost" if action=="buy" else "gain"}: ${(price * qty):.2f}')
-        print('-- use "--execute" to send order.')
+        
+        if action=='sell':
+            validate_sell(contract,qty,price)
+
+        print('\n-- use "--execute" to send order.')
 
 if __name__ == '__main__':
     main()
