@@ -15,6 +15,7 @@ from butil.bsql import fetch_bidask
 from butil.butils import ( DATADIR,DEBUG,
                 get_binance_next_funding_rate,
                 get_maturity )
+from butil.options_calculator import invert_callprice,invert_putprice
 
 def get_contracts_around( strike, df, datestr=None ):
     df = df.copy()
@@ -42,6 +43,20 @@ def check_market( contracts:str, spot_bid,spot_ask):
 
     while True:
         recs = []
+        greeks = {}
+        def calc_(sym):
+            spot_symbol, T, K, ctype = extract_specs(sym)
+            if ctype == 'call':
+                c = greeks[sym][1]
+                sigma = greeks[sym][4]
+                return invert_callprice(c*1.25,K,T/365.,sigma, 0)
+            elif ctype == 'put':
+                p = greeks[sym][1]
+                sigma = greeks[sym][4]
+                return invert_putprice(p*1.25,K,T/365.,sigma, 0)
+            else:
+                raise Exception(f"Wrong contract info: {sym}")
+                
         for c in contracts:
             K = float(c.split('-')[2]);cp=c.split('-')[-1]
             dp = (K-spot_bid)/spot_bid;ep=1/100
@@ -52,7 +67,9 @@ def check_market( contracts:str, spot_bid,spot_ask):
             bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
             delta,gamma,theta,iv,ivbid,ivask = _v(cdata['delta']),_v(cdata['gamma']),_v(cdata['theta']),_v(cdata['impvol']),_v(cdata['impvol_bid']),_v(cdata['impvol_ask'])
             recs += [(c, out_in, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
+            greeks[c] = (bid,ask,iv,ivbid,ivask,delta,gamma,theta,)
         df = pd.DataFrame.from_records(recs, columns=['contract','state','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
+        df['spot_on_20%_profit'] = df.contract.apply(lambda s: calc_)
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
         print( tabulate(df, headers="keys"))
