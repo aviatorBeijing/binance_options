@@ -51,12 +51,12 @@ def check_market( contracts:str, spot_bid,spot_ask):
             if ctype == 'call':
                 c = greeks[sym][1]
                 sigma = greeks[sym][4]
-                option_price = c *1.25
+                option_price = c *(1+pf)
                 pce = invert_callprice(option_price,K,T/365.,sigma, 0)
             elif ctype == 'put':
                 p = greeks[sym][1]
                 sigma = greeks[sym][4]
-                option_price = p*1.25
+                option_price = p*(1+pf)
                 pce = invert_putprice(option_price,K,T/365.,sigma, 0)
             else:
                 raise Exception(f"Wrong contract info: {sym}")
