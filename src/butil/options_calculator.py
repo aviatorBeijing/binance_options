@@ -72,7 +72,7 @@ def invert_(c,K,T,sigma,r, is_call=True):
     """
     # Coarse search
     forward_ = callprice if is_call else putprice
-    spots = np.arange(0,K*2, 100)
+    spots = np.arange(100,K*2, 100)
     calls = list(map(lambda s: forward_(s,K,T,sigma,r), spots))
     calls_diff = np.array( calls) - c
     srange = spots[ np.where(abs(calls_diff)<150) ]
