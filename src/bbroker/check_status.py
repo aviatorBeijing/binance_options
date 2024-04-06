@@ -5,6 +5,8 @@ from tabulate import tabulate
 from bbroker.settings import ex
 from strategy.price_disparity import extract_specs
 from strategy.delta_gamma import callprice, deltafunc,putprice
+from butil.bsql import fetch_bidask 
+from butil.butils import get_maturity,get_binance_spot,get_underlying, DEBUG
 
 def orders_status()->pd.DataFrame:
     #tnow = datetime.datetime.utcnow().timestamp()*1000;tnow=int(tnow)
@@ -43,10 +45,6 @@ def position_status()->pd.DataFrame:
 
 # tests
 def calc_(position_df):
-    from butil.bsql import fetch_bidask
-    from butil.butils import get_maturity,get_binance_spot,get_underlying, DEBUG
-
-
     cs = list(position_df.symbol.values)
     position_df['spot'] = 0.;cnt = 0
     while True:
@@ -64,7 +62,6 @@ def calc_(position_df):
             position_df['ask'] = position_df.spread.apply(lambda e: float(e['ask']))
             position_df['impvol'] = position_df.spread.apply(lambda e: float(e['impvol']))
             #putprice(spot_price, K, T/365, sigma, r )
-
 
             position_df = position_df.drop(['spread','spec',],axis=1)
             
