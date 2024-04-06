@@ -61,7 +61,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
             else:
                 raise Exception(f"Wrong contract info: {sym}")
             d = (pce-spot_bid)/spot_bid*100
-            return f"({d:.1f}%) {pce} ({option_price})"
+            return f"{d:.1f}% {pce} {option_price}"
         for c in contracts:
             K = float(c.split('-')[2]);cp=c.split('-')[-1]
             dp = (K-spot_bid)/spot_bid;ep=1/100
@@ -81,8 +81,8 @@ def check_market( contracts:str, spot_bid,spot_ask):
         df['spot_on_50%_pf'] = df.contract.apply(lambda s: calc_(s, 0.5))
         df['spot_on_100%_pf'] = df.contract.apply(lambda s: calc_(s, 1.))
 
-        for col in ['iv','ivbid','ivask','delta']:
-            df[col] = df[col].apply(lambda v: f"{v:.3f}")
+        for col in ['iv','ivbid','ivask','delta']: df[col] = df[col].apply(lambda v: f"{v:.3f}")
+        for col in ['gamma']: df[col] = df[col].apply(lambda v: f"{v:.6f}")
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
         print( tabulate(df, headers="keys"))
