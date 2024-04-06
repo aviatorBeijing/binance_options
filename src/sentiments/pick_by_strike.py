@@ -80,7 +80,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
         df['spot_on_50%_pf'] = df.contract.apply(lambda s: calc_(s, 0.5))
         df['spot_on_100%_pf'] = df.contract.apply(lambda s: calc_(s, 1.))
 
-        for col in ['iv','ivbid','ivask']:
+        for col in ['iv','ivbid','ivask','delta']:
             df[col] = df[col].apply(lambda v: f"{v:.3f}")
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
