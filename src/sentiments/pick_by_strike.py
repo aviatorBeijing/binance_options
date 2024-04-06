@@ -72,7 +72,8 @@ def check_market( contracts:str, spot_bid,spot_ask):
             delta,gamma,theta,iv,ivbid,ivask = _v(cdata['delta']),_v(cdata['gamma']),_v(cdata['theta']),_v(cdata['impvol']),_v(cdata['impvol_bid']),_v(cdata['impvol_ask'])
             recs += [(c, out_in, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
             greeks[c] = (bid,ask,iv,ivbid,ivask,delta,gamma,theta,)
-        df = pd.DataFrame.from_records(recs, columns=['contract','state','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
+        df['volumes'] = df['bid_vol'].astype(str)+","+df['ask_vol'].astype(str)
+        df = pd.DataFrame.from_records(recs, columns=['contract','state','bid','ask','volumes','iv','delta','gamma','theta','ivbid','ivask'])
         df['spot_on_20%_pf'] = df.contract.apply(lambda s: calc_(s, 0.25))
         df['spot_on_50%_pf'] = df.contract.apply(lambda s: calc_(s, 0.5))
         df['spot_on_100%_pf'] = df.contract.apply(lambda s: calc_(s, 1.))
