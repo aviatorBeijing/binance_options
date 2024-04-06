@@ -14,7 +14,7 @@ def orders_status()->pd.DataFrame:
     df = pd.DataFrame.from_records(ods)
     if df.empty: 
         print('*** No outstanding orders.')
-        return
+        return pd.DataFrame()
     #df['dt'] = (tnow - df.updateTime.apply(int))/1000
     df = df[['status','orderId','symbol','side','price','avgPrice','quantity','executedQty','updateTime','source','priceScale','quantityScale']]
     df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
