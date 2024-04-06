@@ -1,11 +1,28 @@
 import numpy as np
 import scipy.stats as scs
+import datetime 
 
 np.set_printoptions(suppress=True)
 """
 Black-Schole-Merton Theory (BSM)
 European-style Options
 """
+
+
+def get_maturity(contract):
+    fds = contract.split('-')
+    ts = datetime.datetime.strptime('20'+fds[1], '%Y%m%d') + datetime.timedelta(hours=8) # Settle at 08:00 (UTC) of the date.
+    tnow = datetime.datetime.utcnow()
+    dt = (ts-tnow).total_seconds()/3600./24
+    return dt
+
+def extract_specs( contract):
+    sym,expiry,strike,typ = contract.split('-')
+    maturity = get_maturity( contract )
+    strike = float(strike)
+    ctype = 'call' if typ=='C' else 'put'
+    spot = f'{sym.upper()}/USDT'
+    return spot, maturity, strike, ctype
 
 # Call option pprice
 def callprice(S,K,T,sigma,r)->float:
@@ -92,3 +109,11 @@ if __name__ == '__main__':
     xS = invert_putprice(1600.,K,T,sigma,r)
     print( putprice(xS, K, T, sigma, r ), ' == ', 1600, ', calculated spot:', xS )
     
+    #BTC-240410-68250-C  1385  0.538611  68642.0 (1731.25)  69236.5 (2077.5)  70283.0 (2770.0)
+    contract = 'BTC-240410-68250-C'
+    _,T,K,ctype = extract_specs( contract )
+    c = 1731.25
+    sigma = .538611
+    print(f"{contract}\tK = {K}, T = {T}")
+    print( invert_callprice(c,K,T/365,sigma,0.) )
+ 
