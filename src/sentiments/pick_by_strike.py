@@ -85,6 +85,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
         for col in ['gamma']: df[col] = df[col].apply(lambda v: f"{v:.6f}")
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
+        print(f'-- reference spot: {spot_bid:.2f}')
         print( tabulate(df, headers="keys"))
         time.sleep(5)
     print('-- done')
