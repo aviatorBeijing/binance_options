@@ -73,8 +73,9 @@ def check_market( contracts:str, spot_bid,spot_ask):
             recs += [(c, out_in, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
             greeks[c] = (bid,ask,iv,ivbid,ivask,delta,gamma,theta,)
         df = pd.DataFrame.from_records(recs, columns=['contract','state','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
-        df['spot_on_20%_profit'] = df.contract.apply(lambda s: calc_(s, 0.25))
-        df['spot_on_50%_profit'] = df.contract.apply(lambda s: calc_(s, 0.5))
+        df['spot_on_20%_pf'] = df.contract.apply(lambda s: calc_(s, 0.25))
+        df['spot_on_50%_pf'] = df.contract.apply(lambda s: calc_(s, 0.5))
+        df['spot_on_100%_pf'] = df.contract.apply(lambda s: calc_(s, 1.))
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
         print( tabulate(df, headers="keys"))
