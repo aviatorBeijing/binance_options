@@ -72,19 +72,20 @@ def invert_(c,K,T,sigma,r, is_call=True):
     """
     # Coarse search
     forward_ = callprice if is_call else putprice
-    spots = np.arange(K//2,K*2, 100)
+    spots = np.arange(K-5000,K+5000, 100)
     calls = list(map(lambda s: forward_(s,K,T,sigma,r), spots))
     calls_diff = np.array( calls) - c
     srange = spots[ np.where(abs(calls_diff)<150) ]
     n = srange.shape[0]
     i = srange[n//2-1]
     j = srange[n//2+1]
-
+    
     # Fine search
     spots = np.arange(i,j,.5) # FIXME for BTC/USDT only, for DOGE, this might need a smaller steps.
     calls = list(map(lambda s: forward_(s,K,T,sigma,r), spots))
     calls_diff = np.array( calls) - c
     srange = spots[ np.where(abs(calls_diff)<2) ]
+    
     n = srange.shape[0]
     spot = srange[n//2] if n%2==1 else np.mean( srange[n//2-1:n//2])
     return spot
@@ -110,10 +111,10 @@ if __name__ == '__main__':
     print( putprice(xS, K, T, sigma, r ), ' == ', 1600, ', calculated spot:', xS )
     
     #BTC-240410-68250-C  1385  0.538611  68642.0 (1731.25)  69236.5 (2077.5)  70283.0 (2770.0)
-    contract = 'BTC-240410-68250-C'
+    contract = 'BTC-240410-65500-P'
     _,T,K,ctype = extract_specs( contract )
-    c = 1731.25
-    sigma = .538611
+    p = 580
+    sigma = .527
     print(f"{contract}\tK = {K}, T = {T}")
-    print( invert_callprice(c,K,T/365,sigma,0.) )
+    print( invert_putprice(p,K,T/365,sigma,0.) )
  
