@@ -24,7 +24,7 @@ def validate_sell(symbol,qty,pce):
     odf = orders_status()
     if not odf.empty:
         odf = odf[(odf.symbol==symbol)&(odf.side=='SELL')]
-        assert odf.shape[0] == 1, 'Error'
+        assert odf.shape[0] == 1, f'Error\n{odf}'
         existing_position = abs( float(df.iloc[0].quantity) )
         existing_sell_qty = abs( float(odf.iloc[0].quantity) )
         if existing_position < (existing_sell_qty + qty):
