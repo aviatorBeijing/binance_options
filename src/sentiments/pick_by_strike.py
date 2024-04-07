@@ -111,6 +111,7 @@ def main(underlying, strike,date4):
     datestr = list(map(lambda s: s.split('-')[1], df.symbol.values)) 
     datestr = sorted( list(set(datestr)) )
     print('-- available expiry dates:', datestr)
+    assert any([date4 in s for s in datestr]), f'{date4} is not found in expiry dates.'
 
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     print(f'-- [spot] bid: {bid}, ask: {ask}')
