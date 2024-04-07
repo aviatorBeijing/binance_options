@@ -25,6 +25,7 @@ def get_contracts_around( strike, df, datestr=None ):
         datestr = f'{year}{datestr}'
         df = df[df.symbol.str.contains(datestr)]
     df['distance'] = abs(df.strikePrice-float(strike))
+    print(df['distance'])
     recs = {}
     print('  -- first 3 pairs of contracts')
     for expiry in sorted( list(set(df.expiryDate.values))):
@@ -106,7 +107,6 @@ def main(underlying, strike,date4):
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     print(f'-- [spot] bid: {bid}, ask: {ask}')
 
-    print(df)
     cs = get_contracts_around(strike,df,datestr=date4)
     ois=[];recs=[];expDates=[]
     for expiry, contracts in cs.items():
