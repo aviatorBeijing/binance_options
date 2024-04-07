@@ -97,7 +97,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
         print(f'-- reference spot: {spot_bid:.2f}')
         print( tabulate(df[df.contract.str.endswith("-C")], headers="keys"))
         print( tabulate(df[df.contract.str.endswith("-P")], headers="keys"))
-        time.sleep(2)
+        time.sleep(1)
         cnt += 1
     print('-- done')
 
