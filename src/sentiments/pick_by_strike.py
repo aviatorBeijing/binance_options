@@ -106,6 +106,7 @@ def main(underlying, strike,date4):
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     print(f'-- [spot] bid: {bid}, ask: {ask}')
 
+    print(df)
     cs = get_contracts_around(strike,df,datestr=date4)
     ois=[];recs=[];expDates=[]
     for expiry, contracts in cs.items():
