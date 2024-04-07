@@ -1,4 +1,4 @@
-import datetime,os
+import datetime,os,sys
 import pandas as pd
 import requests
 import click,time
@@ -151,14 +151,19 @@ def main(underlying, strike,date4):
         df.sort_values('K', ascending=False, inplace=True)
         print(df)
 
-        contracts = ','.join(list(df.index))
-        conn = Process( target=ws_connector, args=(contracts, "ticker",) )
-        calc = Process( target=check_market, args=(contracts,bid,ask,) )
-        conn.start()
-        calc.start()
-        
-        conn.join()
-        calc.join()
+        try:
+            contracts = ','.join(list(df.index))
+            conn = Process( target=ws_connector, args=(contracts, "ticker",) )
+            calc = Process( target=check_market, args=(contracts,bid,ask,) )
+            conn.start()
+            calc.start()
+            
+            conn.join()
+            calc.join()
+        except KeyboardInterrupt as e:
+            print('-- gracefuly exiting ...')
+            time.sleep(5)
+            sys.exit()
 
 if __name__ == '__main__':
     main()
