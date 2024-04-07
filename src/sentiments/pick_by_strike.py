@@ -107,7 +107,9 @@ def main(underlying, strike,date4):
     df.to_csv(fn)
     print('-- written:',fn)
 
-    datestr = list(set(df.expiryDate.values))
+
+    datestr = list(map(lambda s: s.split('-')[1], df.symbol.values)) 
+    datestr = list(set(datestr))
     print('-- available expiry dates:', datestr)
 
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
