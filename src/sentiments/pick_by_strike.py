@@ -24,8 +24,11 @@ def get_contracts_around( strike, df, datestr=None ):
         assert len(datestr)==4, f'Wrong format of the datestr, ex. 0401. Found: {datestr}'
         datestr = f'{year}{datestr}'
         df = df[df.symbol.str.contains(datestr)]
+        if df.empty:
+            return {}
+    
     df['distance'] = abs(df.strikePrice-float(strike))
-    print(df['distance'])
+    
     recs = {}
     print('  -- first 3 pairs of contracts')
     for expiry in sorted( list(set(df.expiryDate.values))):
@@ -108,38 +111,41 @@ def main(underlying, strike,date4):
     print(f'-- [spot] bid: {bid}, ask: {ask}')
 
     cs = get_contracts_around(strike,df,datestr=date4)
-    ois=[];recs=[];expDates=[]
-    for expiry, contracts in cs.items():
-        for c in contracts:
-            expDates += [ c.split('-')[1]]
-            spot_ric, T,K,ctype = extract_specs( c )
-            recs += [ (spot_ric, T,K,ctype, c,)]
-    for expiry in list(set(expDates)):
-        oi = fetch_oi(expiry,underlying.upper())
-        ois += [ oi ]
-    print(recs[0])
-    cdf = pd.DataFrame.from_records( recs )
-    cdf.columns = 'spot_ric,T,K,ctype,contract'.split(',')
-    cdf.set_index('contract', inplace=True, drop=True)
-
-    df = cdf.copy()
-    if ois:
-        odf = pd.concat( ois, axis=0)
-        odf.set_index('symbol', inplace=True, drop=True)
-        df = cdf.merge(odf,left_index=True,right_index=True)
+    if not cs:
+        print(f'*** no contracts on {date4}')
     else:
-        print('*** failed to fetch open interests, ignored.')
-    df.sort_values('K', ascending=False, inplace=True)
-    print(df)
+        ois=[];recs=[];expDates=[]
+        for expiry, contracts in cs.items():
+            for c in contracts:
+                expDates += [ c.split('-')[1]]
+                spot_ric, T,K,ctype = extract_specs( c )
+                recs += [ (spot_ric, T,K,ctype, c,)]
+        for expiry in list(set(expDates)):
+            oi = fetch_oi(expiry,underlying.upper())
+            ois += [ oi ]
 
-    contracts = ','.join(list(df.index))
-    conn = Process( target=ws_connector, args=(contracts, "ticker",) )
-    calc = Process( target=check_market, args=(contracts,bid,ask,) )
-    conn.start()
-    calc.start()
-    
-    conn.join()
-    calc.join()
+        cdf = pd.DataFrame.from_records( recs )
+        cdf.columns = 'spot_ric,T,K,ctype,contract'.split(',')
+        cdf.set_index('contract', inplace=True, drop=True)
+
+        df = cdf.copy()
+        if ois:
+            odf = pd.concat( ois, axis=0)
+            odf.set_index('symbol', inplace=True, drop=True)
+            df = cdf.merge(odf,left_index=True,right_index=True)
+        else:
+            print('*** failed to fetch open interests, ignored.')
+        df.sort_values('K', ascending=False, inplace=True)
+        print(df)
+
+        contracts = ','.join(list(df.index))
+        conn = Process( target=ws_connector, args=(contracts, "ticker",) )
+        calc = Process( target=check_market, args=(contracts,bid,ask,) )
+        conn.start()
+        calc.start()
+        
+        conn.join()
+        calc.join()
 
 if __name__ == '__main__':
     main()
