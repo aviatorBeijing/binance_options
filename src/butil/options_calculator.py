@@ -76,12 +76,16 @@ def invert_(c,K,T,sigma,r, is_call=True):
     calls = list(map(lambda s: forward_(s,K,T,sigma,r), spots))
     calls_diff = np.array( calls) - c
     
-    if is_call:
-        i = spots[ np.where(calls_diff<0) ][-1]
-        j = spots[ np.where(calls_diff>0) ][0]
-    else:
-        i = spots[ np.where(calls_diff>0) ][-1]
-        j = spots[ np.where(calls_diff<0) ][0]
+    try:
+        if is_call:
+            i = spots[ np.where(calls_diff<0) ][-1]
+            j = spots[ np.where(calls_diff>0) ][0]
+        else:
+            i = spots[ np.where(calls_diff>0) ][-1]
+            j = spots[ np.where(calls_diff<0) ][0]
+    except Exception as _:
+        print(f"*** Not able to calculate spot price: [{'call' if is_call else 'put'}] option = {c}, K={K}, T={T}, sigma={sigma}")
+        return 0.
     
     # Fine search
     spots = np.arange(i,j,.5) # FIXME for BTC/USDT only, for DOGE, this might need a smaller steps.
