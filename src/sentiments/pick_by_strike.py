@@ -95,7 +95,8 @@ def check_market( contracts:str, spot_bid,spot_ask):
         print('\n')
         print(f'-- funding: {(annual*100):.1f}% ({(funding_rate*10000):.2f}%%)')
         print(f'-- reference spot: {spot_bid:.2f}')
-        print( tabulate(df, headers="keys"))
+        print( tabulate(df[df.contract.str.endswith("-C")], headers="keys"))
+        print( tabulate(df[df.contract.str.endswith("-P")], headers="keys"))
         time.sleep(5)
         cnt += 1
     print('-- done')
