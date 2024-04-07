@@ -116,13 +116,16 @@ def main(underlying, strike,date4):
     for expiry in list(set(expDates)):
         oi = fetch_oi(expiry,underlying.upper())
         ois += [ oi ]
-    odf = pd.concat( ois, axis=0)
+    
     cdf = pd.DataFrame.from_records( recs )
     cdf.columns = 'spot_ric,T,K,ctype,contract'.split(',')
-
-    odf.set_index('symbol', inplace=True, drop=True)
     cdf.set_index('contract', inplace=True, drop=True)
-    df = cdf.merge(odf,left_index=True,right_index=True)
+
+    df = cdf.copy()
+    if ois:
+        odf = pd.concat( ois, axis=0)
+        odf.set_index('symbol', inplace=True, drop=True)
+        df = cdf.merge(odf,left_index=True,right_index=True)
     df.sort_values('K', ascending=False, inplace=True)
     print(df)
 
