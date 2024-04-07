@@ -84,7 +84,7 @@ def invert_(c,K,T,sigma,r, is_call=True):
             i = spots[ np.where(calls_diff>0) ][-1]
             j = spots[ np.where(calls_diff<0) ][0]
     except Exception as _:
-        print(f"*** Not able to calculate spot price: [{'call' if is_call else 'put'}] option = {c}, K={K}, T={T}, sigma={sigma} (newly created contract? is it around 16:00 UTC+8?)")
+        print(f"*** Not able to calculate spot price: [{'call' if is_call else 'put'}] option = {c}, K={K}, T={T}, sigma={sigma} ( Bid/ask might be empty. Newly created contract? is it around 16:00 UTC+8?)")
         return 0.
     
     # Fine search
