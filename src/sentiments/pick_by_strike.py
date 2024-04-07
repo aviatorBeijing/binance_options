@@ -109,7 +109,7 @@ def main(underlying, strike,date4):
 
 
     datestr = list(map(lambda s: s.split('-')[1], df.symbol.values)) 
-    datestr = list(set(datestr))
+    datestr = list(set(sorted(datestr)))
     print('-- available expiry dates:', datestr)
 
     bid,ask = binance_spot(f"{underlying.upper()}/USDT")
