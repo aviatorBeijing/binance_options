@@ -116,7 +116,7 @@ def main(underlying, strike,date4):
     for expiry in list(set(expDates)):
         oi = fetch_oi(expiry,underlying.upper())
         ois += [ oi ]
-    
+    print(recs[0])
     cdf = pd.DataFrame.from_records( recs )
     cdf.columns = 'spot_ric,T,K,ctype,contract'.split(',')
     cdf.set_index('contract', inplace=True, drop=True)
