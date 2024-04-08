@@ -84,6 +84,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
         df['volumes'] = df['bid_vol'].astype(str)+","+df['ask_vol'].astype(str)
         df = df[['contract','mon','bid','ask','volumes','iv','delta','gamma','theta','ivbid','ivask']]
         df['spot_on_5%_pf'] = df.contract.apply(lambda s: calc_(s, 0.05))
+        df['spot_on_10%_pf'] = df.contract.apply(lambda s: calc_(s, 0.1))
         df['spot_on_20%_pf'] = df.contract.apply(lambda s: calc_(s, 0.25))
         df['spot_on_50%_pf'] = df.contract.apply(lambda s: calc_(s, 0.5))
         df['spot_on_100%_pf'] = df.contract.apply(lambda s: calc_(s, 1.))
