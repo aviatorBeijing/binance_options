@@ -41,7 +41,7 @@ def validate_sell(symbol,qty,pce):
             if existing_position < (existing_sell_qty + qty):
                 raise Exception(f"""
                 ***
-                {"\n".join(oids)}
+                {",".join(oids)}
                 \texisting sell order qty: {existing_sell_qty};
                 \tposition for sell {existing_position};
                 \trequesting sell qty {qty} is too much.
