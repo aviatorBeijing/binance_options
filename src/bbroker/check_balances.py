@@ -6,6 +6,7 @@ from bbroker.settings import ex
 def balances() -> pd.DataFrame:
     bal = ex.fetch_balance( params={"type": "option"})
     balType  =  bal['info']['accountType']
+    import pprint;pprint.pprint( bal)
     bal = bal['info']['balances']
     bdf  = pd.DataFrame.from_records(bal)
     bdf['free'] = bdf['free'].apply(float)
