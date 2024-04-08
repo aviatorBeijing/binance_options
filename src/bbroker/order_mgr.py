@@ -117,6 +117,10 @@ def main( action,contract, price, qty, cancel_order_id, execute ):
         
         if action=='sell':
             validate_sell(contract,qty,price)
+        elif action == 'buy':
+            validate_buy(contract,qty,price)
+        else:
+            raise Exception("Error:", action)
 
         print('\n-- use "--execute" to send order.')
 
