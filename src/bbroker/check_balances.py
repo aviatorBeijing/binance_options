@@ -12,5 +12,4 @@ def balances() -> pd.DataFrame:
     bdf['locked'] = bdf['locked'].apply(float)
     bdf['ttl'] =  bdf['free'] +  bdf['locked']
     bdf.sort_values('ttl', ascending=False, inplace=True)
-    print( bdf[bdf.ttl>0] )
-    return bdf
+    return bdf[bdf.ttl>0]
