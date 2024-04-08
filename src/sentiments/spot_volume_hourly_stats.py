@@ -65,14 +65,18 @@ def main(ric, dollar, test):
     
     rk = df[colume].rolling(df.shape[0]).rank(pct=True).iloc[-1]*100 # the rank of percentile of the last row volume
     latest_ts = df.timestamp.iloc[-1]
-
     vdf.loc[vdf.utc_hours == current.utc_hour, 'current'] = f'{rk:.1f}% ({latest_ts})'
+
+    print('')
+    print( '-- sort by 50%\n',vdf.sort_values('50%', ascending=False).head(5))
+    print( '-- sort by 75%\n',vdf.sort_values('75%', ascending=False).head(5))
+
     for col in ['mean','std','min','25%','50%','75%','max']:
         vdf[col] = vdf[col].apply(lambda v: f"{v:,.0f}")
-    print( vdf )
+   
     print('')
-    print( '-- sort by 50%\n',vdf.sort_values('75%', ascending=False).head(5))
-    print( '-- sort by 75%\n',vdf.sort_values('75%', ascending=False).head(5))
+    print( vdf )
+    
 
 if __name__ == '__main__':
     main()
