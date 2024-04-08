@@ -67,6 +67,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
                 raise Exception(f"Wrong contract info: {sym}")
             d = (pce-spot_bid)/spot_bid*100
             return f"{d:.1f}% {pce} {option_price}"
+
         for c in contracts:
             K = float(c.split('-')[2]);cp=c.split('-')[-1]
             dp = (K-spot_bid)/spot_bid
@@ -76,6 +77,7 @@ def check_market( contracts:str, spot_bid,spot_ask):
             if cp=='P': out_in = 'OTM' if dp<-ep else 'ITM' if dp>ep else 'ATM'
             cdata = fetch_bidask(c.upper())
             bid,ask,bvol,avol = _v(cdata['bid']),_v(cdata['ask']),_v(cdata['bidv']),_v(cdata['askv'])
+            out_in = f"{out_in} {(ask-bid)}"
             delta,gamma,theta,iv,ivbid,ivask = _v(cdata['delta']),_v(cdata['gamma']),_v(cdata['theta']),_v(cdata['impvol']),_v(cdata['impvol_bid']),_v(cdata['impvol_ask'])
             recs += [(c, out_in, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
             greeks[c] = (bid,ask,iv,ivbid,ivask,delta,gamma,theta,)
