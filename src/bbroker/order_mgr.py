@@ -1,4 +1,5 @@
 import click,datetime,time
+import numpy as np
 from bbroker.settings import ex
 from bbroker.check_status import orders_status,position_status
 
@@ -31,11 +32,19 @@ def validate_sell(symbol,qty,pce):
     if not odf.empty:
         odf = odf[(odf.symbol==symbol)&(odf.side=='SELL')]
         if not odf.empty:
-            assert odf.shape[0] == 1, f'Error\n{odf}'
+            print( odf )
+            #assert odf.shape[0] == 1, f'Error\n{odf}'
             existing_position = abs( float(df.iloc[0].quantity) )
-            existing_sell_qty = abs( float(odf.iloc[0].quantity) )
+            existing_sell_qty = 0 
+            existing_sell_qty = np.sum( odf.quantity.astype(float).apply(abs))
             if existing_position < (existing_sell_qty + qty):
-                raise Exception(f"\n***\n\t{symbol}\n\texisting sell order qty: {existing_sell_qty};\n\tposition for sell {existing_position};\n\trequesting sell qty {qty} is too much.")
+                raise Exception(f"""
+                ***
+                \t{symbol}
+                \texisting sell order qty: {existing_sell_qty};
+                \tposition for sell {existing_position};
+                \trequesting sell qty {qty} is too much.
+                """)
 
     
     # existing position
