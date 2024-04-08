@@ -37,14 +37,14 @@ def validate_sell(symbol,qty,pce):
             existing_position = abs( float(df.iloc[0].quantity) )
             existing_sell_qty = 0 
             existing_sell_qty = np.sum( odf.quantity.astype(float).apply(abs))
-            oids = odf.orderId.values;oids = list(map(lambda oid: f"\t{oid} {symbol}",oids))
+            oids = odf.orderId.values;oids = list(map(lambda oid: f"{oid} {symbol}",oids))
             if existing_position < (existing_sell_qty + qty):
                 raise Exception(f"""
                 ***
                 {",".join(oids)}
-                \texisting sell order qty: {existing_sell_qty};
-                \tposition for sell {existing_position};
-                \trequesting sell qty {qty} is too much.
+                existing sell order qty: {existing_sell_qty};
+                position for sell {existing_position};
+                requesting sell qty {qty} is too much.
                 """)
 
     
