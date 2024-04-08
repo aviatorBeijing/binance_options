@@ -48,7 +48,7 @@ def validate_sell(symbol,qty,pce):
     print(f'-- potential gain (if filled): ${potential_gain}, {rt:.2f}%')
 
 def buy_(symbol,qty,pce):
-    validate_buy(symbol,qty,pce)
+    #validate_buy(symbol,qty,pce)
     mgr(symbol,'buy', qty,pce,timing='limit')
 
 def sell_(symbol,qty,pce):
