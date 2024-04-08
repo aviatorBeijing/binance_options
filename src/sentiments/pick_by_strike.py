@@ -69,7 +69,8 @@ def check_market( contracts:str, spot_bid,spot_ask):
             return f"{d:.1f}% {pce} {option_price}"
         for c in contracts:
             K = float(c.split('-')[2]);cp=c.split('-')[-1]
-            dp = (K-spot_bid)/spot_bid;ep=1/100
+            dp = (K-spot_bid)/spot_bid
+            ep=1/100
             out_in = 'OTM'
             if cp=='C': out_in = 'ITM' if dp<-ep else 'OTM' if dp>ep else 'ATM'
             if cp=='P': out_in = 'OTM' if dp<-ep else 'ITM' if dp>ep else 'ATM'
@@ -79,9 +80,10 @@ def check_market( contracts:str, spot_bid,spot_ask):
             recs += [(c, out_in, bid,ask,bvol,avol,iv,  delta,gamma,theta,ivbid,ivask)]
             greeks[c] = (bid,ask,iv,ivbid,ivask,delta,gamma,theta,)
         
-        df = pd.DataFrame.from_records(recs, columns=['contract','state','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
+        df = pd.DataFrame.from_records(recs, columns=['contract','mon','bid','ask','bid_vol','ask_vol','iv','delta','gamma','theta','ivbid','ivask'])
         df['volumes'] = df['bid_vol'].astype(str)+","+df['ask_vol'].astype(str)
-        df = df[['contract','state','bid','ask','volumes','iv','delta','gamma','theta','ivbid','ivask']]
+        df = df[['contract','mon','bid','ask','volumes','iv','delta','gamma','theta','ivbid','ivask']]
+        df['spot_on_5%_pf'] = df.contract.apply(lambda s: calc_(s, 0.05))
         df['spot_on_20%_pf'] = df.contract.apply(lambda s: calc_(s, 0.25))
         df['spot_on_50%_pf'] = df.contract.apply(lambda s: calc_(s, 0.5))
         df['spot_on_100%_pf'] = df.contract.apply(lambda s: calc_(s, 1.))
