@@ -12,6 +12,12 @@ def mgr(symbol,action,qty,pce, timing='limit'):
         #ex.markets[symbol]['precision']['price'] = 1
     ex.create_order(symbol,timing,action,qty,pce)
 
+
+def validate_buy(symbol,qty,pce):
+    from bbroker.check_balances import balances
+    df = balances()
+    print(df)
+
 def validate_sell(symbol,qty,pce):
     print('-- existing positions:')
     df = position_status()
@@ -42,6 +48,7 @@ def validate_sell(symbol,qty,pce):
     print(f'-- potential gain (if filled): ${potential_gain}, {rt:.2f}%')
 
 def buy_(symbol,qty,pce):
+    validate_buy(symbol,qty,pce)
     mgr(symbol,'buy', qty,pce,timing='limit')
 
 def sell_(symbol,qty,pce):
@@ -62,6 +69,7 @@ def cancel_(symbol, oid):
     print('-- to be cancelled:\n',df)
     ex.cancel_order(oid,symbol)
     
+    print('-- checking order status')
     time.sleep(2)
     orders_status()
 
