@@ -39,10 +39,10 @@ def position_status()->pd.DataFrame:
             'quantity','markValue','expiryDate']]
     df['expiry'] = df.expiryDate.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
     df = df.sort_values(['symbol','expiryDate'], ascending=False)
-    print('-- [ positions ]\n',tabulate(df,headers="keys"))
+    #print('-- [ positions ]\n',tabulate(df,headers="keys"))
 
     gain = df.markValue.astype(float).sum()-df.positionCost.astype(float).sum()
-    print(f'-- gain (vs mark price): ${gain:.2f}' )
+    print(f'-- positions gain (vs mark price): ${gain:.2f}' )
 
     return df
 
