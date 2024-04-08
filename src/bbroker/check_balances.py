@@ -4,7 +4,7 @@ import pandas as pd
 from bbroker.settings import ex
 
 def balances() -> pd.DataFrame:
-    bal = ex.fetch_balance()
+    bal = ex.fetch_balance( params={"type": "option"})
     balType  =  bal['info']['accountType']
     bal = bal['info']['balances']
     bdf  = pd.DataFrame.from_records(bal)
