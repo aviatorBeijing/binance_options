@@ -11,3 +11,13 @@ ex = ccxt.binance({
     }
 })
 ex.load_markets()
+
+spot_ex = ccxt.binance({
+    'apiKey': apikey,
+    'secret': secret,
+    'enableRateLimit': True,
+    'options':{
+        'defaultType': 'spot',
+    }
+})
+spot_ex.load_markets()
