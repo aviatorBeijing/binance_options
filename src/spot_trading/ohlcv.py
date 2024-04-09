@@ -41,11 +41,9 @@ def main(ric):
     openDf = mkt.check_open_orders()
     tds = mkt.check_trades_today()
 
-    f = FeedHandler()
-    #f.add_feed(Coinbase(symbols=['BTC-USD', 'ETH-USD', 'BCH-USD'], channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=10)}))
-    f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
-
-    f.run()
+    #f = FeedHandler()
+    #f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
+    #f.run()
 
 
 if __name__ == '__main__':
