@@ -1,3 +1,4 @@
+import os
 from os.path import join
 import logging
 
@@ -6,20 +7,20 @@ import logging
 ########################################################################################################################
 
 # API URL.
-BASE_URL = "https://testnet.binance.com/api/v1/"
-# BASE_URL = "https://www.binance.com/api/v1/" # Once you're ready, uncomment this.
+BASE_URL = "wss://fstream.binance.com"
 
 # The Binance API requires permanent API keys. Go to https://testnet.binance.com/app/apiKeys to fill these out.
-API_KEY = ""
-API_SECRET = ""
+API_KEY = os.getenv("BINANCE_SPOT_APIKEY",None)
+API_SECRET = os.getenv("BINANCE_SPOT_SECRET", None)
 
+assert API_KEY and API_SECRET, 'No apikey/secret key  provided via env vars: BINANCE_SPOT_APIKEY, BINANCE_SPOT_SECRET.')
 
 ########################################################################################################################
 # Target
 ########################################################################################################################
 
 # Instrument to market make on Binance.
-SYMBOL = "XBTUSD"
+SYMBOL = "DOGE/USDT"
 
 
 ########################################################################################################################
