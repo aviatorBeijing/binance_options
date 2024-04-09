@@ -44,6 +44,7 @@ def orders_status(ex,ric)->pd.DataFrame:
     print(df.columns)
     #df['dt'] = (tnow - df.updateTime.apply(int))/1000
     #df = df[['status','orderId','symbol','side','price','avgPrice','quantity','executedQty','updateTime','source','priceScale','quantityScale']]
+    df = df['symbol,type,side,status,orderId,price,origQuoteOrderQty,executedQty,cummulativeQuoteQty,updateTime'.split(',')]
     df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
     df = df.sort_values('updateTime', ascending=False)
     print('--[ orders ]\n',tabulate(df,headers="keys"))
