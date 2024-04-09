@@ -45,8 +45,8 @@ class BianceSpot:
         dt = datetime.datetime.utcnow().timestamp() - 24*3600
         dt = int(dt)*1000
         tds = self.ex.fetchMyTrades(self.ric, since=dt, limit=None, params={})
-        ods = list(map(lambda e: e['info'],ods))
-        df = pd.DataFrame.from_records(ods)
+        tds = list(map(lambda e: e['info'],tds))
+        df = pd.DataFrame.from_records(tds)
         if df.empty: 
             print('*** No outstanding orders.')
             return pd.DataFrame()
