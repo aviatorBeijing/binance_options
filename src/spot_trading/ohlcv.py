@@ -39,6 +39,7 @@ def main(ric):
     
     mkt = BianceSpot(ric.replace('-','/'))
     openDf = mkt.check_open_orders()
+    tds = mkt.check_trades_today()
 
     f = FeedHandler()
     #f.add_feed(Coinbase(symbols=['BTC-USD', 'ETH-USD', 'BCH-USD'], channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=10)}))
