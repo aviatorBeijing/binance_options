@@ -34,10 +34,7 @@ async def ohlcv(data):
         vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
         print( len(volumes), vrk )
 
-@click.command()
-@click.option('--ric',default="BTC-USDT")
-def main(ric):
-    
+def market_check(ric):
     mkt = BianceSpot(ric.replace('-','/'))
     openDf = mkt.check_open_orders()
     
@@ -63,9 +60,15 @@ def main(ric):
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     print(f'-- fee: ${fee}')
 
-    #f = FeedHandler()
-    #f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
-    #f.run()
+@click.command()
+@click.option('--ric',default="BTC-USDT")
+def main(ric):
+    
+    market_check(ric)
+
+    f = FeedHandler()
+    f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
+    f.run()
 
 
 if __name__ == '__main__':
