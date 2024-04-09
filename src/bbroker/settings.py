@@ -55,6 +55,6 @@ class BianceSpot:
         df['side'] = df.isBuyer.apply(lambda v: 'SELL' if not v else "BUY")
         df = df['id,symbol,side,qty,price,commission,commissionAsset,isMaker,time'.split(',')]
         df['datetime'] = df.time.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
-        df = df.sort_values('time', ascending=False)
+        df = df.sort_values('time', ascending=True)
         print('--[ trades in 24 hours ]\n',tabulate(df,headers="keys"))
         return df  
