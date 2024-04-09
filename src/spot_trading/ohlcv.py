@@ -43,7 +43,7 @@ def main(ric):
     tds = mkt.check_trades_today()
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
-    tds['agg'] = tds.qty.sumsum()
+    tds['agg'] = tds.qty.cumsum()
     tds['$agg'] = -(tds.qty*tds.price.astype(float)).cumsum()
     print( tds )
     res = tds.qty.sum()
