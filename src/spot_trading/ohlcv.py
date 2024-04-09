@@ -10,6 +10,7 @@ from cryptofeed.defines import TRADES
 from cryptofeed.exchanges import Binance
 
 from bbroker.settings import BianceSpot
+from butil.butils import binance_spot
 
 WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
@@ -48,6 +49,19 @@ def main(ric):
     tds['neutral'] = ''
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print( tds )
+    
+    pceMap = {}
+    syms = list(set(tds.commissionAsset.values))
+    for s in syms:
+        if s =='USDT':
+            pceMap[s] = 1.
+        else:
+            feeric = f'{s}/USDT'
+            bid,ask = binance_spot( feeric )
+            pceMap[s] = bid
+    tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
+    fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
+    print(f'-- fee: ${fee}')
 
     #f = FeedHandler()
     #f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
