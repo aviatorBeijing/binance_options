@@ -39,7 +39,12 @@ def main(ric):
     
     mkt = BianceSpot(ric.replace('-','/'))
     openDf = mkt.check_open_orders()
+    
     tds = mkt.check_trades_today()
+    tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
+    tds['qty'] = tds.side * tds.qty 
+    res = tds.qty.sum()
+    print(f"-- res position: {res} {ric.split('-')[0]}")
 
     #f = FeedHandler()
     #f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
