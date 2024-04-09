@@ -9,7 +9,7 @@ from cryptofeed.backends.aggregate import OHLCV
 from cryptofeed.defines import TRADES
 from cryptofeed.exchanges import Binance
 
-from bbroker.settings import SpotMarket
+from bbroker.settings import BianceSpot
 
 WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
@@ -37,7 +37,7 @@ async def ohlcv(data):
 @click.option('--ric',default="BTC-USDT")
 def main(ric):
     
-    mkt = SpotMarket(ric.replace('-','/'))
+    mkt = BianceSpot(ric.replace('-','/'))
     openDf = mkt.check_open_orders()
 
     f = FeedHandler()
