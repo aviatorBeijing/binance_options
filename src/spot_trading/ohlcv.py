@@ -33,9 +33,9 @@ async def ohlcv(data):
         vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
         print( len(volumes), vrk )
 
-def orders_status(ex)->pd.DataFrame:
+def orders_status(ex,ric)->pd.DataFrame:
     #tnow = datetime.datetime.utcnow().timestamp()*1000;tnow=int(tnow)
-    ods = ex.eapiPrivateGetOpenOrders()
+    ods = ex.fetchOpenOrders(ric)
     df = pd.DataFrame.from_records(ods)
     if df.empty: 
         print('*** No outstanding orders.')
@@ -50,7 +50,7 @@ def orders_status(ex)->pd.DataFrame:
 @click.command()
 @click.option('--rics',default="BTC-USDT")
 def main(rics):
-    orders_status( spot_ex )
+    orders_status( spot_ex, 'DOGE/USDT' )
     f = FeedHandler()
     #f.add_feed(Coinbase(symbols=['BTC-USD', 'ETH-USD', 'BCH-USD'], channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=10)}))
     f.add_feed(Binance(symbols=rics.split(','),channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
