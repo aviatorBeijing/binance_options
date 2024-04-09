@@ -45,4 +45,16 @@ class BianceSpot:
         dt = datetime.datetime.utcnow().timestamp() - 24*3600
         dt = int(dt)*1000
         tds = self.ex.fetchMyTrades(self.ric, since=dt, limit=None, params={})
-        import pprint;pprint.pprint( tds )
+        ods = list(map(lambda e: e['info'],ods))
+        df = pd.DataFrame.from_records(ods)
+        if df.empty: 
+            print('*** No outstanding orders.')
+            return pd.DataFrame()
+        #df['dt'] = (tnow - df.updateTime.apply(int))/1000
+        df = df['id,symbol,qty,price,commission,commissionAsset,isMaker,isBuyer,time'.split(',')]
+        df['side'] = df.isBuyer.apply(lambda v: 'SELL' if not v else "BUY")
+        df = df['id,symbol,side,qty,price,commission,commissionAsset,isMaker,time'.split(',')]
+        df['datetime'] = df.time.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
+        df = df.sort_values('updateTime', ascending=False)
+        print('--[ orders ]\n',tabulate(df,headers="keys"))
+        return df  
