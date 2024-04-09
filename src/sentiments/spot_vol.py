@@ -55,6 +55,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
     df['gamma_rnk'] = df.rtn.pct_change().rolling(30).rank(pct=True)
     last_row = df.tail(1)
     last_rtn = df.rtn.iloc[-1]
+    last_rtn_rk = df.rtn.rolling(df.shape[0],pct=True).iloc[-1]*100
     df.dropna(inplace=True)
     last_gamma = df.gamma.iloc[-1]
     last_gamma_rnk = df.gamma_rnk.iloc[-1]
@@ -78,7 +79,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
 
     x = ['' for i in range(0,df.shape[0])]
     x[ last_row.week_days.iloc[0] ] = (last_rtn*100) if check=='return' else last_gamma
-    df[f'lastest_{check}'] = x
+    df[f'lastest_{check}'] = f'{x} {last_rtn_rk:.1f}%'
     df['weekday'] = ['mon','tue','wed','thur','fri','weedends']
     df.set_index('weekday',inplace=True,drop=True)
 
