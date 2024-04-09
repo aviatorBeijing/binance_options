@@ -9,7 +9,6 @@ from cryptofeed.backends.aggregate import OHLCV
 from cryptofeed.defines import TRADES
 from cryptofeed.exchanges import Binance
 
-from bbroker.settings import spot_ex
 from bbroker.settings import BianceSpot
 
 WINDOW_IN_SECONDS = 5
@@ -38,12 +37,12 @@ async def ohlcv(data):
 @click.option('--ric',default="BTC-USDT")
 def main(ric):
     
-    #mkt = BianceSpot(ric.replace('-','/'))
-    #openDf = mkt.check_open_orders()
+    mkt = BianceSpot(ric.replace('-','/'))
+    openDf = mkt.check_open_orders()
 
     f = FeedHandler()
     #f.add_feed(Coinbase(symbols=['BTC-USD', 'ETH-USD', 'BCH-USD'], channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=10)}))
-    f.add_feed(Binance(symbols=ric,channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
+    f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
 
     f.run()
 
