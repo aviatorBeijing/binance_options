@@ -1,4 +1,6 @@
-import ccxt,os
+import ccxt,os,datetime
+from tabulate import tabulate
+import pandas as pd 
 
 apikey = os.getenv('BINANCE_MAIN_OPTIONS_APIKEY', None)
 secret = os.getenv('BINANCE_MAIN_OPTIONS_SECRET', None)
@@ -21,3 +23,21 @@ spot_ex = ccxt.binance({
     }
 })
 spot_ex.load_markets()
+
+class BianceSpot:
+    def __init__(self,ric) -> None:
+        self.ric = ric 
+        self.ex = spot_ex
+    def check_open_orders(self) -> pd.DataFrame:
+        ods = self.ex.fetchOpenOrders(self.ric)
+        ods = list(map(lambda e: e['info'],ods))
+        df = pd.DataFrame.from_records(ods)
+        if df.empty: 
+            print('*** No outstanding orders.')
+            return pd.DataFrame()
+        #df['dt'] = (tnow - df.updateTime.apply(int))/1000
+        df = df['symbol,type,side,status,orderId,price,origQuoteOrderQty,executedQty,cummulativeQuoteQty,updateTime'.split(',')]
+        df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
+        df = df.sort_values('updateTime', ascending=False)
+        print('--[ orders ]\n',tabulate(df,headers="keys"))
+        return df   
