@@ -78,7 +78,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
     df.num /=100
 
     x = ['' for i in range(0,df.shape[0])]
-    x[ last_row.week_days.iloc[0] ] = (last_rtn*100) if check=='return' else last_gamma
+    x[ last_row.week_days.iloc[0] ] = f'{(last_rtn*100)} {last_rtn_rk:.1f}%' if check=='return' else last_gamma
     df[f'lastest_{check}'] = x
     df['weekday'] = ['mon','tue','wed','thur','fri','weedends']
     df.set_index('weekday',inplace=True,drop=True)
