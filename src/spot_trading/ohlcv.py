@@ -45,9 +45,9 @@ def main(ric):
     tds['qty'] = tds.sign * tds.qty.astype(float)
     tds['agg'] = tds.qty.cumsum()
     tds['$agg'] = -(tds.qty*tds.price.astype(float)).cumsum()
+    tds['neutral'] = ''
+    tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print( tds )
-    res = tds.qty.sum()
-    print(f"-- res position: {res} {ric.split('-')[0]}")
 
     #f = FeedHandler()
     #f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
