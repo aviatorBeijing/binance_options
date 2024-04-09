@@ -36,7 +36,7 @@ class BianceSpot:
             print('*** No outstanding orders.')
             return pd.DataFrame()
         #df['dt'] = (tnow - df.updateTime.apply(int))/1000
-        df = df['symbol,type,side,status,orderId,price,origQuoteOrderQty,executedQty,cummulativeQuoteQty,updateTime'.split(',')]
+        df = df['symbol,type,side,status,orderId,price,origQty,executedQty,cummulativeQuoteQty,updateTime'.split(',')]
         df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('updateTime', ascending=False)
         print('--[ orders ]\n',tabulate(df,headers="keys"))
