@@ -132,17 +132,19 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     tnow = int(datetime.datetime.utcnow().timestamp()*1000)
     dfs = []
     tsecs = -1
+    gap = 990
     if span.endswith('d'):
         tsecs = 24*3600 * int(span.split('d')[0])
     elif span.endswith('h'):
         tsecs = 3600 * int(span.split('h')[0])
     elif span.endswith('m'):
         tsecs = 60 * int(span.split('m')[0])
+        gap = 100
     else:
         raise Exception( f"Unsupported span type: {span}")
 
     for i in range(1,grps+1):
-        from_ts = tnow - tsecs*1000 *990*i
+        from_ts = tnow - tsecs*1000 *gap*i
         ohlcvs = ex_binance.fetch_ohlcv(symbol, span,since=from_ts,limit=1000)
         recs = []
         for ohlcv in ohlcvs:
