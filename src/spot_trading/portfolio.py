@@ -35,7 +35,9 @@ def portfolio_check(ric):
 
 def price_range(ric, span='5m'):
     ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
+    print('-- ', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     print(ohlcv)
+    print( ohlcv.close.describe() )
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
