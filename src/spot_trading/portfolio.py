@@ -11,7 +11,7 @@ def portfolio_check(ric):
     mkt = BianceSpot(ric.replace('-','/'))
     openDf = mkt.check_open_orders()
     
-    tds = mkt.check_trades_today()
+    tds = mkt.check_trades(hours=48)
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
@@ -81,7 +81,7 @@ def price_range(ric, span='5m', start_ts=None) -> PriceGrid:
 @click.option('--ric',default="DOGE-USDT")
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 def main(ric,start_ts):
-    print( price_range(ric, span="5m", start_ts=start_ts) )
+    #print( price_range(ric, span="5m", start_ts=start_ts) )
     portfolio_check(ric)
 
 if __name__ == '__main__':

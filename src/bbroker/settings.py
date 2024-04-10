@@ -41,8 +41,12 @@ class BianceSpot:
         df = df.sort_values('updateTime', ascending=False)
         print('--[ orders ]\n',tabulate(df,headers="keys"))
         return df  
+        
     def check_trades_today(self)  -> pd.DataFrame:
-        dt = datetime.datetime.utcnow().timestamp() - 24*3600
+        return self.check_trades(hours=24)
+    
+    def check_trades(self, hours=24):
+        dt = datetime.datetime.utcnow().timestamp() - hours*3600
         dt = int(dt)*1000
         tds = self.ex.fetchMyTrades(self.ric, since=dt, limit=None, params={})
         tds = list(map(lambda e: e['info'],tds))
