@@ -9,6 +9,8 @@ from cryptofeed.backends.aggregate import OHLCV
 from cryptofeed.defines import TRADES
 from cryptofeed.exchanges import Binance
 
+from spot_trading.portfolio import PriceGrid,price_range
+
 WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
 rows = []

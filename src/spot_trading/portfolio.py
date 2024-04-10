@@ -34,17 +34,31 @@ def portfolio_check(ric):
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     print(f'-- fee: ${fee}')
 
-def price_range(ric, span='5m'):
+class PriceGrid:
+    def __init__(self,lbound,hbound,median_v,from_ts,end_ts) -> None:
+        self.lb = lbound
+        self.hb = hbound
+        self.md = median_v
+        self.t0 = from_ts
+        self.t1 = end_ts
+    def __str__(self) -> str:
+        return f"[{self.lb}, {self.hb}], 50%: {self.md}, samples from {self.t0} to {self.t1}"
+    def __repr__(self) -> str:
+        return self.__str__()
+def price_range(ric, span='5m') -> PriceGrid:
     ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
     ohlcv = ohlcv.tail( int(2*60/5) )
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     
-    print( np.percentile(ohlcv.low,1), np.percentile(ohlcv.close, 50), np.percentile(ohlcv.high,99) )
+    lbound = np.percentile(ohlcv.low,1)
+    md = np.percentile(ohlcv.close, 50)
+    hbound = np.percentile(ohlcv.high,99)
+    return PriceGrid( lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp )
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
 def main(ric):
-    price_range(ric)
+    print( price_range(ric) )
     portfolio_check(ric)
 
 if __name__ == '__main__':
