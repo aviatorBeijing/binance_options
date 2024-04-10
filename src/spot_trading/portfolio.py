@@ -5,7 +5,7 @@ import numpy as np
 import scipy
 
 from bbroker.settings import BianceSpot
-from butil.butils import binance_kline
+from butil.butils import binance_kline,binance_spot
 
 def portfolio_check(ric):
     mkt = BianceSpot(ric.replace('-','/'))
