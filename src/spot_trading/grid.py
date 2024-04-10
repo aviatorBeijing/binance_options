@@ -15,9 +15,11 @@ WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
 rows = []
 
+pgrid = None 
 async def ohlcv(data):
     global stacks_len
     global rows 
+    global pgrid 
     for k,v in data.items():
         vv = v;v['ric']=k
         if 'DOGE' in k:
@@ -27,6 +29,7 @@ async def ohlcv(data):
 
     df = pd.DataFrame.from_records( rows )
     print(tabulate(df,headers="keys"))
+    print(pgrid)
 
     volumes = df.volume.values
     if len(volumes)>3:
@@ -34,8 +37,11 @@ async def ohlcv(data):
         print( len(volumes), vrk )
 
 @click.command()
-@click.option('--ric',default="BTC-USDT")
+@click.option('--ric',default="DOGE-USDT")
 def main(ric):
+    global pgrid 
+    if not pgrid: # Init
+        pgrid = price_range(ric,span='5m')
 
     f = FeedHandler()
     f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
