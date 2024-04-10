@@ -22,8 +22,7 @@ async def ohlcv(data):
     global pgrid 
     for k,v in data.items():
         vv = v;v['ric']=k
-        if 'DOGE' in k:
-            rows+= [ vv ]
+        rows+= [ vv ]
         if len(rows) > stacks_len:
             rows = rows[ -stacks_len:]
 
