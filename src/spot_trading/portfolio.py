@@ -38,8 +38,7 @@ def price_range(ric, span='5m'):
     ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
     ohlcv = ohlcv.tail( int(2*60/5) )
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
-    print(ohlcv)
-
+    
     print( np.percentile(ohlcv.low,5), np.percentile(ohlcv.high,99) )
 
 @click.command()
