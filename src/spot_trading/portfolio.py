@@ -65,8 +65,8 @@ def price_range(ric, span='5m', start_ts=None) -> PriceGrid:
     if start_ts:
         print('-- selecting by input timestamp')
         assert len(start_ts) == len('2024-04-09T20:35:00.000Z'), f"Wrong format {start_ts}"
-        t = pd.Timestamp(start_ts)
-        ohlcv = ohlcv[ohlcv.timestamp>t]
+        #t = pd.Timestamp(start_ts)
+        ohlcv = ohlcv[ohlcv.timestamp>start_ts]
     else:
         print('-- selecting last rows')
         ohlcv = ohlcv.tail( int(8*60/5) )
