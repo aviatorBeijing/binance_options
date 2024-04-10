@@ -65,9 +65,9 @@ def price_range(ric, span='5m') -> PriceGrid:
     ohlcv = ohlcv.tail( int(2*60/5) )
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     
-    lbound = np.percentile(ohlcv.low,1)
+    lbound = np.percentile(ohlcv.low,0.1)
     md = np.percentile(ohlcv.close, 50)
-    hbound = np.percentile(ohlcv.high,99)
+    hbound = np.percentile(ohlcv.high,99.9)
     return PriceGrid( span, lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp )
 
 @click.command()
