@@ -3,9 +3,9 @@
 # can also use "./atms.sh" to find all avalialbe ATM options, and select two ATM options.
 
 CRYPTO=BTC
-DT=240411
+DT=240412
 
-PUT=69500
+PUT=69000
 CALL=69500
 
 echo $PYTHON ws_bcontract.py --channel ticker --rics $CRYPTO-$DT-$PUT-P,$CRYPTO-$DT-$CALL-C
