@@ -49,7 +49,7 @@ class PriceGrid:
         self.t1 = end_ts
         self.updated_utc = int(datetime.datetime.utcnow().timestamp())
     def __str__(self) -> str:
-        return f"Grid ({self.span}): \n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}\n\tage:{self.age()} secs"
+        return f"Grid ({self.span}): \n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}\n\tage: {self.age()} secs"
     def __repr__(self) -> str:
         return self.__str__()
     def distance(self, d)->pd.DataFrame:
@@ -59,6 +59,8 @@ class PriceGrid:
         df['bps'] = (d-df.price)/df.price*1_0000
         df['bps'] = df['bps'].apply(lambda v: f"{v:.0f}")
         return df
+    def bound_breached(self,d)->bool:
+        return d>self.hb or d<self.lb
     def age(self)->int: # seconds
         d = int(datetime.datetime.utcnow().timestamp()) - self.updated_utc
         return d

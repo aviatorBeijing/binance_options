@@ -28,6 +28,11 @@ async def ohlcv(data):
 
     df = pd.DataFrame.from_records( rows )
     print(tabulate(df,headers="keys"))
+
+    if pgrid.bound_breached(closep):
+        print('  -- update on new hi/lo')
+        pgrid.update()
+
     print(pgrid)
     closep = float(df.iloc[-1].close)
     ddf = pgrid.distance( closep )
