@@ -49,8 +49,8 @@ class PriceGrid:
         return self.__str__()
     def distance(self, d)->pd.DataFrame:
         df = pd.DataFrame.from_dict([{'lb':self.lb, 'md':self.md, 'hb':self.hb}] ).transpose()
-        df.columns = ['price']
-        df['distance'] = df.price.astype(float) - d 
+        df.columns = ['price'];df.price = float(df.price)
+        df['distance'] = df.price - d 
         return df
 
 
