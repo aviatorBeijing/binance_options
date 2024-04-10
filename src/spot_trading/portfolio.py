@@ -82,6 +82,8 @@ def price_range(ric, span='5m', start_ts=None) -> PriceGrid:
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 def main(ric,start_ts):
     #print( price_range(ric, span="5m", start_ts=start_ts) )
+    
+    print('\n-- trades:')
     portfolio_check(ric)
 
 if __name__ == '__main__':
