@@ -41,7 +41,7 @@ def price_range(ric, span='5m'):
 @click.option('--ric',default="DOGE-USDT")
 def main(ric):
     price_range(ric)
-    portfolio_check(ric)
+    #portfolio_check(ric)
 
 if __name__ == '__main__':
     main()
