@@ -40,7 +40,7 @@ def price_range(ric, span='5m'):
     print('-- ', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     print(ohlcv)
 
-    print( np.percentile(ohlcv.low,0.05), np.percentile(ohlcv.low,0.95) )
+    print( np.percentile(ohlcv.low,0.05), np.percentile(ohlcv.high,0.95) )
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
