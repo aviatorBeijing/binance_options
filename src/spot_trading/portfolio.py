@@ -60,9 +60,16 @@ class PriceGrid:
         return df
 
 
-def price_range(ric, span='5m') -> PriceGrid:
+def price_range(ric, span='5m', start_ts=None) -> PriceGrid:
     ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
-    ohlcv = ohlcv.tail( int(2*60/5) )
+    if start_ts:
+        print('-- selecting by input timestamp')
+        assert len(start_ts) == len('2024-04-09T20:35:00.000Z'), f"Wrong format {start_ts}"
+        t = pd.Timestamp(start_ts)
+        ohlcv = ohlcv[ohlcv.timestamp>t]
+    else:
+        print('-- selecting last rows')
+        ohlcv = ohlcv.tail( int(8*60/5) )
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     
     lbound = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
@@ -72,8 +79,9 @@ def price_range(ric, span='5m') -> PriceGrid:
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
-def main(ric):
-    print( price_range(ric) )
+@click.option('--start_ts', default='2024-04-09T20:35:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
+def main(ric,start_ts):
+    print( price_range(ric, start_ts) )
     portfolio_check(ric)
 
 if __name__ == '__main__':
