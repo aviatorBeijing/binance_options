@@ -40,10 +40,11 @@ async def ohlcv(data):
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
-def main(ric):
+@click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
+def main(ric,start_ts):
     global pgrid 
     if not pgrid: # Init
-        pgrid = price_range(ric,span='5m')
+        pgrid = price_range(ric,span='5m',start_ts=start_ts)
 
     f = FeedHandler()
     f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
