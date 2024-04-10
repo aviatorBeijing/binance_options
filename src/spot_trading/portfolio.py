@@ -35,7 +35,7 @@ def portfolio_check(ric):
     print(f'-- fee: ${fee}')
 
     pce,_ = binance_spot( ric.replace('-','/') )
-    port_value = tds.iloc[-1].agg * pce  + tds.iloc[-1]['$agg'] - fee 
+    port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
 
 class PriceGrid:
