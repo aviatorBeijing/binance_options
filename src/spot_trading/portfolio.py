@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from bbroker.settings import BianceSpot
-from butil.butils import binance_spot
+from butil.butils import binance_kline
 
 def portfolio_check(ric):
     mkt = BianceSpot(ric.replace('-','/'))
@@ -33,9 +33,14 @@ def portfolio_check(ric):
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     print(f'-- fee: ${fee}')
 
+def price_range(ric, span='5m'):
+    ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
+    print(ohlcv)
+
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
 def main(ric):
+    price_range(ric)
     portfolio_check(ric)
 
 if __name__ == '__main__':
