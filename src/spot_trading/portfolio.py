@@ -47,6 +47,13 @@ class PriceGrid:
         return f"Grid ({self.span}): \n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}"
     def __repr__(self) -> str:
         return self.__str__()
+    def distance(self, d)->pd.DataFrame:
+        df = pd.DataFrame.from_dict([{'lb':self.lb, 'md':self.md, 'hb':self.hb}] ).transpose()
+        df.columns = ['price']
+        df['distance'] = df.price.astype(float) - d 
+        return df
+
+
 def price_range(ric, span='5m') -> PriceGrid:
     ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
     ohlcv = ohlcv.tail( int(2*60/5) )

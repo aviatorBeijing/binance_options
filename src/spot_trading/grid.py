@@ -29,6 +29,9 @@ async def ohlcv(data):
     df = pd.DataFrame.from_records( rows )
     print(tabulate(df,headers="keys"))
     print(pgrid)
+    closep = df.iloc[-1].close.astype(float)
+    ddf = pgrid.distance( closep )
+    print(ddf)
 
     volumes = df.volume.values
     if len(volumes)>3:
