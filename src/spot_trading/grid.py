@@ -29,7 +29,7 @@ async def ohlcv(data):
     df = pd.DataFrame.from_records( rows )
     print(tabulate(df,headers="keys"))
     print(pgrid)
-    closep = df.iloc[-1].close.astype(float)
+    closep = float(df.iloc[-1].close)
     ddf = pgrid.distance( closep )
     print(ddf)
 
