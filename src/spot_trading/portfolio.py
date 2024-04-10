@@ -34,7 +34,7 @@ def portfolio_check(ric):
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     print(f'-- fee: ${fee}')
 
-def price_range(ric, span='1h'):
+def price_range(ric, span='5m'):
     ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
     #ohlcv = ohlcv.tail( int(2*60/5) )
     print('-- ', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
