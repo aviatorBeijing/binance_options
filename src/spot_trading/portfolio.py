@@ -35,14 +35,15 @@ def portfolio_check(ric):
     print(f'-- fee: ${fee}')
 
 class PriceGrid:
-    def __init__(self,lbound,hbound,median_v,from_ts,end_ts) -> None:
+    def __init__(self,span, lbound,hbound,median_v,from_ts,end_ts) -> None:
+        self.span = span
         self.lb = lbound
         self.hb = hbound
         self.md = median_v
         self.t0 = from_ts
         self.t1 = end_ts
     def __str__(self) -> str:
-        return f"[{self.lb}, {self.hb}], 50%: {self.md}, samples from {self.t0} to {self.t1}"
+        return f"Grid ({self.span}): [{self.lb}, {self.hb}], 50%: {self.md}, samples from {self.t0} to {self.t1}"
     def __repr__(self) -> str:
         return self.__str__()
 def price_range(ric, span='5m') -> PriceGrid:
@@ -53,7 +54,7 @@ def price_range(ric, span='5m') -> PriceGrid:
     lbound = np.percentile(ohlcv.low,1)
     md = np.percentile(ohlcv.close, 50)
     hbound = np.percentile(ohlcv.high,99)
-    return PriceGrid( lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp )
+    return PriceGrid( span, lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp )
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
