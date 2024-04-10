@@ -34,6 +34,10 @@ def portfolio_check(ric):
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     print(f'-- fee: ${fee}')
 
+    pce,_ = binance_spot( ric.replace('-','/') )
+    port_value = tds.iloc[-1].agg * pce  + tds.iloc[-1]['$agg'] - fee 
+    print(f'-- gain (after liquidating): $ {port_value:,.4f}')
+
 class PriceGrid:
     def __init__(self,span, lbound,hbound,median_v,from_ts,end_ts) -> None:
         self.span = span
