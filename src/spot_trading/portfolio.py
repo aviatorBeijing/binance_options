@@ -51,6 +51,8 @@ class PriceGrid:
         df = pd.DataFrame.from_dict([{'hb':self.hb, 'md':self.md,'lb':self.lb}] ).transpose()
         df.columns = ['price'];df.price = df.price.apply(float)
         df['distance'] = d-df.price
+        df['d%\%'] = (d-df.price)/df.price*1_0000
+        df['d%\%'] = df['d%\%'].apply(lambda v: f"{v:.1f}")
         return df
 
 
