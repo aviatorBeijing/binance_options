@@ -42,8 +42,9 @@ class PriceGrid:
         self.md = median_v
         self.t0 = from_ts
         self.t1 = end_ts
+        self.updated_utc = int(datetime.datetime.utcnow().timestamp())
     def __str__(self) -> str:
-        return f"Grid ({self.span}): [{self.lb}, {self.hb}], 50%: {self.md}, samples from {self.t0} to {self.t1}"
+        return f"Grid ({self.span}): \n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}"
     def __repr__(self) -> str:
         return self.__str__()
 def price_range(ric, span='5m') -> PriceGrid:
