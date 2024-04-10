@@ -23,13 +23,15 @@ def _dt(t1,t2):
 @click.option('--ric', default="BTC/USDT")
 @click.option('--dollar', is_flag=True, default=False, help="if presented, convert the volume to $volume, default volume is in BTC counts")
 @click.option('--test', default=False, is_flag=True)
-def main(ric, dollar, test):
+@click.option('--target',default='volume', help='"volume" | "rtn"')
+@click.option('--span', default='1h', help='1h | 5m')
+def main(ric, dollar, test,target, span):
     ric = ric.upper()
     print('\n--', ric)
     
     fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_1h.csv'
     if not test:
-        df = binance_kline(ric, span='1h')
+        df = binance_kline(ric, span=span)
         df.to_csv(fn)
         print('-- saved:', fn)
     else:
@@ -45,9 +47,11 @@ def main(ric, dollar, test):
     
     for col in ['open','high','low','close','volume']:
         df[col] = df[col].apply(float)
+    df['rtn'] = ( df['close'] - df['open'] )/df['open']
     
-    colume = 'volume'
-    if dollar:
+    colume = target
+
+    if dollar and colume == 'volume':
         colume = '$volume'
         df['$volume'] = df.volume * (df.open+df.close+df.high+df.low)/4
 
@@ -71,11 +75,15 @@ def main(ric, dollar, test):
     print( '-- sort by 50%\n',vdf.sort_values('50%', ascending=False).head(5))
     print( '-- sort by 75%\n',vdf.sort_values('75%', ascending=False).head(5))
 
+    func = lambda v: f"{v:,.0f}"
+    if target == 'volume': pass 
+    elif target == 'rtn': func = lambda v: f"{(float(v)*100):,.1f}%"
     for col in ['mean','std','min','25%','50%','75%','max']:
-        vdf[col] = vdf[col].apply(lambda v: f"{v:,.0f}")
+        vdf[col] = vdf[col].apply( func )
    
     print('')
     print( vdf )
+    print(f'-- results for: "{target}"', span)
     
 
 if __name__ == '__main__':
