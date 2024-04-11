@@ -36,6 +36,7 @@ async def ohlcv(data):
 
     print(pgrid)
     ddf = pgrid.distance( closep )
+    print('-- current:', closep)
     print(ddf)
 
     volumes = df.volume.values
