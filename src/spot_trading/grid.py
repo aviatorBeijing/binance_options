@@ -89,7 +89,8 @@ class PriceGrid_:
         print('  -- saved grid figure:', gridfig)
         
 class UniformGrid(PriceGrid_):
-    def __init__(self, gap_bps, span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv=pd.DataFrame()) -> None:
+    def __init__(self, gap_bps, 
+                span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv=pd.DataFrame()) -> None:
         super().__init__(span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv)
         self.gap_bps = gap_bps
         self.gap_dollar = 0.
@@ -127,11 +128,17 @@ def price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceGrid_:
             ohlcv = ohlcv.tail( int(8*60/5) )
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     
-    lbound = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
-    md = np.percentile(ohlcv.close, 50)
-    hbound = np.max(ohlcv.high) #np.percentile(ohlcv.high,99.9)
+    if not is_test:
+        lbound = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
+        md = np.percentile(ohlcv.close, 50)
+        hbound = np.max(ohlcv.high) #np.percentile(ohlcv.high,99.9)
+    else:
+        n = 150
+        lbound = np.min(ohlcv[:n].low) 
+        md = np.percentile(ohlcv[:n].close, 50)
+        hbound = np.max(ohlcv[:n].high)
 
-    return UniformGrid( 200, span, lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp, ric, ohlcv )
+    return span, lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp, ric, ohlcv 
 
 WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
@@ -170,11 +177,14 @@ async def ohlcv(data):
 @click.option('--ric',default="DOGE-USDT")
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--test', is_flag=True, default=False)
-def main(ric,start_ts,test):
+@click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
+def main(ric,start_ts,test, uniform_grid_gap):
     global pgrid 
     if not pgrid: # Init
-        pgrid = price_range(ric,span='5m',start_ts=start_ts, is_test=test)
+        prange = price_range(ric,span='1h',start_ts=start_ts, is_test=test)
+        pgrid = UniformGrid( uniform_grid_gap , *prange)
         pgrid.plot()
+        print(pgrid)
 
     if not test:
         from cryptofeed import FeedHandler

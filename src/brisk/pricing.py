@@ -47,7 +47,7 @@ def _main(contract,user_cost):
     df = pd.DataFrame.from_dict({contract: options, 'rtn': rtns, 'spot': spots })
     df['rtn'] = df.rtn.apply(lambda v: f"{(v*100)}%")
     
-    print('-- current bid:', bid)
+    print('-- current bid:', bid, ', cost:', user_cost)
     print( df )
 
 
