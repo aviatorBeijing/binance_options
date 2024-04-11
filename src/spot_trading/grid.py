@@ -42,7 +42,7 @@ async def ohlcv(data):
     volumes = df.volume.values
     if len(volumes)>3:
         vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
-        print( len(volumes), vrk )
+        print( f'-- volume stack: {len(volumes)}, latest volume rank: {vrk:.1f}%' )
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
