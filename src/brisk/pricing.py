@@ -47,7 +47,8 @@ def _main(contract,user_cost):
     df = pd.DataFrame.from_dict({contract: options, 'rtn': rtns, 'spot': spots })
     df['rtn'] = df.rtn.apply(lambda v: f"{(v*100)}%")
     
-    print('-- current bid:', bid, ', cost:', user_cost)
+    g = bid-user_cost
+    print('-- current bid:', bid, ', cost:', user_cost, f', ${"+" if g>0 else "-" if g<0 else ""}{g}')
     print( df )
 
 
