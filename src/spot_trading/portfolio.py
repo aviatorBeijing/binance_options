@@ -9,7 +9,6 @@ from butil.butils import binance_spot
 
 def portfolio_check(ric):
     mkt = BianceSpot(ric.replace('-','/'))
-    openDf = mkt.check_open_orders()
     
     tds = mkt.check_trades(hours=48)
     tds = tds[tds.symbol==ric.replace('-','')]
@@ -19,6 +18,7 @@ def portfolio_check(ric):
     tds['$agg'] = -(tds.qty*tds.price.astype(float)).cumsum()
     tds['neutral'] = ''
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
+    print('-- [trades]')
     print( tds )
     
     pceMap = {}
@@ -37,12 +37,14 @@ def portfolio_check(ric):
     pce,_ = binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
+    
+    # orders
+    openDf = mkt.check_open_orders()
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 def main(ric,start_ts):    
-    print('\n-- trades:')
     portfolio_check(ric)
 
 if __name__ == '__main__':
