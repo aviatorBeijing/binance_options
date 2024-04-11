@@ -7,10 +7,13 @@ import scipy
 from bbroker.settings import BianceSpot
 from butil.butils import binance_spot
 
-def portfolio_check(ric):
+def portfolio_check(ric,days=72):
+    """
+    @param days (int): how long to look back for trades
+    """
     mkt = BianceSpot(ric.replace('-','/'))
     
-    tds = mkt.check_trades(hours=48)
+    tds = mkt.check_trades(hours=days*24)
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
@@ -43,9 +46,10 @@ def portfolio_check(ric):
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
+@click.option('--days',default=72)
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
-def main(ric,start_ts):    
-    portfolio_check(ric)
+def main(ric,days,start_ts):    
+    portfolio_check(ric,days=days)
 
 if __name__ == '__main__':
     main()
