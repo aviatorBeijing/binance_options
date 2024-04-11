@@ -48,7 +48,7 @@ def _main(contract,user_cost):
     df['rtn'] = df.rtn.apply(lambda v: f"{(v*100)}%")
     
     g = bid-user_cost
-    print('-- current bid:', bid, ', cost:', user_cost, f', ${"+" if g>0 else "-" if g<0 else ""}{g}')
+    print('-- current bid:', bid, ', cost:', user_cost, f', ${"+" if g>0 else ""}{g}')
     print( df )
 
 
