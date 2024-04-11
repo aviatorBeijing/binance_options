@@ -16,6 +16,12 @@ from butil.options_calculator import extract_specs, invert_callprice,invert_putp
 
 
 def _main(contract,user_cost):
+    """
+    @brief Given the 
+                average cost of an option trade, 
+                calc the 
+                    spot prices v.s. a list of returns% on the option purchased.
+    """
     user_cost  = float(user_cost)
     _, T, K, ctype = extract_specs(contract)
     cdata = fetch_bidask(contract.upper())
