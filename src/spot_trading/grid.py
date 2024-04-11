@@ -178,10 +178,11 @@ async def ohlcv(data):
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
-def main(ric,start_ts,test, uniform_grid_gap):
+@click.option('--span',default='5m')
+def main(ric,start_ts,test, uniform_grid_gap,span):
     global pgrid 
     if not pgrid: # Init
-        prange = price_range(ric,span='1h',start_ts=start_ts, is_test=test)
+        prange = price_range(ric,span=span,start_ts=start_ts, is_test=test)
         pgrid = UniformGrid( uniform_grid_gap , *prange)
         pgrid.plot()
         print(pgrid)
