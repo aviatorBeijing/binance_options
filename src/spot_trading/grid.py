@@ -49,6 +49,9 @@ class PriceGrid_:
         return df
     def bound_breached(self,d)->bool:
         return d>self.hb or d<self.lb
+    def price_moved(self, d)->bool:
+        print('*** ', d, self.last_updated_price, self.gap )
+        return abs(d-self.last_updated_price) > self.gap * 1
     def age(self)->int: # seconds
         d = int(datetime.datetime.utcnow().timestamp()) - self.updated_utc
         return d
@@ -66,6 +69,7 @@ class PriceGrid_:
         self.t1 = ohlcv.iloc[-1].timestamp
         self.updated_utc = int(datetime.datetime.utcnow().timestamp())
         self.last_updated_price = float(ohlcv.iloc.close)
+        self.grid_ = self.generate_grid()
     
     def plot(self):
         if self.raw.empty:
@@ -100,14 +104,13 @@ class HFTUniformGrid(PriceGrid_):
     @param ask (float)  : diddo 
     @param gap_bps (int): pre-determined gap between grids
     """
-    def __init__(self, bid,ask, gap_bps, 
+    def __init__(self, current_price, gap_bps, 
                 span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv=pd.DataFrame()) -> None:
         super().__init__(span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv)
         self.gap_bps = gap_bps
         self.gap_dollar = 0.
-        self.bid = bid 
-        self.ask = ask
-        assert bid>0 and ask>0, f"Negative or zero prices input: bid={bid},ask={ask}"
+        self.current_price = current_price
+        assert current_price>0, f"Negative or zero prices input: current_price={current_price}"
     def __str__(self) -> str:
         others = super().__str__()
         return f'[HFT UNIFORM GRID]\nbid/ask: {self.bid:.5f}/{self.ask:.5f}, gap= {self.gap_bps}bps,gap= ${self.gap:.5f}\n{others}'
@@ -200,7 +203,7 @@ async def ohlcv(data):
     print(tabulate(df,headers="keys"))
 
     closep = float(df.iloc[-1].close)
-    if pgrid.bound_breached(closep):
+    if pgrid.bound_breached(closep) or pgrid.price_moved(closep):
         print('  -- update on new hi/lo')
         pgrid.update()
 
@@ -225,9 +228,8 @@ def main(ric,start_ts,test, uniform_grid_gap,span):
     global pgrid 
     if not pgrid: # Init
         prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
-        bid = prange[-1].iloc[-1].close*(1-5/10000) #test
-        ask = prange[-1].iloc[-1].close*(1+5/10000)
-        pgrid = HFTUniformGrid( bid,ask, uniform_grid_gap, *prange)
+        current_price = prange[-1].iloc[-1].close #test
+        pgrid = HFTUniformGrid( current_price, uniform_grid_gap, *prange)
         #pgrid.plot()
         print(pgrid)
         print(pgrid.grid)
