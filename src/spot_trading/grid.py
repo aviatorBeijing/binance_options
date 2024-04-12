@@ -6,6 +6,8 @@ import scipy
 
 from butil.butils import binance_kline
 
+GRID_DEBUG=os.getenv('GRID_DEBUG', None)
+
 class PriceGrid_:
     def __init__(self,span, lbound,hbound,median_v,
                             from_ts,end_ts,
@@ -22,6 +24,7 @@ class PriceGrid_:
         self.raw = ohlcv
 
         self.updated_utc = int(datetime.datetime.utcnow().timestamp())
+        self.last_updated_price = float(ohlcv.iloc[-1].close) if not ohlcv.empty else -1.
         
         self.grid_ = np.array([])
 
@@ -62,6 +65,7 @@ class PriceGrid_:
         self.t0 = ohlcv.iloc[0].timestamp
         self.t1 = ohlcv.iloc[-1].timestamp
         self.updated_utc = int(datetime.datetime.utcnow().timestamp())
+        self.last_updated_price = float(ohlcv.iloc.close)
     
     def plot(self):
         if self.raw.empty:
@@ -88,30 +92,65 @@ class PriceGrid_:
         plt.savefig(gridfig)
         print('  -- saved grid figure:', gridfig)
         
-class UniformGrid(PriceGrid_):
-    def __init__(self, gap_bps, 
+class HFTUniformGrid(PriceGrid_):
+    """
+    @brief "HFT" indicates the grid is designed with HFT in mind.
+
+    @param bid (float)  : current bid price
+    @param ask (float)  : diddo 
+    @param gap_bps (int): pre-determined gap between grids
+    """
+    def __init__(self, bid,ask, gap_bps, 
                 span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv=pd.DataFrame()) -> None:
         super().__init__(span, lbound, hbound, median_v, from_ts, end_ts, ric, ohlcv)
         self.gap_bps = gap_bps
         self.gap_dollar = 0.
+        self.bid = bid 
+        self.ask = ask
+        assert bid>0 and ask>0, f"Negative or zero prices input: bid={bid},ask={ask}"
+    def __str__(self) -> str:
+        others = super().__str__()
+        return f'[HFT UNIFORM GRID]\nbid/ask: {self.bid:.5f}/{self.ask:.5f}, gap= {self.gap_bps}bps,gap= ${self.gap:.5f}\n{others}'
     @property 
     def gap(self):
         if self.gap_dollar>0:
             return self.gap_dollar
         else: 
-            self.generate_grid()
+            self.grid_ = self.generate_grid()
             assert self.gap_dollar>0, f"Gap can't be less than 0. Found {self.gap_dollar}"
             return self.gap_dollar
-    def generate_grid(self):
+
+    def generate_grid(self) ->list:
         self.gap_dollar = stp  = self.lb * self.gap_bps/10_000.
-        print(f'  -- uniform grid, gap={self.gap_bps} bps, ${stp}')
+        #print(f'  -- uniform grid, gap={self.gap_bps} bps, ${stp:.4f}')
+        #print(f'     last updated price: {self.last_updated_price:.5f}')
+        #print(f'     current bid/ask: {self.bid:.5f}/{self.ask:.5f}')
         grid = np.arange(self.lb + stp,self.hb - stp, stp)
-        print('*'*10, f'Grid ({len(grid)})','*'*10)
-        for g in grid: print('\t', f"{g:.4f}")
+        grid = list(reversed(grid))
+        aug_grid = []
 
-        return grid
+        if self.ric.upper().startswith('DOGE'): fa = 1e4
+        if self.ric.upper().startswith('BTC'): fa = 1e2
+        fa_ = lambda v: int(v*fa)/fa
 
-def price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceGrid_:
+        for g in grid: 
+            action = 'sell' if g>self.ask else 'buy' if g<self.bid else 'sit'
+            aug_grid += [ (action, fa_(g)) ]
+
+        if GRID_DEBUG:
+            print(' *'*10, f'grids={len(grid)}',' *'*10)
+            for g in aug_grid: 
+                action = g[0]
+                if action != 'sit':
+                    print('\t', ' '*10, f"{action}  {g[1]}")
+        return aug_grid
+
+def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceGrid_:
+    """
+    @brief This function should be used in low-frequency (>1~5min) mode,
+            because https respests are used here. In high-frequency
+            mode, ip  might be banned by any exchanges.
+    """
     user_home = os.getenv('USER_HOME','')
     if is_test:
         fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
@@ -129,22 +168,24 @@ def price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceGrid_:
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     
     if not is_test:
+        print('-- [live mode grid]')
         lbound = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
         md = np.percentile(ohlcv.close, 50)
         hbound = np.max(ohlcv.high) #np.percentile(ohlcv.high,99.9)
     else:
-        n = 150
+        print('-- [test mode grid]')
+        n = 150 # mimic the impact of trade now but using history to generate grid
         lbound = np.min(ohlcv[:n].low) 
         md = np.percentile(ohlcv[:n].close, 50)
         hbound = np.max(ohlcv[:n].high)
 
-    return span, lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp, ric, ohlcv 
+    return span,lbound,hbound,md, ohlcv.iloc[0].timestamp, ohlcv.iloc[-1].timestamp, ric, ohlcv 
 
 WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
 rows = []
 
-pgrid = None 
+pgrid = None #global
 async def ohlcv(data):
     global stacks_len
     global rows 
@@ -182,10 +223,13 @@ async def ohlcv(data):
 def main(ric,start_ts,test, uniform_grid_gap,span):
     global pgrid 
     if not pgrid: # Init
-        prange = price_range(ric,span=span,start_ts=start_ts, is_test=test)
-        pgrid = UniformGrid( uniform_grid_gap , *prange)
-        pgrid.plot()
+        prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
+        bid = prange[-1].iloc[-1].close*(1-5/10000) #test
+        ask = prange[-1].iloc[-1].close*(1+5/10000)
+        pgrid = HFTUniformGrid( bid,ask, uniform_grid_gap, *prange)
+        #pgrid.plot()
         print(pgrid)
+        print(pgrid.grid)
 
     if not test:
         from cryptofeed import FeedHandler
