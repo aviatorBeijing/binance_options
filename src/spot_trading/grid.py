@@ -239,7 +239,7 @@ def main(ric,start_ts,test, uniform_grid_gap,span):
         from cryptofeed.exchanges import Binance
 
         f = FeedHandler()
-        f.add_feed(Binance(symbols=[ric],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
+        f.add_feed(Binance(symbols=[ric.replace('/','-')],channels=[TRADES], callbacks={TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)}))
         f.run()
     else:
         print('-- [testing mode] ignore realtime wss connectivity')
