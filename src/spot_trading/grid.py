@@ -71,6 +71,7 @@ class PriceGrid_:
         ohlcv = ohlcv[ohlcv.timestamp>self.t0]
         if os.getenv('BINANCE_DEGUG'):
             print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
+        
         self.trendy()
 
         self.lb = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
@@ -113,6 +114,8 @@ class PriceGrid_:
         ohlcv[['close','hbound','lbound','md']].plot(ax=ax1,linewidth=2, style='-')
         for i in range(0, len(self.grid)):
             ohlcv[f'grid{i}'].plot(ax=ax1,linewidth=1, style='-.')
+
+        ohlcv[['high','low']].plot(ax=ax2,linewidth=1, style='-')
 
         user_home = os.getenv('USER_HOME','')
         gridfig = f'{user_home}/tmp/{self.ric.lower().replace("/","-")}_{self.span}.png'
@@ -179,6 +182,7 @@ def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceG
     if is_test:
         fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
         ohlcv = pd.read_csv( fn ).tail(200)
+        ohlcv = ohlcv[ohlcv.timestamp>start_ts]
     else:
         ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
         if start_ts:
