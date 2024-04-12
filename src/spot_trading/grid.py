@@ -197,14 +197,28 @@ async def ohlcv(data):
         if len(rows) > stacks_len:
             rows = rows[ -stacks_len:]
 
+    # sub-minutes trading history (transient)
     df = pd.DataFrame.from_records( rows )
     print(tabulate(df,headers="keys"))
-
     closep = float(df.iloc[-1].close)
+
+    # transient trading volume info
+    volumes = df.volume.values
+    large_volume_move = False
+    if len(volumes)>3:
+        vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
+        if vrk>99.:
+            large_volume_move = True
+        print( f'-- volume stack: {len(volumes)}, latest volume rank: {vrk:.1f}%' )
+
+    # grid
     bound_breached = pgrid.bound_breached(closep)
     price_moved = pgrid.price_moved(closep)
     if bound_breached or price_moved :
-        print(f'  *** update on {"new hi/lo" if bound_breached else "price moved" if price_moved else "somehow?"}')
+        print(f"""  
+        *** update on ***
+           {"new hi/lo" if bound_breached else "price moved" if price_moved else "large trading volumes" if large_volume_move else "somehow?"}
+        """)
         pgrid.update()
 
     # grid info
@@ -212,12 +226,6 @@ async def ohlcv(data):
     ddf = pgrid.distance( closep )
     print('-- current: $', closep)
     print(ddf)
-
-    # volume info
-    volumes = df.volume.values
-    if len(volumes)>3:
-        vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
-        print( f'-- volume stack: {len(volumes)}, latest volume rank: {vrk:.1f}%' )
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
