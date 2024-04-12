@@ -28,8 +28,18 @@ class PriceGrid_:
         
         self.grid_ = np.array([])
 
+        self.trendy()
+
     def __str__(self) -> str:
-        return f"Grid ({self.span}): \n\tN={len(self.grid)}\n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}\n\tage: {self.age()} secs"
+        info = f"Grid ({self.span}): \n\tN={len(self.grid)}\n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}\n\tage: {self.age()} secs"
+        if self.grid:
+            gdf = pd.DataFrame.from_records( self.grid )
+            gdf.columns = ['action','price']
+            gdf['bps']=(gdf.price-self.current_price)/self.current_price*10_000
+            gdf.bps = gdf.bps.apply(int)
+            gdf['inc'] = gdf.bps.diff()
+            info += '\n' + str(gdf)
+        return info
     def __repr__(self) -> str:
         return self.__str__()
     def generate_grid(self):
@@ -56,12 +66,13 @@ class PriceGrid_:
         d = int(datetime.datetime.utcnow().timestamp()) - self.updated_utc
         return d
     def update(self):
-        ohlcv = binance_kline(symbol=self.ric.replace('-','/'),span=self.span,grps=1)
+        self.raw = ohlcv = binance_kline(symbol=self.ric.replace('-','/'),span=self.span,grps=1)
         assert len(self.t0) == len('2024-04-09T20:35:00.000Z'), f"Wrong format {self.t0}"
         ohlcv = ohlcv[ohlcv.timestamp>self.t0]
         if os.getenv('BINANCE_DEGUG'):
             print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
-        
+        self.trendy()
+
         self.lb = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
         self.md = np.percentile(ohlcv.close, 50)
         self.hb = np.max(ohlcv.high) #np.percentile(ohlcv.high,99.9)
@@ -70,7 +81,19 @@ class PriceGrid_:
         self.updated_utc = int(datetime.datetime.utcnow().timestamp())
         self.last_updated_price = float(ohlcv.iloc[-1].close)
         self.grid_ = self.generate_grid()
-    
+
+    def trendy(self):
+        if not self.raw.empty:
+            # Trend
+            ohlcv = self.raw.copy()
+            ttv = ohlcv.volume.sum()
+            ohlcv['wrtn_bps'] = (ohlcv['close'] - ohlcv['open'])/ohlcv['open']*10_000
+            ohlcv.wrtn_bps = ohlcv.wrtn_bps * ohlcv.volume / ttv
+            s = ohlcv.wrtn_bps.describe()
+            #print( s.loc['25%'], s.loc['50%'], s.loc['75%'])
+            print( '-- trend:', np.array([ s.loc['25%'], s.loc['50%'], s.loc['75%']]), ' (25%,50%,75%)')
+            del ohlcv
+            
     def plot(self):
         if self.raw.empty:
             print('-- no ohlcv df provided, ignore plotting')
@@ -242,7 +265,6 @@ def main(ric,start_ts,test, uniform_grid_gap,span):
         pgrid = HFTUniformGrid( current_price, uniform_grid_gap, *prange)
         #pgrid.plot()
         print(pgrid)
-        print(pgrid.grid)
 
     if not test:
         from cryptofeed import FeedHandler
