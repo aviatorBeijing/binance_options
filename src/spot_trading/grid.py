@@ -214,7 +214,7 @@ async def ohlcv(data):
     # grid
     bound_breached = pgrid.bound_breached(closep)
     price_moved = pgrid.price_moved(closep)
-    if bound_breached or price_moved :
+    if bound_breached or price_moved or large_volume_move:
         print(f"""  
         *** update on ***
            {"new hi/lo" if bound_breached else "price moved" if price_moved else "large trading volumes" if large_volume_move else "somehow?"}
