@@ -199,7 +199,7 @@ async def ohlcv(data):
 
     # sub-minutes trading history (transient)
     df = pd.DataFrame.from_records( rows )
-    print(tabulate(df,headers="keys"))
+    print(tabulate(df.tail(5),headers="keys"))
     closep = float(df.iloc[-1].close)
 
     # transient trading volume info
