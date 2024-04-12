@@ -108,7 +108,7 @@ class PriceGrid_:
         ohlcv['lbound'] = self.lb
         ohlcv['md'] = self.md
         for i in range(0, len(self.grid)):
-            ohlcv[f'grid{i}'] = self.grid[i]
+            ohlcv[f'grid{i}'] = self.grid[i][1]
         
         ohlcv[['close','hbound','lbound','md']].plot(ax=ax1,linewidth=2, style='-')
         for i in range(0, len(self.grid)):
@@ -263,7 +263,7 @@ def main(ric,start_ts,test, uniform_grid_gap,span):
         prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
         current_price = prange[-1].iloc[-1].close #test
         pgrid = HFTUniformGrid( current_price, uniform_grid_gap, *prange)
-        #pgrid.plot()
+        pgrid.plot()
         print(pgrid)
 
     if not test:
