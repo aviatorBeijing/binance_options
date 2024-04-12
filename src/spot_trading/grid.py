@@ -100,8 +100,7 @@ class HFTUniformGrid(PriceGrid_):
     """
     @brief "HFT" indicates the grid is designed with HFT in mind.
 
-    @param bid (float)  : current bid price
-    @param ask (float)  : diddo 
+    @param current_price (float)  : current price
     @param gap_bps (int): pre-determined gap between grids
     """
     def __init__(self, current_price, gap_bps, 
@@ -113,7 +112,7 @@ class HFTUniformGrid(PriceGrid_):
         assert current_price>0, f"Negative or zero prices input: current_price={current_price}"
     def __str__(self) -> str:
         others = super().__str__()
-        return f'[HFT UNIFORM GRID]\nbid/ask: {self.bid:.5f}/{self.ask:.5f}, gap= {self.gap_bps}bps,gap= ${self.gap:.5f}\n{others}'
+        return f'[HFT UNIFORM GRID]\ncurrent price: {self.current_price:.5f}, gap= {self.gap_bps}bps,gap= ${self.gap:.5f}\n{others}'
     @property 
     def gap(self):
         if self.gap_dollar>0:
@@ -127,7 +126,6 @@ class HFTUniformGrid(PriceGrid_):
         self.gap_dollar = stp  = self.lb * self.gap_bps/10_000.
         #print(f'  -- uniform grid, gap={self.gap_bps} bps, ${stp:.4f}')
         #print(f'     last updated price: {self.last_updated_price:.5f}')
-        #print(f'     current bid/ask: {self.bid:.5f}/{self.ask:.5f}')
         grid = np.arange(self.lb + stp,self.hb - stp, stp)
         grid = list(reversed(grid))
         aug_grid = []
@@ -137,7 +135,7 @@ class HFTUniformGrid(PriceGrid_):
         fa_ = lambda v: int(v*fa)/fa
 
         for g in grid: 
-            action = 'sell' if g>self.ask else 'buy' if g<self.bid else 'sit'
+            action = 'sell' if g>self.current_price else 'buy' if g<self.current_price else 'sit'
             aug_grid += [ (action, fa_(g)) ]
 
         if GRID_DEBUG:
