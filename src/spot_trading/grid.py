@@ -221,6 +221,7 @@ async def ohlcv(data):
 @click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
 @click.option('--span',default='5m')
 def main(ric,start_ts,test, uniform_grid_gap,span):
+    ric = ric.upper()
     global pgrid 
     if not pgrid: # Init
         prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
