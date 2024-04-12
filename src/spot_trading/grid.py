@@ -51,7 +51,6 @@ class PriceGrid_:
         return d>self.hb or d<self.lb
     def price_moved(self, d)->bool:
         sf = abs(d-self.last_updated_price)
-        print('*** ', d, self.last_updated_price, sf, self.gap )
         return sf > self.gap * 1
     def age(self)->int: # seconds
         d = int(datetime.datetime.utcnow().timestamp()) - self.updated_utc
@@ -202,8 +201,10 @@ async def ohlcv(data):
     print(tabulate(df,headers="keys"))
 
     closep = float(df.iloc[-1].close)
-    if pgrid.bound_breached(closep) or pgrid.price_moved(closep):
-        print('  -- update on new hi/lo')
+    bound_breached = pgrid.bound_breached(closep)
+    price_moved = pgrid.price_moved(closep)
+    if bound_breached or price_moved :
+        print(f'  *** update on {"new hi/lo" if bound_breached else "price moved" if price_moved else "somehow?"}')
         pgrid.update()
 
     print(pgrid)
