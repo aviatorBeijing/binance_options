@@ -29,7 +29,7 @@ class PriceGrid_:
         self.grid_ = np.array([])
 
     def __str__(self) -> str:
-        return f"Grid ({self.span}): \n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}\n\tage: {self.age()} secs"
+        return f"Grid ({self.span}): \n\tN={len(self.grid_)}\n\t[{self.lb}, {self.hb}] \n\t50%: {self.md} \n\tsamples from {self.t0} to {self.t1} \n\tlast_update_utc: {self.updated_utc}\n\tage: {self.age()} secs"
     def __repr__(self) -> str:
         return self.__str__()
     def generate_grid(self):
