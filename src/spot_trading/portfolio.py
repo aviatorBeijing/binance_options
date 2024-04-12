@@ -19,7 +19,6 @@ def portfolio_check(ric,days=72):
     tds['qty'] = tds.sign * tds.qty.astype(float)
     tds['agg'] = tds.qty.cumsum()
     tds['$agg'] = -(tds.qty*tds.price.astype(float)).cumsum()
-    tds['$agg_d'] = tds['$agg'].diff()
     tds['neutral'] = ''
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
