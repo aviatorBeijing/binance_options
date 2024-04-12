@@ -210,7 +210,7 @@ async def ohlcv(data):
     # grid info
     print(pgrid)
     ddf = pgrid.distance( closep )
-    print('-- current:', closep)
+    print('-- current: $', closep)
     print(ddf)
 
     # volume info
