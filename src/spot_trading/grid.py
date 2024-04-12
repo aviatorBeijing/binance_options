@@ -50,8 +50,9 @@ class PriceGrid_:
     def bound_breached(self,d)->bool:
         return d>self.hb or d<self.lb
     def price_moved(self, d)->bool:
-        print('*** ', d, self.last_updated_price, self.gap )
-        return abs(d-self.last_updated_price) > self.gap * 1
+        sf = abs(d-self.last_updated_price)
+        print('*** ', d, self.last_updated_price, sf, self.gap )
+        return sf > self.gap * 1
     def age(self)->int: # seconds
         d = int(datetime.datetime.utcnow().timestamp()) - self.updated_utc
         return d
