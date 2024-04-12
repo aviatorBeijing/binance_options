@@ -68,7 +68,7 @@ class PriceGrid_:
         self.t0 = ohlcv.iloc[0].timestamp
         self.t1 = ohlcv.iloc[-1].timestamp
         self.updated_utc = int(datetime.datetime.utcnow().timestamp())
-        self.last_updated_price = float(ohlcv.iloc.close)
+        self.last_updated_price = float(ohlcv.iloc[-1].close)
         self.grid_ = self.generate_grid()
     
     def plot(self):
@@ -207,11 +207,13 @@ async def ohlcv(data):
         print(f'  *** update on {"new hi/lo" if bound_breached else "price moved" if price_moved else "somehow?"}')
         pgrid.update()
 
+    # grid info
     print(pgrid)
     ddf = pgrid.distance( closep )
     print('-- current:', closep)
     print(ddf)
 
+    # volume info
     volumes = df.volume.values
     if len(volumes)>3:
         vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
