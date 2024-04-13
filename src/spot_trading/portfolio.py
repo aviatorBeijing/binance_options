@@ -23,8 +23,8 @@ def portfolio_check(ric,days=72):
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
     print( tds )
-    fn = os.getenv('USER_HOME',"/Users/junma")
-    fn += f'/tmp/binance_trades_in_{days}.csv'
+    fd = os.getenv('USER_HOME',"/Users/junma")
+    fn = fd + f'/tmp/binance_trades_in_{days}.csv'
     tds.to_csv(fn,index=0)
     print('-- saved:', fn)
     
@@ -44,6 +44,9 @@ def portfolio_check(ric,days=72):
     pce,_ = binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
+    fn = fd + f'/tmp/binance.fee${fee}.gain.${port_value:,.4f}.dat'
+    with open(fn,'w') as fp:
+        pass
     
     # orders
     openDf = mkt.check_open_orders()
