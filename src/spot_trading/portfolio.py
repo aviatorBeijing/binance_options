@@ -46,7 +46,7 @@ def portfolio_check(ric,days=72):
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
     fn = fd + f'/tmp/binance_fee_gain.dat'
     with open(fn,'w') as fp:
-        fp.writelines([f'fee:${fee:4f}',f'gain:${port_value:,.4f}'])
+        fp.writelines([f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}'])
     
     # orders
     openDf = mkt.check_open_orders()
