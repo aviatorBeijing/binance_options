@@ -23,6 +23,10 @@ def portfolio_check(ric,days=72):
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
     print( tds )
+    fn = os.getenv('USER_HOME',"/Users/junma")
+    fn += f'/tmp/binance_trades_in_{days}.csv'
+    tds.to_csv(fn,index=0)
+    print('-- saved:', fn)
     
     pceMap = {}
     syms = list(set(tds.commissionAsset.values))

@@ -40,6 +40,10 @@ class BianceSpot:
         df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('updateTime', ascending=False)
         print('--[ orders ]\n',tabulate(df,headers="keys"))
+        fn = os.getenv("USER_HOME","/Users/junma")
+        fn += '/tmp/binance_open_orders.csv'
+        df.to_csv( fn, index=0)
+        print('-- saved:', fn)
         return df  
 
     def check_trades_today(self)  -> pd.DataFrame:
