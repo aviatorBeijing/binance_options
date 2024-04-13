@@ -44,9 +44,9 @@ def portfolio_check(ric,days=72):
     pce,_ = binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
-    fn = fd + f'/tmp/binance_fee_${fee:4f}_gain_${port_value:,.4f}_dat'
+    fn = fd + f'/tmp/binance_fee_gain.dat'
     with open(fn,'w') as fp:
-        pass
+        fp.writelines([f'fee:${fee:4f}',f'gain:${port_value:,.4f}'])
     
     # orders
     openDf = mkt.check_open_orders()
