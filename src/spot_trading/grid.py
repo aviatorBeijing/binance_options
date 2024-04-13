@@ -101,7 +101,7 @@ class PriceGrid_:
             return
         ohlcv = self.raw.copy()
         import matplotlib.pyplot as plt
-        fig, (ax1,ax2,) = plt.subplots(2,1,figsize=(8,7))
+        fig, (ax1,ax2,) = plt.subplots(2,1,figsize=(10,14))
          
         ohlcv['index'] = ohlcv.timestamp.apply(pd.Timestamp)
         ohlcv.set_index('index', inplace=True)
@@ -117,6 +117,23 @@ class PriceGrid_:
 
         ohlcv[['high','low']].plot(ax=ax2,linewidth=1, style='-')
 
+        # current trades
+        from spot_trading.portfolio import analyze_trades_cached
+        from spot_trading.bs_meta import BianceSpot
+        #tds = analyze_trades_cached()
+        odf = BianceSpot.analyze_open_orders_cached()
+        odf = odf[odf.symbol==self.ric.replace('/','').replace('-','')]
+        if not odf.empty:
+            for i, ord in odf[['side','price']].iterrows():
+                if ord.side == 'BUY':
+                    ohlcv[f'buy_{i}'] = ord.price
+                    ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='+')
+                elif ord.side == 'SELL':
+                    ohlcv[f'sell_{i}'] = ord.price   
+                    ohlcv[[f'sell_{i}']].plot(ax=ax2,linewidth=1, style='v')             
+        
+        ax1.set_title('Suggested trade grid')
+        ax2.set_title('Open orders')
         user_home = os.getenv('USER_HOME','')
         gridfig = f'{user_home}/tmp/{self.ric.lower().replace("/","-")}_{self.span}.png'
         plt.savefig(gridfig)
