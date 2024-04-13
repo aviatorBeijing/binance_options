@@ -39,12 +39,12 @@ def portfolio_check(ric,days=72):
             pceMap[s] = bid
     tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
-    print(f'-- fee: ${fee}')
+    print(f'-- fee: ${fee:4f}')
 
     pce,_ = binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
-    fn = fd + f'/tmp/binance_fee_${fee}_gain_${port_value:,.4f}_dat'
+    fn = fd + f'/tmp/binance_fee_${fee:4f}_gain_${port_value:,.4f}_dat'
     with open(fn,'w') as fp:
         pass
     
