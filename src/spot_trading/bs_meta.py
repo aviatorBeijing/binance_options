@@ -121,14 +121,17 @@ def main_(ex, cbuy,csell,price,qty):
 
 import click
 @click.command()
+@click.option('--ric')
 @click.option('--cbuy', is_flag=True,  default=False)
 @click.option('--csell', is_flag=True,  default=False)
 @click.option('--cancel', default='', help='comma-separated order ids to be canceled')
 @click.option('--price')
 @click.option('--qty')
-def main(cbuy,csell,cancel,price,qty):
+def main(ric, cbuy,csell,cancel,price,qty):
     from bbroker.settings import spot_ex
-    ex = BianceSpot('DOGE/USDT', spot_ex=spot_ex)
+    assert 'USDT' in ric, r'Unsuported: {ric}'
+    assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
+    ex = BianceSpot(ric.split('-','/'), spot_ex=spot_ex)
     
     if cancel:
         for oid in cancel.split(','):
