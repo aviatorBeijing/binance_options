@@ -131,7 +131,7 @@ def main(ric, cbuy,csell,cancel,price,qty):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
-    ex = BianceSpot(ric.split('-','/'), spot_ex=spot_ex)
+    ex = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
     if cancel:
         for oid in cancel.split(','):
