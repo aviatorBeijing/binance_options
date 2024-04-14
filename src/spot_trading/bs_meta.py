@@ -1,3 +1,4 @@
+from sys import is_finalizing
 import pandas as pd 
 from tabulate import tabulate
 import datetime,os
@@ -53,3 +54,51 @@ class BianceSpot:
         df = df.sort_values('time', ascending=True)
         #print('--[ trades in 24 hours ]\n',tabulate(df,headers="keys"))
         return df  
+
+    def buy(self,price,qty,ask):
+        """
+        @param ask: must pass in the current ask price on order book
+        """
+        assert price<ask, f"buying price must be less than ask price. price={price}, ask={ask}"
+        sym = self.ric.replace('-','/').upper()
+        res = self.ex.createLimitBuyOrder(sym,qty,price,params={})
+        print(res)
+    
+    def sell(self,price,qty,bid):
+        """
+        @param bid: must pass in the current bid price on order book
+        """
+        assert price>bid, f"selling price must be greater than ask price. price={price}, bid={bid}"
+        sym = self.ric.replace('-','/').upper()
+        res = self.ex.createLimitSellOrder(sym,qty,price,params={})
+        print(res)
+
+# test
+def main_(ex, cbuy,csell,price,qty):
+    from butil.butils import get_binance_spot
+    bid,ask = get_binance_spot(ex.ric.replace('-','/'))
+    bid = float(bid)
+    ask = float(ask)
+    print(f'-- current bid={bid}, ask={ask}; requesting: price={price}, qty={qty}, {"sell" if csell else "buy" if cbuy else "unknown"}')
+    if cbuy:
+        ex.buy(price,qty,ask)
+    elif csell:
+        ex.sell(price,qty,bid)
+    else:
+        print('*** nothing to do.')
+
+import click
+@click.command()
+@click.option('--cbuy', is_flag=True,  default=False)
+@click.option('--csell', is_flag=True,  default=False)
+@click.option('--price')
+@click.option('--qty')
+def main(cbuy,csell,price,qty):
+    from bbroker.settings import spot_ex
+    ex = BianceSpot('DOGE/USDT', spot_ex=spot_ex)
+    price = float(price)
+    qty = float(qty)
+    main_(ex,cbuy,csell,price,qty)
+
+if __name__ == '__main__':
+    main()
