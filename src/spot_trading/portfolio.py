@@ -35,7 +35,8 @@ def portfolio_check(ric,days=72):
     """
     @param days (int): how long to look back for trades
     """
-    mkt = BianceSpot(ric.replace('-','/'))
+    from bbroker.settings import spot_ex
+    mkt = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
     tds = mkt.check_trades(hours=days*24)
     analyze_trades( ric, tds, days)

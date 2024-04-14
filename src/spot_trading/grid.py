@@ -109,12 +109,15 @@ class PriceGrid_:
         ohlcv['lbound'] = self.lb
         ohlcv['md'] = self.md
         for i in range(0, len(self.grid)):
-            ohlcv[f'grid{i}'] = self.grid[i][1]
+            if self.grid[i][0] == 'buy':
+                ohlcv[f'buy{i}'] = self.grid[i][1]
+                ohlcv[f'buy{i}'].plot(ax=ax1,linewidth=1, style='-.',color='red')
+            elif self.grid[i][0] == 'sell':
+                ohlcv[f'sell{i}'] = self.grid[i][1]
+                ohlcv[f'sell{i}'].plot(ax=ax1,linewidth=1, style='-.',color='gold')
         
         ohlcv[['close','hbound','lbound','md']].plot(ax=ax1,linewidth=2, style='-')
-        for i in range(0, len(self.grid)):
-            ohlcv[f'grid{i}'].plot(ax=ax1,linewidth=1, style='-.')
-
+        
         ohlcv[['high','low']].plot(ax=ax2,linewidth=1, style='-')
 
         # current trades
@@ -133,7 +136,7 @@ class PriceGrid_:
                     ohlcv[[f'sell_{i}']].plot(ax=ax2,linewidth=1, style='v')             
         
         ax1.set_title('Suggested trade grid')
-        ax2.set_title('Open orders')
+        ax2.set_title('Open orders (* live data *)')
         user_home = os.getenv('USER_HOME','')
         gridfig = f'{user_home}/tmp/{self.ric.lower().replace("/","-")}_{self.span}.png'
         plt.savefig(gridfig)
@@ -189,6 +192,20 @@ class HFTUniformGrid(PriceGrid_):
                     print('\t', ' '*10, f"{action}  {g[1]}")
         return aug_grid
 
+def detect_stats( df ):
+    df = df.copy()['timestamp,open,high,low,close,volume'.split(',')]
+    df['index'] = df.timestamp.apply(pd.Timestamp)
+    df.set_index('index', inplace=True,drop=True)
+    df = df.resample('1h').agg({'timestamp':'last','open':'first','close':'last','high':'max','low':'min','volume':'sum'})
+    price = df.iloc[-1].close
+    #rtns = (df.high-df.low)/df.low
+    rtns = df.close.pct_change()
+    rtns = rtns.fillna(0).apply(abs)
+    rtn50 = np.percentile(rtns, 50)
+    rtn75 = np.percentile(rtns, 75)
+    print('-- average price change (50%):', f"{(rtn50*10000):.0f} bps, ${(rtn50*price):.4f}")
+    print('-- average price change (75%):', f"{(rtn75*10000):.0f} bps, ${(rtn75*price):.4f}")
+
 def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceGrid_:
     """
     @brief This function should be used in low-frequency (>1~5min) mode,
@@ -217,6 +234,8 @@ def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceG
             ohlcv = ohlcv.tail( int(8*60/5) )
     print(f'-- [{ohlcv.shape[0]}]', ohlcv.iloc[0].timestamp, '~', ohlcv.iloc[-1].timestamp)
     
+    detect_stats( ohlcv )
+
     if not is_test:
         print('-- [live mode grid]')
         lbound = np.min(ohlcv.low) #np.percentile(ohlcv.low,0.1)
