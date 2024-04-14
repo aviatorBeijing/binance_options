@@ -58,6 +58,19 @@ class BianceSpot:
     def buy(self,price,qty,ask):
         """
         @param ask: must pass in the current ask price on order book
+
+        {'info': {'symbol': 'DOGEUSDT', 
+                'orderId': '4888578705', 
+                'orderListId': '-1', 
+                'clientOrderId': 'x-R4BD3S8268d769b85f2481f7d68115', 
+                'transactTime': '1713079091348', 
+                'price': '0.14000000', 
+                'origQty': '50.00000000', 
+                'executedQty': 
+                '0.00000000', 
+                'cummulativeQuoteQty': '0.00000000', '
+                status': 'NEW', 'timeInForce': 'GTC', 
+                'type': 'LIMIT', 'side': 'BUY', 'workingTime': '1713079091348', 'fills': [], 'selfTradePreventionMode': 'EXPIRE_MAKER'}, 'id': '4888578705', 'clientOrderId': 'x-R4BD3S8268d769b85f2481f7d68115', 'timestamp': 1713079091348, 'datetime': '2024-04-14T07:18:11.348Z', 'lastTradeTimestamp': None, 'lastUpdateTimestamp': 1713079091348, 'symbol': 'DOGE/USDT', 'type': 'limit', 'timeInForce': 'GTC', 'postOnly': False, 'reduceOnly': None, 'side': 'buy', 'price': 0.14, 'triggerPrice': None, 'amount': 50.0, 'cost': 0.0, 'average': None, 'filled': 0.0, 'remaining': 50.0, 'status': 'open', 'fee': None, 'trades': [], 'fees': [], 'stopPrice': None, 'takeProfitPrice': None, 'stopLossPrice': None}
         """
         assert price<ask, f"buying price must be less than ask price. price={price}, ask={ask}"
         sym = self.ric.replace('-','/').upper()
@@ -73,6 +86,10 @@ class BianceSpot:
         res = self.ex.createLimitSellOrder(sym,qty,price,params={})
         print(res)
 
+    def cancel_orders(self, oids: list):
+        if oids:
+            res = self.ex.cancelOrders( oids )
+            print(res)
 # test
 def main_(ex, cbuy,csell,price,qty):
     from butil.butils import get_binance_spot
@@ -91,14 +108,18 @@ import click
 @click.command()
 @click.option('--cbuy', is_flag=True,  default=False)
 @click.option('--csell', is_flag=True,  default=False)
+@click.option('--cancel', default='', help='comma-separated order ids to be canceled')
 @click.option('--price')
 @click.option('--qty')
-def main(cbuy,csell,price,qty):
+def main(cbuy,csell,cancel,price,qty):
     from bbroker.settings import spot_ex
     ex = BianceSpot('DOGE/USDT', spot_ex=spot_ex)
     price = float(price)
     qty = float(qty)
-    main_(ex,cbuy,csell,price,qty)
+    if cancel:
+        ex.cancel_orders( cancel.split(',') )
+    else:
+        main_(ex,cbuy,csell,price,qty)
 
 if __name__ == '__main__':
     main()
