@@ -87,9 +87,24 @@ class BianceSpot:
         print(res)
 
     def cancel_order(self, oid:str): # cancel single order
+        """
+        {'info': {'symbol': 'DOGEUSDT', 
+            'origClientOrderId': 'x-R4BD3S8268d769b85f2481f7d68115', 
+            'orderId': '4888578705', 'orderListId': '-1', 
+            'clientOrderId': '8zE1oB4p40vUVoSsayL3w9', 
+            'transactTime': '1713079742955', 'price': '0.14000000', 'origQty': '50.00000000', 
+            'executedQty': '0.00000000', 
+            'cummulativeQuoteQty': '0.00000000', 
+            'status': 'CANCELED', 'timeInForce': 'GTC', 'type': 'LIMIT', 'side': 'BUY', 'selfTradePreventionMode': 'EXPIRE_MAKER'}, 'id': '4888578705', 'clientOrderId': '8zE1oB4p40vUVoSsayL3w9', 'timestamp': 1713079742955, 'datetime': '2024-04-14T07:29:02.955Z', 'lastTradeTimestamp': None, 'lastUpdateTimestamp': 1713079742955, 'symbol': 'DOGE/USDT', 'type': 'limit', 'timeInForce': 'GTC', 'postOnly': False, 'reduceOnly': None, 'side': 'buy', 'price': 0.14, 'triggerPrice': None, 'amount': 50.0, 'cost': 0.0, 'average': None, 'filled': 0.0, 'remaining': 50.0, 'status': 'canceled', 'fee': None, 'trades': [], 'fees': [], 'stopPrice': None, 'takeProfitPrice': None, 'stopLossPrice': None}
+
+        """
         if oid:
             res = self.ex.cancelOrder( oid, symbol=self.ric.replace('-','/') )
-            print(res)
+            assert res['info']['status'] == 'CANCELED', f'oid={oid} failed to cancel. resp: \n{res}'
+            rqty = float( res['info']['executedQty'])
+            if rqty>0:
+                print(f'  -- oid={oid} canceled ok')
+                print(f'  -- oid={oid} filled before cancelation')
 # test
 def main_(ex, cbuy,csell,price,qty):
     from butil.butils import get_binance_spot
