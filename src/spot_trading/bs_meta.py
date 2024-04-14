@@ -140,7 +140,7 @@ import click
 @click.option('--cbuy', is_flag=True,  default=False)
 @click.option('--csell', is_flag=True,  default=False)
 @click.option('--cancel', default='', help='comma-separated order ids to be canceled')
-@click.option('--price')
+@click.option('--price',default=0.)
 @click.option('--qty',default=0.)
 @click.option('--sellbest', is_flag=True, default=False,help='judge from ask price, automatic create an order close to ask price')
 @click.option('--buybest',  is_flag=True, default=False,help='judge from bid price, automatic create an order close to ask price')
@@ -150,7 +150,6 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest):
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
     ex = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
-    print('***', cancel)
     if cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
