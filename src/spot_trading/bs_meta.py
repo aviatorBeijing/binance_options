@@ -150,6 +150,7 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest):
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
     ex = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
+    print('***', cancel)
     if cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
