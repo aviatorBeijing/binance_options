@@ -116,7 +116,7 @@ def main(cbuy,csell,cancel,price,qty):
     ex = BianceSpot('DOGE/USDT', spot_ex=spot_ex)
     
     if cancel:
-        ex.cancel_orders( cancel.split(',') )
+        ex.cancel_order( cancel.split(',') )
     else:
         price = float(price)
         qty = float(qty)
