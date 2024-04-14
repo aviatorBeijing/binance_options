@@ -49,6 +49,7 @@ def _main(contract,user_cost):
     
     g = bid-user_cost
     print('-- current bid:', bid, ', cost:', user_cost, f', ${"+" if g>0 else ""}{g}')
+    print('-- price projections of option v.s. spot (assuming volatility is NOT changing)')
     print( df )
 
 
