@@ -6,6 +6,13 @@ class BianceSpot:
     def __init__(self,ric, spot_ex=None) -> None:
         self.ric = ric 
         self.ex = spot_ex
+
+        # valid price digits
+        if ric.startswith('DOGE'): self.ndigits = 5 
+        elif ric.startswith('BTC'): self.ndigits = 2
+        else:
+            raise Exception(f'Unsupported ric: {ric}')
+            
     def check_open_orders(self) -> pd.DataFrame:
         ods = self.ex.fetchOpenOrders(self.ric)
         ods = list(map(lambda e: e['info'],ods))
@@ -106,7 +113,7 @@ class BianceSpot:
                 print(f'  -- oid={oid} canceled ok')
                 print(f'  -- oid={oid} filled before cancelation')
 # test
-def main_(ex, cbuy,csell,price,qty):
+def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
     from butil.butils import get_binance_spot
     bid,ask = get_binance_spot(ex.ric.replace('-','/'))
     bid = float(bid)
@@ -116,6 +123,14 @@ def main_(ex, cbuy,csell,price,qty):
         ex.buy(price,qty,ask)
     elif csell:
         ex.sell(price,qty,bid)
+    elif buybest:
+        pce = bid * (1-1/1_000.)
+        pce = round(pce, ex.ndigits)
+        ex.buy(pce,qty,ask)
+    elif sellbest:
+        pce = ask * (1+1/1_000.)
+        pce = round(pce, ex.ndigits)
+        ex.sell(pce,qty,bid)
     else:
         print('*** nothing to do.')
 
@@ -127,7 +142,9 @@ import click
 @click.option('--cancel', default='', help='comma-separated order ids to be canceled')
 @click.option('--price')
 @click.option('--qty')
-def main(ric, cbuy,csell,cancel,price,qty):
+@click.option('--sellbest', is_flag=True, default=False,help='judge from ask price, automatic create an order close to ask price')
+@click.option('--buybest',  is_flag=True, default=False,help='judge from bid price, automatic create an order close to ask price')
+def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -136,10 +153,13 @@ def main(ric, cbuy,csell,cancel,price,qty):
     if cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
+    if sellbest or buybest:
+        assert qty>0, f"qty is required"
+        main_(ex,False,False,0.,qty,sellbest,buybest)
     else:
         price = float(price)
         qty = float(qty)
-        main_(ex,cbuy,csell,price,qty)
+        main_(ex,cbuy,csell,price,qty,sellbest,buybest)
 
 if __name__ == '__main__':
     main()
