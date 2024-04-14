@@ -82,7 +82,7 @@ class BianceSpot:
         assert price<ask, f"buying price must be less than ask price. price={price}, ask={ask}"
         sym = self.ric.replace('-','/').upper()
         res = self.ex.createLimitBuyOrder(sym,qty,price,params={})
-        print(res)
+        print(res['info']['orderId'])
     
     def sell(self,price,qty,bid):
         """
@@ -91,7 +91,7 @@ class BianceSpot:
         assert price>bid, f"selling price must be greater than ask price. price={price}, bid={bid}"
         sym = self.ric.replace('-','/').upper()
         res = self.ex.createLimitSellOrder(sym,qty,price,params={})
-        print(res)
+        print(res['info']['orderId'])
 
     def cancel_order(self, oid:str): # cancel single order
         """
