@@ -12,7 +12,7 @@ class BianceSpot:
         elif ric.startswith('BTC'): self.ndigits = 2
         else:
             raise Exception(f'Unsupported ric: {ric}')
-            
+
     def check_open_orders(self) -> pd.DataFrame:
         ods = self.ex.fetchOpenOrders(self.ric)
         ods = list(map(lambda e: e['info'],ods))
@@ -125,11 +125,11 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
         ex.sell(price,qty,bid)
     elif buybest:
         pce = bid * (1-1/1_000.)
-        pce = round(pce, ex.ndigits)
+        #pce = round(pce, ex.ndigits)
         ex.buy(pce,qty,ask)
     elif sellbest:
         pce = ask * (1+1/1_000.)
-        pce = round(pce, ex.ndigits)
+        #pce = round(pce, ex.ndigits)
         ex.sell(pce,qty,bid)
     else:
         print('*** nothing to do.')
