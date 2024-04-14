@@ -17,6 +17,7 @@ def analyze_trades_cached(days=72) -> pd.DataFrame:
     return df
 
 def analyze_trades(ric, tds, days, save=True):
+    tds = tds.copy()
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
@@ -30,6 +31,7 @@ def analyze_trades(ric, tds, days, save=True):
         fn = fd + f'/tmp/binance_trades_in_{days}.csv'
         tds.to_csv(fn,index=0)
         print('-- saved:', fn)
+    return tds
 
 def portfolio_check(ric,days=72):
     """
@@ -39,7 +41,7 @@ def portfolio_check(ric,days=72):
     mkt = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
     tds = mkt.check_trades(hours=days*24)
-    analyze_trades( ric, tds, days)
+    tds = analyze_trades( ric, tds, days)
     
     pceMap = {}
     syms = list(set(tds.commissionAsset.values))
