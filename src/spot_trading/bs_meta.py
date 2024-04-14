@@ -114,11 +114,12 @@ import click
 def main(cbuy,csell,cancel,price,qty):
     from bbroker.settings import spot_ex
     ex = BianceSpot('DOGE/USDT', spot_ex=spot_ex)
-    price = float(price)
-    qty = float(qty)
+    
     if cancel:
         ex.cancel_orders( cancel.split(',') )
     else:
+        price = float(price)
+        qty = float(qty)
         main_(ex,cbuy,csell,price,qty)
 
 if __name__ == '__main__':
