@@ -94,7 +94,7 @@ class PriceGrid_:
             #print( s.loc['25%'], s.loc['50%'], s.loc['75%'])
             print( '-- trend:', np.array([ s.loc['25%'], s.loc['50%'], s.loc['75%']]), ' (25%,50%,75%)')
             del ohlcv
-            
+
     def plot(self):
         if self.raw.empty:
             print('-- no ohlcv df provided, ignore plotting')

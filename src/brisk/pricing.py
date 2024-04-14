@@ -29,7 +29,7 @@ def _main(contract,user_cost):
     sigma = float(cdata['impvol_bid'])
     
     x = bid/user_cost-1
-    rtns = np.array([-.1, -.05,.1,.2,.5,1.0, x ])
+    rtns = np.array([-.1, -.05,.1,.2,.5,1.0, 2.0, 3.0,4.0,5.0, x ])
     rtns = np.array(sorted(rtns))
     pce_ranges = (1+rtns)*user_cost
 
