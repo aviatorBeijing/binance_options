@@ -130,10 +130,10 @@ class PriceGrid_:
             for i, ord in odf[['side','price']].iterrows():
                 if ord.side == 'BUY':
                     ohlcv[f'buy_{i}'] = ord.price
-                    ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='+')
+                    ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='+',color='red')
                 elif ord.side == 'SELL':
                     ohlcv[f'sell_{i}'] = ord.price   
-                    ohlcv[[f'sell_{i}']].plot(ax=ax2,linewidth=1, style='v')             
+                    ohlcv[[f'sell_{i}']].plot(ax=ax2,linewidth=1, style='--',color='gold')             
         
         ax1.set_title('Suggested trade grid')
         ax2.set_title('Open orders (* live data *)')
@@ -277,7 +277,8 @@ async def ohlcv(data):
         vrk = scipy.stats.percentileofscore( volumes, volumes[-1] )
         if vrk>99.:
             large_volume_move = True
-        print( f'-- volume stack: {len(volumes)}, latest volume rank: {vrk:.1f}%' )
+        price_direction = (df.close.iloc[-1]-df.open.iloc[-1])/df.open.iloc[-1]*10_000
+        print( f'-- volume stack: {len(volumes)}, latest volume rank: {vrk:.1f}%, price move: {price_direction:.0f}bps' )
 
     # grid
     bound_breached = pgrid.bound_breached(closep)
