@@ -6,21 +6,22 @@ import numpy  as np
 from multiprocessing import Process
 
 from butil.bsql import fetch_bidask 
-from butil.butils import ( DATADIR,DEBUG,
+from butil.butils import ( DATADIR,DEBUG, binance_spot,
                 get_binance_next_funding_rate,
-                get_maturity )
+                get_maturity, get_underlying )
 from brisk.bfee import calc_fee
 from ws_bcontract import _main as ws_connector
 from strategy.delta_gamma import callprice,putprice
 from butil.options_calculator import extract_specs, invert_callprice,invert_putprice
 
 
-def _main(contract,user_cost):
+def _main(contract,user_cost, reference_spot):
     """
     @brief Given the 
                 average cost of an option trade, 
                 calc the 
                     spot prices v.s. a list of returns% on the option purchased.
+    @param reference_spot: the price of underlying when the routine starts, will be not update in the middle!
     """
     user_cost  = float(user_cost)
     _, T, K, ctype = extract_specs(contract)
@@ -46,6 +47,8 @@ def _main(contract,user_cost):
         options += [ target_price ]
     df = pd.DataFrame.from_dict({contract: options, 'rtn': rtns, 'spot': spots })
     df['rtn'] = df.rtn.apply(lambda v: f"{(v*100)}%")
+    df['spot_chg'] = (df.spot - reference_spot)/reference_spot*100
+    df['spot_chg'] = df['spot_chg'].apply(lambda v: f"{v:.1f}%")
     
     g = bid-user_cost
     print('-- current bid:', bid, ', cost:', user_cost, f', ${"+" if g>0 else ""}{g}')
@@ -55,10 +58,11 @@ def _main(contract,user_cost):
 
 def _multiprocess_main(contract,user_cost):
     print('-- waiting data...')
+    bid,ask = binance_spot( get_underlying(contract))
     time.sleep(2)
     while True:
         try:
-            _main(contract,user_cost)
+            _main(contract,user_cost, (bid+ask)*.5)
             time.sleep(5)
         except KeyboardInterrupt as e:
             print("-- Exiting --")
