@@ -88,7 +88,7 @@ class BianceSpot:
 
     def cancel_orders(self, oids: list):
         if oids:
-            res = self.ex.cancelOrders( oids )
+            res = self.ex.cancelOrders( oids, symbol=self.ric.replace('-','/') )
             print(res)
 # test
 def main_(ex, cbuy,csell,price,qty):
