@@ -86,9 +86,9 @@ class BianceSpot:
         res = self.ex.createLimitSellOrder(sym,qty,price,params={})
         print(res)
 
-    def cancel_orders(self, oids: list):
-        if oids:
-            res = self.ex.cancelOrders( oids, symbol=self.ric.replace('-','/') )
+    def cancel_order(self, oid:str): # cancel single order
+        if oid:
+            res = self.ex.cancelOrder( oid, symbol=self.ric.replace('-','/') )
             print(res)
 # test
 def main_(ex, cbuy,csell,price,qty):
