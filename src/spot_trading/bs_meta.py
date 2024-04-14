@@ -153,7 +153,7 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest):
     if cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
-    if sellbest or buybest:
+    elif sellbest or buybest:
         assert qty>0, f"qty is required"
         main_(ex,False,False,0.,qty,sellbest,buybest)
     else:
