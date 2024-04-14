@@ -124,11 +124,11 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
     elif csell:
         ex.sell(price,qty,bid)
     elif buybest:
-        pce = bid * (1-1/1_000.)
+        pce = bid * (1-1/10_000.)
         #pce = round(pce, ex.ndigits)
         ex.buy(pce,qty,ask)
     elif sellbest:
-        pce = ask * (1+1/1_000.)
+        pce = ask * (1+1/10_000.)
         #pce = round(pce, ex.ndigits)
         ex.sell(pce,qty,bid)
     else:
