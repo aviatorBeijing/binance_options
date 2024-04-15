@@ -148,8 +148,8 @@ import click
 @click.option('--qty',default=0.)
 @click.option('--sellbest', is_flag=True, default=False,help='judge from ask price, automatic create an order close to ask price')
 @click.option('--buybest',  is_flag=True, default=False,help='judge from bid price, automatic create an order close to ask price')
-@click.option('--centered_aligned_pair', is_flag=True, default=False, help='generate a pair of orders set apart by 100bsp around the bid/ask')
-def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_aligned_pair):
+@click.option('--centered_pair', is_flag=True, default=False, help='generate a pair of orders set apart by 100bsp around the bid/ask')
+def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -158,7 +158,7 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_aligned_pair
     if cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
-    elif centered_aligned_pair:
+    elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
         bid,ask = get_spot_(ex)
         pce = (bid+ask)*.5
