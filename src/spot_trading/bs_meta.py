@@ -112,12 +112,16 @@ class BianceSpot:
             if rqty>0:
                 print(f'  -- oid={oid} canceled ok')
                 print(f'  -- oid={oid} filled before cancelation')
-# test
-def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
+
+def get_spot_(ex):
     from butil.butils import get_binance_spot
     bid,ask = get_binance_spot(ex.ric.replace('-','/'))
     bid = float(bid)
     ask = float(ask)
+    return bid,ask
+
+def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
+    bid,ask = get_spot_(ex)
     print(f'-- current bid={bid}, ask={ask}; requesting: price={price}, qty={qty}, {"sell" if csell else "buy" if cbuy else "unknown"}')
     if cbuy:
         ex.buy(price,qty,ask)
@@ -144,7 +148,8 @@ import click
 @click.option('--qty',default=0.)
 @click.option('--sellbest', is_flag=True, default=False,help='judge from ask price, automatic create an order close to ask price')
 @click.option('--buybest',  is_flag=True, default=False,help='judge from bid price, automatic create an order close to ask price')
-def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest):
+@click.option('--centered_aligned_pair', is_flag=True, default=False, help='generate a pair of orders set apart by 100bsp around the bid/ask')
+def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_aligned_pair):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -153,6 +158,13 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest):
     if cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
+    elif centered_aligned_pair:
+        assert qty>0, 'Must provide a qty>0'
+        bid,ask = get_spot_(ex)
+        pce = (bid+ask)*.5
+        e = 5/100.
+        ex.buy( pce*(1-e), qty, ask )
+        ex.sell(pce*(1+e), qty, bid)
     elif sellbest or buybest:
         assert qty>0, f"qty is required"
         main_(ex,False,False,0.,qty,sellbest,buybest)

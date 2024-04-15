@@ -101,7 +101,7 @@ class PriceGrid_:
             return
         ohlcv = self.raw.copy()
         import matplotlib.pyplot as plt
-        fig, (ax1,ax2,) = plt.subplots(2,1,figsize=(10,14))
+        fig, (ax2,ax1,) = plt.subplots(2,1,figsize=(10,12))
          
         ohlcv['index'] = ohlcv.timestamp.apply(pd.Timestamp)
         ohlcv.set_index('index', inplace=True)
@@ -136,7 +136,7 @@ class PriceGrid_:
             for i, ord in odf[['side','price']].iterrows():
                 if ord.side == 'BUY':
                     ohlcv[f'buy_{i}'] = ord.price
-                    ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='+',color='red')
+                    ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='--',color='red')
                 elif ord.side == 'SELL':
                     ohlcv[f'sell_{i}'] = ord.price   
                     ohlcv[[f'sell_{i}']].plot(ax=ax2,linewidth=1, style='--',color='gold')             
