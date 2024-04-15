@@ -33,6 +33,15 @@ def analyze_trades(ric, tds, days, save=True):
         print('-- saved:', fn)
     return tds
 
+def calc_avg_holding_price( tds = pd.DataFrame()) -> tuple:
+    assert 'neutral' in tds, f"trades dataframe should have a special flag"
+    neu_indices = list( tds[tds.neutral=='ok'].index )
+    assert len(neu_indices)>0, f"no neutral location found in trades history"
+    tds = tds.iloc[ neu_indices[-1]: ]
+    res_size = tds.qty.sum()
+    res_price = (tds.qty*tds.price).sum()/res_size
+    return res_price, res_size
+
 def portfolio_check(ric,days=72):
     """
     @param days (int): how long to look back for trades
@@ -42,6 +51,7 @@ def portfolio_check(ric,days=72):
     
     tds = mkt.check_trades(hours=days*24)
     tds = analyze_trades( ric, tds, days)
+    holding_cost, holding_size = calc_avg_holding_price( tds )
     
     pceMap = {}
     syms = list(set(tds.commissionAsset.values))
@@ -56,9 +66,12 @@ def portfolio_check(ric,days=72):
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     print(f'-- fee: ${fee:4f}')
 
+    print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
+    
     pce,_ = binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating): $ {port_value:,.4f}')
+    
     fn = fd + f'/tmp/binance_fee_gain.dat'
     with open(fn,'w') as fp:
         fp.writelines([f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}'])
