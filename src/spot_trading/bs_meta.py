@@ -149,7 +149,8 @@ import click
 @click.option('--sellbest', is_flag=True, default=False,help='judge from ask price, automatic create an order close to ask price')
 @click.option('--buybest',  is_flag=True, default=False,help='judge from bid price, automatic create an order close to ask price')
 @click.option('--centered_pair', is_flag=True, default=False, help='generate a pair of orders set apart by 100bsp around the bid/ask')
-def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair):
+@click.option('--centered_pair_dist', default=50., help='generate a pair of orders set apart by # (bps) around the bid/ask')
+def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -162,7 +163,8 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair):
         assert qty>0, 'Must provide a qty>0'
         bid,ask = get_spot_(ex)
         pce = (bid+ask)*.5
-        e = 50/10_000.
+        assert centered_pair_dist > 20, f"{centered_pair_dist} is too low, suggest to > 20 or 50"
+        e = float(centered_pair_dist)/10_000.
         print('-- price diff:', 2*e*pce)
         ex.buy( pce*(1-e), qty, ask )
         ex.sell(pce*(1+e), qty, bid)
