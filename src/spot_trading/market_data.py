@@ -9,7 +9,7 @@ def main(ric,span):
     ric = ric.upper()
 
     fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
-    df = binance_kline(ric, span=span, grp=5)
+    df = binance_kline(ric, span=span, grps=5)
     
     df.to_csv(fn)
     print('-- saved:', fn)
