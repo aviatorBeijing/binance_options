@@ -163,6 +163,7 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_aligned_pair
         bid,ask = get_spot_(ex)
         pce = (bid+ask)*.5
         e = 5/1000.
+        print('-- price diff:', 2*e)
         ex.buy( pce*(1-e), qty, ask )
         ex.sell(pce*(1+e), qty, bid)
     elif sellbest or buybest:
