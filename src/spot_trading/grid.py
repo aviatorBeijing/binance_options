@@ -117,8 +117,14 @@ class PriceGrid_:
                 ohlcv[f'sell{i}'].plot(ax=ax1,linewidth=1, style='-.',color='gold')
         
         ohlcv[['close','hbound','lbound','md']].plot(ax=ax1,linewidth=2, style='-')
-        
         ohlcv[['high','low']].plot(ax=ax2,linewidth=1, style='-')
+        
+        # Shade the +/- 100bps area
+        p0 = ohlcv.iloc[-1].close
+        p1 = p0*(1+100/10_000)
+        p2 = p0*(1-100/10_000)
+        ax2.fill_between(ohlcv.index, p1, p2, alpha=0.5) #, where=(ohlcv.high < 0.165) & (ohlcv.high > 0.155)
+        ax2.grid()
 
         # current trades
         from spot_trading.portfolio import analyze_trades_cached
