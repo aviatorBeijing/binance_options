@@ -1,8 +1,11 @@
+from importlib import import_module
 import click,datetime,os
 from tabulate import tabulate
 import pandas as pd
 import numpy as np
 import scipy
+from decimal import Decimal
+from cryptofeed.defines import TRADES,BID,ASK,L2_BOOK,TICKER
 
 from butil.butils import binance_kline
 
@@ -259,9 +262,39 @@ def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceG
 WINDOW_IN_SECONDS = 5
 stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of history
 rows = []
-
 pgrid = None #global
-async def ohlcv(data):
+
+from spot_trading.bs_spot_sql import init_ticker_snippet_tbl,ticker_snippet_tbl_exists
+def _t(s): return datetime.datetime.fromtimestamp(int(float(s)/1000))
+async def on_ticker(t, receipt_timestamp):
+    if t.timestamp is not None:
+        assert isinstance(t.timestamp, float)
+    assert isinstance(t.exchange, str)
+    assert isinstance(t.bid, Decimal)
+    assert isinstance(t.ask, Decimal)
+    print(f'{t.exchange} ticker @ {receipt_timestamp}: {t}')
+    print(_t(receipt_timestamp))
+    print(_t(t.timestamp))
+    df = pd.DataFrame.from_dict({
+        'ric': [t.symbol],
+        'bid': [float(t.bid)],
+        'ask': [float(t.ask)],
+        'timestamp': [int(t.timestamp)],
+        'receipt': [int(receipt_timestamp)],
+    })
+    if not ticker_snippet_tbl_exists():
+        init_ticker_snippet_tbl(df)
+
+
+"""async def on_book(book, receipt_timestamp):
+    print(f'Book received at {receipt_timestamp} for {book.exchange} - {book.symbol}, with {len(book.book)} entries. Top of book prices: {book.book.asks.index(0)[0]} - {book.book.bids.index(0)[0]}')
+    if book.delta:
+        print(f"Delta from last book contains {len(book.delta[BID]) + len(book.delta[ASK])} entries.")
+    if book.sequence_number:
+        assert isinstance(book.sequence_number, int)
+"""
+
+async def on_ohlcv(data):
     global stacks_len
     global rows 
     global pgrid 
@@ -321,15 +354,16 @@ def main(ric,start_ts,test, uniform_grid_gap,span):
     if not test:
         from cryptofeed import FeedHandler
         from cryptofeed.backends.aggregate import OHLCV
-        from cryptofeed.defines import TRADES
         from cryptofeed.exchanges import Binance
 
         f = FeedHandler()
         f.add_feed(Binance(
                 symbols=[ric.replace('/','-')],
-                channels=[TRADES], 
+                channels=[TRADES,L2_BOOK,TICKER], 
                 callbacks={
-                    TRADES: OHLCV(ohlcv, window=WINDOW_IN_SECONDS)
+                    TRADES: OHLCV(on_ohlcv, window=WINDOW_IN_SECONDS),
+                    #L2_BOOK: on_book,
+                    TICKER: on_ticker,
                 }))
         f.run()
     else:

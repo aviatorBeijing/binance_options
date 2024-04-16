@@ -2,6 +2,7 @@ from sys import is_finalizing
 import pandas as pd 
 from tabulate import tabulate
 import datetime,os
+
 class BianceSpot:
     def __init__(self,ric, spot_ex=None) -> None:
         self.ric = ric 
