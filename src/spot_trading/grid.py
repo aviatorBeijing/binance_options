@@ -265,7 +265,7 @@ rows = []
 pgrid = None #global
 
 from spot_trading.bs_spot_sql import init_ticker_snippet_tbl,ticker_snippet_tbl_exists
-def _t(s): return datetime.datetime.fromtimestamp(int(s))
+def _t(s): return datetime.datetime.fromtimestamp(int(s)).isoformat() 
 async def on_ticker(t, receipt_timestamp):
     if t.timestamp is not None:
         assert isinstance(t.timestamp, float)
