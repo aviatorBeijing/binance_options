@@ -35,7 +35,7 @@ def read_latest_ticker(ric):
             assert( tnow>=ts and (tnow-ts)<5000 ), f"tnow={tnow}, db ts={ts}, diff={tnow-ts}"
 
             return bid,ask,ts,timestamp 
-    return -1.,-1.,0,'n/a'
+    raise Exception(f"data error in read_latest_ticker(ric)")
 
 def write_latest_ticker(ric,bid,ask,ts,timestamp):
     assert isinstance(timestamp,str)
