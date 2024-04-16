@@ -285,7 +285,7 @@ async def on_ticker(t, receipt_timestamp):
     if not ticker_snippet_tbl_exists():
         init_ticker_snippet_tbl(df)
     else:
-        write_latest_ticker(float(t.bid),float(t.ask),int(float(t.timestamp)*1000), _t(t.timestamp))
+        write_latest_ticker(t.symbol, float(t.bid),float(t.ask),int(float(t.timestamp)*1000), _t(t.timestamp))
 
 
 """async def on_book(book, receipt_timestamp):
