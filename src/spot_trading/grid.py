@@ -279,6 +279,7 @@ async def on_ticker(t, receipt_timestamp):
         'ric': [t.symbol],
         'bid': [float(t.bid)],
         'ask': [float(t.ask)],
+        'ts': [ int(float(t.timestamp)*1000)],
         'timestamp': [int(t.timestamp)],
         'receipt': [int(receipt_timestamp)],
     })
