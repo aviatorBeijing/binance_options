@@ -127,12 +127,14 @@ class PriceGrid_:
         p2 = p0*(1-100/10_000)
         ax2.fill_between(ohlcv.index, p1, p2, alpha=0.5) #, where=(ohlcv.high < 0.165) & (ohlcv.high > 0.155)
         ax2.grid()
+        ax1.grid()
+        
 
         # current trades
         from spot_trading.portfolio import analyze_trades_cached
         from spot_trading.bs_meta import BianceSpot
         #tds = analyze_trades_cached()
-        odf = BianceSpot.analyze_open_orders_cached()
+        odf = BianceSpot.analyze_open_orders_cached(0.152)
         odf = odf[odf.symbol==self.ric.replace('/','').replace('-','')]
         if not odf.empty:
             for i, ord in odf[['side','price']].iterrows():

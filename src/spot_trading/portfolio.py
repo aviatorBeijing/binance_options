@@ -12,8 +12,23 @@ fd = os.getenv('USER_HOME',"/Users/junma")
 def analyze_trades_cached(days=72) -> pd.DataFrame:
     fn = fd + f'/tmp/binance_trades_in_{days}.csv'
     df = pd.read_csv(fn)
+    df['datetime'] = df['datetime'].apply(pd.Timestamp)
+    df.set_index('datetime',inplace=True)
     print(f'-- [trades from cached: {fn}]')
     print(df)
+
+    import matplotlib.pyplot as plt 
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    ax1.grid()
+
+    ax1.set_ylabel('$agg', color = 'blue') 
+    ax2.set_ylabel('#agg', color = 'red') 
+    ax1.plot(df['$agg'], color='blue')
+    ax2.plot(df['agg'], color='red')
+    fn =f"{fd}/tmp/binance_portfolio.png"
+    plt.savefig(fn)
+    print('-- saved:', fn)
     return df
 
 def analyze_trades(ric, tds, days, save=True):
@@ -55,7 +70,7 @@ def portfolio_check(ric,days=72):
     from bbroker.settings import spot_ex
     mkt = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
-    tds = mkt.check_trades(hours=days*24)
+    tds = mkt.check_trades(hours=days*24*2)
     tds = analyze_trades( ric, tds, days)
     
     pceMap = {}
@@ -90,10 +105,11 @@ def portfolio_check(ric,days=72):
 @click.option('--days',default=72)
 #@click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--check_cached', is_flag=True, default=False)
-def main(ric,days,check_cached): 
+@click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
+def main(ric,days,check_cached,spot): 
     if check_cached:
         _ = analyze_trades_cached(72)
-        _ = BianceSpot.analyze_open_orders_cached()
+        _ = BianceSpot.analyze_open_orders_cached(p0=spot)
     else:   
         portfolio_check(ric,days=days)
 

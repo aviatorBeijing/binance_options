@@ -122,6 +122,7 @@ def get_binance_spot( symbol='BTC/USDT'): #Alias
         print( '***', str(e))
         return binance_spot( symbol )
 def binance_spot(symbol='BTC/USDT')->tuple:
+    symbol = symbol.replace('-','/')
     qts = ex_binance.fetch_ticker(symbol)
     bid,ask = qts['bid'],qts['ask']
     return float(bid),float(ask)

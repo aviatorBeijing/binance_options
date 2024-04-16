@@ -2,6 +2,7 @@ from sys import is_finalizing
 import pandas as pd 
 from tabulate import tabulate
 import datetime,os
+from butil.butils import get_binance_spot
 
 class BianceSpot:
     def __init__(self,ric, spot_ex=None) -> None:
@@ -25,6 +26,9 @@ class BianceSpot:
         df = df['symbol,type,side,status,orderId,price,origQty,executedQty,cummulativeQuoteQty,updateTime'.split(',')]
         df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('updateTime', ascending=False)
+        bid,ask = get_binance_spot(self.ric.upper())
+        df = BianceSpot.est_pnl_on_open_orders(df, (bid+ask)*.5)
+        
         print('--[ orders ]\n',tabulate(df,headers="keys"))
         fn = os.getenv("USER_HOME","/Users/junma")
         fn += '/tmp/binance_open_orders.csv'
@@ -33,11 +37,26 @@ class BianceSpot:
         return df  
     
     @staticmethod
-    def analyze_open_orders_cached() ->pd.DateOffset:
+    def est_pnl_on_open_orders(df,p0)->pd.DataFrame:
+        """
+        @param p0: reference current spot price
+        """
+        df = df.copy()
+        df['sign'] = df.side.apply(lambda s: -1 if s=='SELL' else 1  if s=='BUY' else 0)
+        df['$loss'] = (df.price - p0) * df.sign * df.origQty
+        df['drift_bps'] = ((df.price-p0)/p0*10_000).apply(int)
+        df.drop(['sign'],axis=1,inplace=True)
+        return df 
+
+    @staticmethod
+    def analyze_open_orders_cached(p0) ->pd.DateOffset:
         fn = os.getenv("USER_HOME","/Users/junma")
         fn += '/tmp/binance_open_orders.csv'
         df = pd.read_csv( fn )
         df['datetime'] = df['datetime'].apply(pd.Timestamp)
+
+        df = BianceSpot.est_pnl_on_open_orders(df,p0)
+
         print(f'-- [trades from cached file: {fn}]')
         print( tabulate(df, headers='keys') )
         return df
@@ -115,7 +134,6 @@ class BianceSpot:
                 print(f'  -- oid={oid} filled before cancelation')
 
 def get_spot_(ex):
-    from butil.butils import get_binance_spot
     bid,ask = get_binance_spot(ex.ric.replace('-','/'))
     bid = float(bid)
     ask = float(ask)
