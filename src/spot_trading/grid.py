@@ -1,4 +1,3 @@
-from importlib import import_module
 import click,datetime,os
 from tabulate import tabulate
 import pandas as pd
@@ -296,12 +295,15 @@ async def on_ticker(t, receipt_timestamp):
         assert isinstance(book.sequence_number, int)
 """
 
+from spot_trading.bs_spot_sql import read_latest_ticker
 async def on_ohlcv(data):
     global stacks_len
     global rows 
     global pgrid 
     for k,v in data.items():
         vv = v;v['ric']=k
+        bid,ask,ts,_ = read_latest_ticker(k)
+        print('***', bid,ask,ts)
         rows+= [ vv ]
         if len(rows) > stacks_len:
             rows = rows[ -stacks_len:]
