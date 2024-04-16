@@ -41,7 +41,7 @@ def write_latest_ticker(ric,bid,ask,ts,timestamp):
 INSERT INTO {ticker_snippet_tbl} (ric,bid,ask,ts,timestamp) VALUES ('{ric}',{bid},{ask},{ts},'{timestamp}') ON CONFLICT (ric) 
 DO UPDATE SET bid={bid},ask={ask},ts={int(ts)},timestamp='{timestamp}';
 """
-        res = conn.execute(stmt)
+        res = conn.execute(text(stmt))
         if res:
             r = res.fetchall()
             assert len(r)==1
