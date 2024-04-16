@@ -43,8 +43,8 @@ class BianceSpot:
         """
         df = df.copy()
         df['sign'] = df.side.apply(lambda s: -1 if s=='SELL' else 1  if s=='BUY' else 0)
-        df['$loss'] = (df.price - p0) * df.sign * df.origQty
-        df['drift_bps'] = ((df.price-p0)/p0*10_000).apply(int)
+        df['$loss'] = (df.price.astype(float) - p0) * df.sign * df.origQty.astype(float)
+        df['drift_bps'] = ((df.price.astype(float)-p0)/p0*10_000).apply(int)
         df.drop(['sign'],axis=1,inplace=True)
         return df 
 
