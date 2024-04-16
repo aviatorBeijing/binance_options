@@ -280,8 +280,7 @@ async def on_ticker(t, receipt_timestamp):
         'bid': [float(t.bid)],
         'ask': [float(t.ask)],
         'ts': [ int(float(t.timestamp)*1000)],
-        'timestamp': [int(t.timestamp)],
-        'receipt': [int(receipt_timestamp)],
+        'timestamp': [_t(t.timestamp)],
     })
     if not ticker_snippet_tbl_exists():
         init_ticker_snippet_tbl(df)
