@@ -23,7 +23,7 @@ def read_latest_ticker(ric):
     ric = ric.replace('/','-')
     with bn_spot_engnine.connect() as conn:
         stmt =  f"SELECT bid,ask,ts,timestamp FROM {ticker_snippet_tbl} WHERE ric='{ric}';"
-        res = conn.execute(stmt)
+        res = conn.execute(text(stmt))
         if res:
             r = res.fetchall()
             assert len(r)==1
