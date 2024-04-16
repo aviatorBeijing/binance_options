@@ -38,7 +38,7 @@ def write_latest_ticker(ric,bid,ask,ts,timestamp):
     ric = ric.replace('/','-')
     with bn_spot_engnine.connect() as conn:
         stmt =  f"""
-INSERT INTO {ticker_snippet_tbl} (ric,bid,ask,ts,timestamp) VALUES ('{ric}',{bid},{ask},{ts},{timestamp}) ON CONFLICT (ric) 
+INSERT INTO {ticker_snippet_tbl} (ric,bid,ask,ts,timestamp) VALUES ('{ric}',{bid},{ask},{ts},'{timestamp}') ON CONFLICT (ric) 
 DO UPDATE SET bid={bid},ask={ask},ts={int(ts)},timestamp={timestamp};
 """
         res = conn.execute(stmt)
