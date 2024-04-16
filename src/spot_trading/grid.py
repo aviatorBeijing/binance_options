@@ -97,7 +97,7 @@ class PriceGrid_:
             print( '-- trend:', np.array([ s.loc['25%'], s.loc['50%'], s.loc['75%']]), ' (25%,50%,75%)')
             del ohlcv
 
-    def plot(self):
+    def plot(self,ref_spot):
         if self.raw.empty:
             print('-- no ohlcv df provided, ignore plotting')
             return
@@ -134,7 +134,7 @@ class PriceGrid_:
         from spot_trading.portfolio import analyze_trades_cached
         from spot_trading.bs_meta import BianceSpot
         #tds = analyze_trades_cached()
-        odf = BianceSpot.analyze_open_orders_cached(0.152)
+        odf = BianceSpot.analyze_open_orders_cached(ref_spot)
         odf = odf[odf.symbol==self.ric.replace('/','').replace('-','')]
         if not odf.empty:
             for i, ord in odf[['side','price']].iterrows():
@@ -346,14 +346,15 @@ async def on_ohlcv(data):
 @click.option('--test', is_flag=True, default=False)
 @click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
 @click.option('--span',default='5m')
-def main(ric,start_ts,test, uniform_grid_gap,span):
+@click.option('--ref_spot', default=0.155, help="spot price, used for offline plot")
+def main(ric,start_ts,test, uniform_grid_gap,span,ref_spot):
     ric = ric.upper()
     global pgrid 
     if not pgrid: # Init
         prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
         current_price = prange[-1].iloc[-1].close #test
         pgrid = HFTUniformGrid( current_price, uniform_grid_gap, *prange)
-        pgrid.plot()
+        pgrid.plot( ref_spot )
         print(pgrid)
 
     if not test:
