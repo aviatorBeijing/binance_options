@@ -29,6 +29,11 @@ def read_latest_ticker(ric):
             assert len(r)==1
             r = r[0]
             bid =float(r[0]);ask=float(r[1]);ts=int(r[2]);timestamp=r[3]
+
+            tnow = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
+            tnow = int( tnow.timestamp()*1000)
+            assert( tnow>=ts and (tnow-ts)<5000 ), f"tnow={tnow}, db ts={ts}, diff={tnow-ts}"
+
             return bid,ask,ts,timestamp 
     return -1.,-1.,0,'n/a'
 
