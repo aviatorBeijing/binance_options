@@ -264,7 +264,7 @@ stacks_len=10*12 # Working with WINDOW_IN_SECONDS,  defines the length of histor
 rows = []
 pgrid = None #global
 
-from spot_trading.bs_spot_sql import init_ticker_snippet_tbl,ticker_snippet_tbl_exists
+from spot_trading.bs_spot_sql import init_ticker_snippet_tbl,ticker_snippet_tbl_exists,write_latest_ticker
 def _t(s): return datetime.datetime.fromtimestamp(int(s)).isoformat() 
 async def on_ticker(t, receipt_timestamp):
     if t.timestamp is not None:
@@ -272,9 +272,9 @@ async def on_ticker(t, receipt_timestamp):
     assert isinstance(t.exchange, str)
     assert isinstance(t.bid, Decimal)
     assert isinstance(t.ask, Decimal)
-    print(f'{t.exchange} ticker @ {receipt_timestamp}: {t}')
-    print(_t(receipt_timestamp))
-    print(_t(t.timestamp))
+    #print(f'{t.exchange} ticker @ {receipt_timestamp}: {t}')
+    #print(_t(receipt_timestamp))
+    #print(_t(t.timestamp))
     df = pd.DataFrame.from_dict({
         'ric': [t.symbol],
         'bid': [float(t.bid)],
@@ -284,6 +284,8 @@ async def on_ticker(t, receipt_timestamp):
     })
     if not ticker_snippet_tbl_exists():
         init_ticker_snippet_tbl(df)
+    else:
+        write_latest_ticker(float(t.bid),float(t.ask),int(float(t.timestamp)*1000), _t(t.timestamp))
 
 
 """async def on_book(book, receipt_timestamp):

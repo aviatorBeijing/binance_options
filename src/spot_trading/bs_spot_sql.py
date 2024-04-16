@@ -19,3 +19,33 @@ def init_ticker_snippet_tbl(df):
         stmt =  f'ALTER TABLE {ticker_snippet_tbl} ADD PRIMARY KEY (ric);'
         conn.execute( text(stmt))
         conn.commit()
+def read_latest_ticker(ric):
+    ric = ric.replace('/','-')
+    with bn_spot_engnine.connect() as conn:
+        stmt =  f"SELECT bid,ask,ts,timestamp FROM {ticker_snippet_tbl} WHERE ric='{ric}';"
+        res = conn.execute(stmt)
+        if res:
+            r = res.fetchall()
+            assert len(r)==1
+            r = r[0]
+            bid =float(r[0]);ask=float(r[1]);ts=int(r[2]);timestamp=r[3]
+            return bid,ask,ts,timestamp 
+    return -1.,-1.,0,'n/a'
+
+def write_latest_ticker(ric,bid,ask,ts,timestamp):
+    assert isinstance(timestamp,str)
+    assert isinstance(ts,int)
+    ric = ric.replace('/','-')
+    with bn_spot_engnine.connect() as conn:
+        stmt =  f"""
+INSERT INTO {ticker_snippet_tbl} (ric,bid,ask,ts,timestamp) VALUES () ON CONFLICT (ric) 
+DO UPDATE SET bid={bid},ask={ask},ts={int(ts)},timestamp={timestamp};
+"""
+        res = conn.execute(stmt)
+        if res:
+            r = res.fetchall()
+            assert len(r)==1
+            r = r[0]
+            bid =float(r[0]);ask=float(r[1]);ts=int(r[2]);timestamp=r[3]
+            return bid,ask,ts,timestamp 
+    return -1.,-1.,0,'n/a'
