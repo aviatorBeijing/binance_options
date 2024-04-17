@@ -91,7 +91,7 @@ def portfolio_check(ric,days=72):
 
     pce,_ = binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
-    print(f'-- gain (after liquidating): $ {port_value:,.4f}')
+    print(f'-- gain (after liquidating and fee deduction): $ {port_value:,.4f}')
     
     fn = fd + f'/tmp/binance_fee_gain.dat'
     with open(fn,'w') as fp:
