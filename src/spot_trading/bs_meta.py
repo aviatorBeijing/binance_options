@@ -23,7 +23,7 @@ class BianceSpot:
             print('*** No outstanding orders.')
             return pd.DataFrame()
         #df['dt'] = (tnow - df.updateTime.apply(int))/1000
-        df = df['symbol,type,side,status,orderId,price,origQty,executedQty,cummulativeQuoteQty,updateTime'.split(',')]
+        df = df['symbol,type,side,status,orderId,price,origQty,executedQty,updateTime'.split(',')] #cummulativeQuoteQty
         df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('updateTime', ascending=False)
         bid,ask = get_binance_spot(self.ric.upper())
