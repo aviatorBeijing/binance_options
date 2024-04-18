@@ -36,7 +36,7 @@ def _main(contracts:list, reference_spots:list):
             func_ = putprice
         for S in reference_spots:
             op = func_(S,K,T/365,sigma,0.)
-            recs += [ {'contract': contract, 'spot': S, 'option_projected': op, 'option_ask':ask} ]
+            recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': S, 'option_projected': op} ]
     df = pd.DataFrame.from_records( recs )
     df.sort_values('spot', ascending=False, inplace=True)
     print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
