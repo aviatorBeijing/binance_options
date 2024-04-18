@@ -22,18 +22,19 @@ def _main(contracts:list, reference_spots:list):
     underlying = get_underlying( contracts[0])
     spot_now, _ = get_binance_spot(underlying)
     recs = [] 
-    for S in reference_spots:
-        for contract in contracts:
-            _, T, K, ctype = extract_specs(contract)
-            cdata = fetch_bidask(contract.upper())
-            ask = float(cdata['ask'])
-            sigma = float(cdata['impvol_ask'])
+    
+    for contract in contracts:
+        _, T, K, ctype = extract_specs(contract)
+        cdata = fetch_bidask(contract.upper())
+        ask = float(cdata['ask'])
+        sigma = float(cdata['impvol_ask'])
 
-            func_ = None
-            if ctype == 'call':
-                func_ = callprice
-            elif ctype == 'put':
-                func_ = putprice
+        func_ = None
+        if ctype == 'call':
+            func_ = callprice
+        elif ctype == 'put':
+            func_ = putprice
+        for S in reference_spots:
             op = func_(S,K,T/365,sigma,0.)
             recs += [ {'contract': contract, 'spot': S, 'option': op, 'option_ask':ask} ]
     df = pd.DataFrame.from_records( recs )
