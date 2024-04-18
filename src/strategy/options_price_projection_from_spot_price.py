@@ -28,8 +28,7 @@ def _main(contracts, reference_spot):
         cdata = fetch_bidask(contract.upper())
         ask = float(cdata['ask'])
         sigma = float(cdata['impvol_ask'])
-        recs += [{'spot': spot_now, 'option': ask, 'projected':False}]
-        
+                
         func_ = None
         if ctype == 'call':
             func_ = callprice
