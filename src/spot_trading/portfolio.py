@@ -1,13 +1,29 @@
 import click,datetime,os
 from tabulate import tabulate
 import pandas as pd
-import numpy as np
-import scipy
+import numpy as np 
+import matplotlib.pyplot as plt
 
 from spot_trading.bs_meta import BianceSpot
 from butil.butils import binance_spot
 
 fd = os.getenv('USER_HOME',"/Users/junma")
+
+def _find_max_capital(df):
+    capitals= []
+    prev_idx = -1
+    for i, idx in enumerate(df[df['neutral']=='ok'].index):
+        if i ==0:
+            max_capital = df.loc[:idx]['$agg'].min()
+        else:
+            max_capital = df.loc[prev_idx:idx]['$agg'].min()
+        prev_idx = idx 
+        capitals += [ max_capital]
+    max_capital = df.loc[prev_idx:]['$agg'].min()
+    capitals += [max_capital]
+    mx = max( np.array(capitals)*-1. )
+    print(f'-- max capital cost: $ {mx:.2f}')
+    return mx
 
 def analyze_trades_cached(days=72) -> pd.DataFrame:
     fn = fd + f'/tmp/binance_trades_in_{days}.csv'
@@ -17,18 +33,20 @@ def analyze_trades_cached(days=72) -> pd.DataFrame:
     print(f'-- [trades from cached: {fn}]')
     print(df)
 
-    import matplotlib.pyplot as plt 
+    max_capital = _find_max_capital(df)
+    p = df[df['neutral']=='ok']['$agg']/max_capital*100
+
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.grid()
+    #ax1.grid()
 
     ax1.set_ylabel('$agg', color = 'blue') 
-    ax2.set_ylabel('#agg', color = 'red') 
+    ax2.set_ylabel('agg rtn%', color = 'red') 
     ax1.plot(df['$agg'], color='blue')
-    ax2.plot(df['agg'], color='red')
+    ax2.plot(p, color='red')
     fn =f"{fd}/tmp/binance_portfolio.png"
     plt.savefig(fn)
-    print('-- saved:', fn)
+    print('-- saved portfolio:', fn)
     return df
 
 def analyze_trades(ric, tds, days, save=True):
