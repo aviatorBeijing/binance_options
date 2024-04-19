@@ -42,7 +42,7 @@ def _main(contracts:list, reference_spots:list):
         for S in reference_spots:
             op = func_(S,K,T/365,sigma,0.)
             opr = (op-ask)/ask*100
-            spr = (S-K)/K*100
+            spr = (S-spot_now)/spot_now*100
             recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': f"{S} ({spr:.1f}%)", 'option_projected': op, 'opr': f"{opr:.1f}%"} ]
     df = pd.DataFrame.from_records( recs )
     df.sort_values('contract', ascending=True, inplace=True)
