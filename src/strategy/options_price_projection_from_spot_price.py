@@ -25,7 +25,12 @@ def _main(contracts:list, reference_spots:list):
     
     for contract in contracts:
         _, T, K, ctype = extract_specs(contract)
-        cdata = fetch_bidask(contract.upper())
+        try:
+            cdata = fetch_bidask(contract.upper())
+        except Exception as e:
+            print('*** wait for data')
+            continue
+        if not 'ask' in cdata: continue
         ask = float(cdata['ask'])
         sigma = float(cdata['impvol_ask'])
 
