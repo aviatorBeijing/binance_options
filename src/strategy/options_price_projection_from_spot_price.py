@@ -43,7 +43,7 @@ def _main(contracts:list, reference_spots:list):
             op = func_(S,K,T/365,sigma,0.)
             recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': S, 'option_projected': op} ]
     df = pd.DataFrame.from_records( recs )
-    df.sort_values('spot', ascending=False, inplace=True)
+    df.sort_values('contract', ascending=True, inplace=True)
     print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
     print( tabulate(df[df.contract.str.contains('-P')], headers="keys"))
 
