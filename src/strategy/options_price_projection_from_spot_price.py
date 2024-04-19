@@ -22,7 +22,7 @@ def _main(contracts:list, reference_spots:list):
     underlying = get_underlying( contracts[0])
     spot_now, _ = get_binance_spot(underlying)
     recs = [] 
-    
+    print('-- ', underlying,": $", spot_now)
     for contract in contracts:
         _, T, K, ctype = extract_specs(contract)
         try:
