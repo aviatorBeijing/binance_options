@@ -32,6 +32,8 @@ def main(ric,span):
     df['hl'] = df['high'] - df['low']
 
     print(f'-- span={span}, n={df.shape[0]}')
+    print( f"-- kline completeness: {r:.1f}%, now = ${close}" )
+    
     def _r(x): # compare abs
         neg = x.iloc[-1]<0
         ocr = x.apply(abs).rolling(x.shape[0]).rank(pct=True).iloc[-1]
@@ -51,8 +53,6 @@ def main(ric,span):
     a,b= df.close.min(), df.close.max()
     print(f'-- close price rank: {cr:.1f}% (high=$ {b} ({((b-close)/close*100):.1f}%), low=$ {((a-close)/close*100):.1f}%)')
     
-
-    print( f"-- kline completeness: {r:.1f}%, now = ${close}" )
     print( f"-- current (UTC): {tnow}")
 
 if __name__ == '__main__':
