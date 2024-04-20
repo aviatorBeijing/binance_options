@@ -33,10 +33,10 @@ def main(ric,span):
     def _r(x):
         neg = df.oc.iloc[-1]<0
         ocr = x.oc.rolling(x.shape[0]).rank(pct=True).iloc[-1]
-        print(f'open close ({"-" if neg else "+"}): {ocr:.1f}%')
+        print(f'-- open close ({"-" if neg else "+"}): {ocr:.1f}%')
     _r( df[df.oc<0].dropna() )
 
-    print( f"{r:.1f}%", close )
+    print( f"-- kline completeness: {r:.1f}%", f"close = ${close}" )
 
 if __name__ == '__main__':
     main()
