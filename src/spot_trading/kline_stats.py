@@ -28,7 +28,7 @@ def main(ric,span):
     tnow = datetime.datetime.utcnow()
     r = (tnow-ts).seconds/_secs(span)*100
 
-    df['oc'] = df['open'] - df['close']
+    df['oc'] = df['close'] - df['open']
     df['hl'] = df['high'] - df['low']
 
     print(f'-- span={span}, n={df.shape[0]}')
@@ -38,9 +38,9 @@ def main(ric,span):
         ocr *=100
         return ocr, neg      
     ocr, neg = _r( df[df.oc<0].dropna().oc )
-    print(f'-- open close rank   ({"-" if neg else "+"}): {ocr:.1f}%')
+    print(f'-- close open rank   ({"-" if neg else "+"}): {ocr:.1f}%')
     ocr, neg = _r( df.dropna().oc )
-    print(f'-- open close rank (all): {ocr:.1f}%')
+    print(f'-- close open rank (all): {ocr:.1f}%')
     hlr, neg = _r( df.dropna().hl )
     print(f'-- high low rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
