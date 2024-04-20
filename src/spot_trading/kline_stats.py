@@ -29,12 +29,16 @@ def main(ric,span):
     r = (tnow-ts).seconds/_secs(span)*100
 
     df['oc'] = df['open'] - df['close']
+    df['hl'] = df['high'] - df['low']
 
     def _r(x):
-        neg = df.oc.iloc[-1]<0
-        ocr = x.oc.rolling(x.shape[0]).rank(pct=True).iloc[-1]
-        print(f'-- open close rank ({"-" if neg else "+"}): {ocr:.1f}%')
-    _r( df[df.oc<0].dropna() )
+        neg = x.iloc[-1]<0
+        ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
+        return ocr, neg      
+    ocr, neg = _r( df[df.oc<0].dropna().oc )
+    print(f'-- open close rank ({"-" if neg else "+"}): {ocr:.1f}%')
+    hlr, neg = _r( df.dropna().hl )
+    print(f'-- open close rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
     print( f"-- kline completeness: {r:.1f}%, close = ${close}" )
     print( f"-- current (UTC): {tnow}")
