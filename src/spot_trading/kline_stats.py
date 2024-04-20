@@ -48,6 +48,7 @@ def main(ric,span):
     ocr, neg = _r( df.dropna().oc )
     print(f'-- close open rank (all): {ocr:.1f}%')
     hlr, neg = _r( df.dropna().hl )
+    print(f'-- high minus low: $ {(high-low):.5f}, { ((high-low)/low*10_000):.0f}bps')
     print(f'-- high low rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
     cr, neg = _r( df.dropna().close )
