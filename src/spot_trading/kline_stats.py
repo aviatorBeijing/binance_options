@@ -9,10 +9,10 @@ def main(ric,span):
     df = binance_kline( symbol=ric, span=span )
     row = df.iloc[-1]
     ts,open,high,low,close,volume = row.timestamp,row.open,row.high,row.low,row.close,row.volume 
-    ts = pd.Timestamp(ts).to_pydatetime().timestamp()
-    tnow = datetime.datetime.utcnow().timestamp()
+    ts = datetime.datetime.strptime(ts,'%Y-%m-%dT%H:%M:%S.%fZ')
+    tnow = datetime.datetime.utcnow()
     print( ts)
     print( tnow)
-    print( (tnow-ts)/3600/24, close )
+    print( tnow-ts, close )
 if __name__ == '__main__':
     main()
