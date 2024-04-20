@@ -38,7 +38,7 @@ def main(ric,span):
         ocr *=100
         return ocr, neg 
     if df.oc.iloc[-1]<0:     
-        ocr, neg = _r( df[df.oc<0].dropna().oc )
+        ocr, neg = _r( df[df.oc<0].dropna().apply(abs).oc )
     else:
         ocr, neg = _r( df[df.oc>0].dropna().oc )
     print(f'-- close open rank   ({"-" if neg else "+"}): {ocr:.1f}%')
