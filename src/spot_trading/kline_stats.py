@@ -2,6 +2,20 @@ import os,datetime,click
 import pandas as pd
 from butil.butils import binance_kline
 
+def _secs(span):
+    span = span.lower()
+    if span.endswith('m'):
+        n = span.split('m')[0];n=int(n)
+        return n * 60
+    elif span.endswith('h'):
+        n = span.split('h')[0];n=int(n)
+        return n * 60 * 60
+    elif span.endswith('d'):
+        n = span.split('d')[0];n=int(n)
+        return n * 60 * 60  * 24
+    else:
+        raise Exception("Not imp.")
+
 @click.command()
 @click.option('--ric', default='DOGE/USDT')
 @click.option('--span', default='5m')
@@ -13,6 +27,6 @@ def main(ric,span):
     tnow = datetime.datetime.utcnow()
     print( ts)
     print( tnow)
-    print( tnow-ts, close )
+    print( (tnow-ts)/_secs(span), close )
 if __name__ == '__main__':
     main()
