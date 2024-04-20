@@ -11,7 +11,8 @@ def main(ric,span):
     ts,open,high,low,close,volume = row.timestamp,row.open,row.high,row.low,row.close,row.volume 
     ts = pd.Timestamp(ts).to_pydatetime().timestamp()
     tnow = datetime.datetime.utcnow().timestamp()
-    print( ts, tnow, '(utc)')
+    print( ts)
+    print( tnow)
     print( tnow-ts, close )
 if __name__ == '__main__':
     main()
