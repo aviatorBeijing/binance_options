@@ -49,7 +49,7 @@ def main(ric,span):
 
     cr, neg = _r( df.dropna().close )
     a,b= df.close.min(), df.close.max()
-    print(f'-- close price rank: {cr:.1f}% (high=$ {b} ({((close-b)/b*100):.1f}%), low=$ {a})')
+    print(f'-- close price rank: {cr:.1f}% (high=$ {b} ({((b-close)/close*100):.1f}%), low=$ {((a-close)/close*100):.1f}%)')
     
 
     print( f"-- kline completeness: {r:.1f}%, now = ${close}" )
