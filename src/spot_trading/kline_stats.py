@@ -43,6 +43,7 @@ def main(ric,span):
         ocr, neg = _r( df[df.oc<0].dropna().oc )
     else:
         ocr, neg = _r( df[df.oc>0].dropna().oc )
+    print(f'-- close minus open: $ {(close-open)}, { ((close-open)/open*10_000):.0f}bps')
     print(f'-- close open rank   ({"-" if neg else "+"}): {ocr:.1f}%')
     ocr, neg = _r( df.dropna().oc )
     print(f'-- close open rank (all): {ocr:.1f}%')
