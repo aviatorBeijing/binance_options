@@ -25,8 +25,9 @@ def main(ric,span):
     ts,open,high,low,close,volume = row.timestamp,row.open,row.high,row.low,row.close,row.volume 
     ts = datetime.datetime.strptime(ts,'%Y-%m-%dT%H:%M:%S.%fZ')
     tnow = datetime.datetime.utcnow()
+    r = (tnow-ts).seconds/_secs(span)*100
     print( ts)
     print( tnow)
-    print( (tnow-ts).seconds/_secs(span), close )
+    print( f"{r:.1f}%", close )
 if __name__ == '__main__':
     main()
