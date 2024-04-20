@@ -27,6 +27,6 @@ def main(ric,span):
     tnow = datetime.datetime.utcnow()
     print( ts)
     print( tnow)
-    print( (tnow-ts)/_secs(span), close )
+    print( (tnow-ts).seconds/_secs(span), close )
 if __name__ == '__main__':
     main()
