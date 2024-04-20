@@ -48,10 +48,11 @@ def main(ric,span):
     print(f'-- high low rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
     cr, neg = _r( df.dropna().close )
-    print(f'-- close price rank: {cr:.1f}% (high=$ {df.close.max()}, low=$ {df.close.min()})')
+    a,b= df.close.min(), df.close.max()
+    print(f'-- close price rank: {cr:.1f}% (high=$ {b} ({((close-b)/b*100):.1f}%), low=$ {a})')
     
 
-    print( f"-- kline completeness: {r:.1f}%, close = ${close}" )
+    print( f"-- kline completeness: {r:.1f}%, now = ${close}" )
     print( f"-- current (UTC): {tnow}")
 
 if __name__ == '__main__':
