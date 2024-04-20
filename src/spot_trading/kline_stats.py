@@ -30,7 +30,7 @@ def main(ric,span):
 
     df['oc'] = df['open'] - df['close']
     x = df[df.oc<0].dropna()
-    ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
+    ocr = x.oc.rolling(x.shape[0]).rank(pct=True).iloc[-1]
     print( f"{r:.1f}%", close )
     print(f'open close (-): {ocr:.1f}%')
 if __name__ == '__main__':
