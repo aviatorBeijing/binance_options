@@ -31,10 +31,10 @@ def main(ric,span):
     df['oc'] = df['open'] - df['close']
     df['hl'] = df['high'] - df['low']
 
+    print(f'-- span={span}, n={df.shape[0]}')
     def _r(x):
         neg = x.iloc[-1]<0
         ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
-        print( ocr )
         ocr *=100
         return ocr, neg      
     ocr, neg = _r( df[df.oc<0].dropna().oc )
