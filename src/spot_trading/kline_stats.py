@@ -47,6 +47,10 @@ def main(ric,span):
     hlr, neg = _r( df.dropna().hl )
     print(f'-- high low rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
+    cr, neg = _r( df.dropna().close )
+    print(f'-- close price rank: {cr:.1f}%')
+    
+
     print( f"-- kline completeness: {r:.1f}%, close = ${close}" )
     print( f"-- current (UTC): {tnow}")
 
