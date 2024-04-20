@@ -36,7 +36,8 @@ def main(ric,span):
         print(f'-- open close ({"-" if neg else "+"}): {ocr:.1f}%')
     _r( df[df.oc<0].dropna() )
 
-    print( f"-- kline completeness: {r:.1f}%", f"close = ${close}" )
+    print( f"-- kline completeness: {r:.1f}%, close = ${close}" )
+    print( f"-- current: {tnow}")
 
 if __name__ == '__main__':
     main()
