@@ -32,13 +32,13 @@ def main(ric,span):
     df['hl'] = df['high'] - df['low']
 
     print(f'-- span={span}, n={df.shape[0]}')
-    def _r(x):
+    def _r(x): # compare abs
         neg = x.iloc[-1]<0
-        ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
+        ocr = x.apply(abs).rolling(x.shape[0]).rank(pct=True).iloc[-1]
         ocr *=100
         return ocr, neg 
     if df.oc.iloc[-1]<0:     
-        ocr, neg = _r( df[df.oc<0].dropna().apply(abs).oc )
+        ocr, neg = _r( df[df.oc<0].dropna().oc )
     else:
         ocr, neg = _r( df[df.oc>0].dropna().oc )
     print(f'-- close open rank   ({"-" if neg else "+"}): {ocr:.1f}%')
