@@ -7,6 +7,9 @@ from butil.butils import binance_kline
 @click.option('--span', default='5m')
 def main(ric,span):
     df = binance_kline( symbol=ric, span=span )
-    print(df)
+    row = df.iloc[-1]
+    ts,open,high,low,close,volume = row.timestamp,row.open,row.high,row.low,row.close,row.volume 
+    ts = pd.Timestamp(ts).to_pydatetime()
+    print( ts, close )
 if __name__ == '__main__':
     main()
