@@ -48,7 +48,7 @@ def main(ric,span):
     print(f'-- high low rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
     cr, neg = _r( df.dropna().close )
-    print(f'-- close price rank: {cr:.1f}%')
+    print(f'-- close price rank: {cr:.1f}% (high=$ {df.close.max()}, low=$ {df.close.min()})')
     
 
     print( f"-- kline completeness: {r:.1f}%, close = ${close}" )
