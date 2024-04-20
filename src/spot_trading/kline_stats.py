@@ -38,7 +38,7 @@ def main(ric,span):
     ocr, neg = _r( df[df.oc<0].dropna().oc )
     print(f'-- open close rank ({"-" if neg else "+"}): {ocr:.1f}%')
     hlr, neg = _r( df.dropna().hl )
-    print(f'-- open close rank ({"-" if neg else "+"}): {hlr:.1f}%')
+    print(f'-- high low rank ({"-" if neg else "+"}): {hlr:.1f}%')
 
     print( f"-- kline completeness: {r:.1f}%, close = ${close}" )
     print( f"-- current (UTC): {tnow}")
