@@ -36,8 +36,11 @@ def main(ric,span):
         neg = x.iloc[-1]<0
         ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
         ocr *=100
-        return ocr, neg      
-    ocr, neg = _r( df[df.oc<0].dropna().oc )
+        return ocr, neg 
+    if df.oc.iloc[-1]<0:     
+        ocr, neg = _r( df[df.oc<0].dropna().oc )
+    else:
+        ocr, neg = _r( df[df.oc>0].dropna().oc )
     print(f'-- close open rank   ({"-" if neg else "+"}): {ocr:.1f}%')
     ocr, neg = _r( df.dropna().oc )
     print(f'-- close open rank (all): {ocr:.1f}%')
