@@ -29,7 +29,7 @@ def main(ric,span):
     r = (tnow-ts).seconds/_secs(span)*100
 
     df['oc'] = df['open'] - df['close']
-    x = df[df.oc<0]
+    x = df[df.oc<0].dropna()
     ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
     print( f"{r:.1f}%", close )
     print(f'open close (-): {ocr:.1f}%')
