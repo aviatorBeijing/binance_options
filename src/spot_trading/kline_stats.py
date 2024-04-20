@@ -13,6 +13,6 @@ def main(ric,span):
     tnow = datetime.datetime.utcnow().timestamp()
     print( ts)
     print( tnow)
-    print( tnow-ts, close )
+    print( (tnow-ts)/3600/24, close )
 if __name__ == '__main__':
     main()
