@@ -34,6 +34,8 @@ def main(ric,span):
     def _r(x):
         neg = x.iloc[-1]<0
         ocr = x.rolling(x.shape[0]).rank(pct=True).iloc[-1]
+        print( ocr )
+        ocr *=100
         return ocr, neg      
     ocr, neg = _r( df[df.oc<0].dropna().oc )
     print(f'-- open close rank   ({"-" if neg else "+"}): {ocr:.1f}%')
