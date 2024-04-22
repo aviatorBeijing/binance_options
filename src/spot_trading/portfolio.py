@@ -53,7 +53,7 @@ def analyze_trades_cached(days=72) -> pd.DataFrame:
 def read_cached_trades(ric):
     fn = fd + f'/tmp/binance_trades.csv'
     if os.path.exists(fn):
-        df = pd.read_csv( fn, index=False )
+        df = pd.read_csv( fn, index_col=False)
         return df 
     return pd.DataFrame()
 
