@@ -59,7 +59,7 @@ def analyze_trades(ric, tds, days, save=True):
     tds['neutral'] = ''
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
-    print( tds )
+    print( tds.tail(10) )
     if save:
         fn = fd + f'/tmp/binance_trades_in_{days}.csv'
         tds.to_csv(fn,index=0)
