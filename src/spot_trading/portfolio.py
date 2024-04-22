@@ -50,8 +50,20 @@ def analyze_trades_cached(days=72) -> pd.DataFrame:
     print('-- saved portfolio:', fn)
     return df
 
+def read_cached_trades(ric):
+    fn = fd + f'/tmp/binance_trades.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv( fn, index=False )
+        return df 
+    return pd.DataFrame()
+
 def analyze_trades(ric, tds, days, save=True):
+    old_tds = read_cached_trades(ric)
     tds = tds.copy()
+    if not old_tds.empty:
+        tds = pd.concat([old_tds,tds], axis=1)
+        print('#'*90)
+        print( tds )
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
@@ -62,7 +74,7 @@ def analyze_trades(ric, tds, days, save=True):
     print('-- [trades]')
     print( tds.tail(10) )
     if save:
-        fn = fd + f'/tmp/binance_trades_in_{days}.csv'
+        fn = fd + f'/tmp/binance_trades.csv'
         tds.to_csv(fn,index=0)
         print('-- saved:', fn)
     return tds
