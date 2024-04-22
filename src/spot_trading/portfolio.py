@@ -35,6 +35,7 @@ def analyze_trades_cached(days=72) -> pd.DataFrame:
 
     max_capital = _find_max_capital(df)
     p = df[df['neutral']=='ok']['$agg']/max_capital*100
+    print('-- max capital invested: $', max_capital)
 
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
