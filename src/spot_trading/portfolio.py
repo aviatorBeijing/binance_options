@@ -65,7 +65,7 @@ def analyze_trades(ric, tds, days, save=True):
         tds['index'] = tds['id'];tds.set_index('index',inplace=True)
         tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
 
-    tds = tds.drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
+    tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
         fn = fd + f'/tmp/binance_trades.csv'
         for col in 'qty,price,commission'.split(','):
