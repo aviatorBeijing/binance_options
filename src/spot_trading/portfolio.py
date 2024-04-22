@@ -67,6 +67,11 @@ def analyze_trades(ric, tds, days, save=True):
         print('#'*90)
         print( tds )
 
+    if save:
+        fn = fd + f'/tmp/binance_trades.csv'
+        tds.to_csv(fn,index=False)
+        print('-- saved:', fn)
+        
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
@@ -76,10 +81,6 @@ def analyze_trades(ric, tds, days, save=True):
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
     print( tds.tail(10) )
-    if save:
-        fn = fd + f'/tmp/binance_trades.csv'
-        tds.to_csv(fn,index=False)
-        print('-- saved:', fn)
     return tds
 
 def calc_avg_holding_price( tds = pd.DataFrame()) -> tuple:
