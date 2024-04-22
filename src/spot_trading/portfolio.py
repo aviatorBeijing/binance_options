@@ -63,8 +63,9 @@ def analyze_trades(ric, tds, days, save=True):
     tds = tds.copy()
     if not old_tds.empty:
         tds['index'] = tds['id'];tds.set_index('index',inplace=True)
-        tds = pd.concat([old_tds,tds], axis=0, ignore_index=False).drop_duplicates(['id'])
-    
+        tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
+
+    tds = tds.drop_duplicates(['id'])    
     if save:
         fn = fd + f'/tmp/binance_trades.csv'
         tds.to_csv(fn,index=False)
