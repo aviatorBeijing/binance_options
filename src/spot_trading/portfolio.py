@@ -68,6 +68,9 @@ def analyze_trades(ric, tds, days, save=True):
     tds = tds.drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
         fn = fd + f'/tmp/binance_trades.csv'
+        for col in 'qty,price,commission'.split(','):
+            tds[col] = tds[col].apply(float)
+        tds['datetime'] = tds['datetime'].apply(str)
         tds.to_csv(fn,index=False)
         print('-- saved:', fn)
     print(f"-- Total: {tds.shape[0]}, start: {tds.iloc[0]['datetime']}")
