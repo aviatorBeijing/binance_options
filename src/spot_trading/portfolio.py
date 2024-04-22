@@ -54,15 +54,16 @@ def read_cached_trades(ric):
     fn = fd + f'/tmp/binance_trades.csv'
     if os.path.exists(fn):
         df = pd.read_csv( fn, index_col=False)
+        df['index'] = df['id'];df.set_index('index',inplace=True)
         return df 
     return pd.DataFrame()
 
 def analyze_trades(ric, tds, days, save=True):
     old_tds = read_cached_trades(ric)
     tds = tds.copy()
-    print('#'*90)
     if not old_tds.empty:
-        tds = pd.concat([old_tds,tds], axis=1)
+        tds['index'] = tds['id'];tds.set_index('index',inplace=True)
+        tds = pd.concat([old_tds,tds], axis=1, ignore_index=False)
         print('#'*90)
         print( tds )
 
@@ -77,7 +78,7 @@ def analyze_trades(ric, tds, days, save=True):
     print( tds.tail(10) )
     if save:
         fn = fd + f'/tmp/binance_trades.csv'
-        tds.to_csv(fn,index=0)
+        tds.to_csv(fn,index=False)
         print('-- saved:', fn)
     return tds
 
