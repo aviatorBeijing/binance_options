@@ -60,10 +60,12 @@ def read_cached_trades(ric):
 def analyze_trades(ric, tds, days, save=True):
     old_tds = read_cached_trades(ric)
     tds = tds.copy()
+    print('#'*90)
     if not old_tds.empty:
         tds = pd.concat([old_tds,tds], axis=1)
         print('#'*90)
         print( tds )
+
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
