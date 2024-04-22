@@ -62,6 +62,8 @@ def analyze_trades(ric, tds, days, save=True):
     old_tds = read_cached_trades(ric)
     tds = tds.copy()
     if not old_tds.empty:
+        old_tds['id'] = old_tds['id'].apply(int)
+        tds['id'] = tds['id'].apply(int)
         tds['index'] = tds['id'];tds.set_index('index',inplace=True)
         tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
 
