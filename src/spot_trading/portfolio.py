@@ -103,14 +103,15 @@ def calc_avg_holding_price( tds = pd.DataFrame()) -> tuple:
     res_price = cost/res_size
     return res_price, res_size
 
-def portfolio_check(ric,days=72):
+def portfolio_check(ric,days=3):
     """
     @param days (int): how long to look back for trades
     """
     from bbroker.settings import spot_ex
     mkt = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
-    tds = mkt.check_trades(hours=3*24)
+    print(f'*** fetching trades data in {days} days. Be aware, max count returned by Binance API is 500 trades. To ensure getting all trades, the day count might need to be adjusted to set the start time of fetching.')
+    tds = mkt.check_trades(hours=days*24)
     tds = analyze_trades( ric, tds, days)
     
     pceMap = {}
