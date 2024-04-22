@@ -25,8 +25,8 @@ def _find_max_capital(df):
     print(f'-- max capital cost: $ {mx:.2f}')
     return mx
 
-def analyze_trades_cached(days=72) -> pd.DataFrame:
-    fn = fd + f'/tmp/binance_trades_in_{days}.csv'
+def analyze_trades_cached() -> pd.DataFrame:
+    fn = fd + f'/tmp/binance_trades.csv'
     df = pd.read_csv(fn)
     df['datetime'] = df['datetime'].apply(pd.Timestamp)
     df.set_index('datetime',inplace=True)
@@ -147,7 +147,7 @@ def portfolio_check(ric,days=3):
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
-@click.option('--days',default=72)
+@click.option('--days',default=3)
 #@click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--check_cached', is_flag=True, default=False)
 @click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
