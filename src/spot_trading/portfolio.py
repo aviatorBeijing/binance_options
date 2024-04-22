@@ -110,7 +110,7 @@ def portfolio_check(ric,days=72):
     from bbroker.settings import spot_ex
     mkt = BianceSpot(ric.replace('-','/'), spot_ex=spot_ex)
     
-    tds = mkt.check_trades(hours=days*24*2)
+    tds = mkt.check_trades(hours=3*24)
     tds = analyze_trades( ric, tds, days)
     
     pceMap = {}
