@@ -103,7 +103,7 @@ def portfolio_check(ric,days=72):
     tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
     
-    for feeasset in tds.commissionAsset.values:
+    for feeasset in list(set(tds.commissionAsset.values)):
         feex = tds[tds.commissionAsset==feeasset].commission.astype(float).sum()
         print(f'  -- #fee in {feeasset}: {feex}')
     print(f'-- fee: ${fee:4f}')
