@@ -65,12 +65,12 @@ def analyze_trades(ric, tds, days, save=True):
         tds['index'] = tds['id'];tds.set_index('index',inplace=True)
         tds = pd.concat([old_tds,tds], axis=0, ignore_index=False).drop_duplicates(['id'])
     
-    print(f"-- Total: {tds.shape[0]}, start: {tds.iloc[0]['datetime']}")
     if save:
         fn = fd + f'/tmp/binance_trades.csv'
         tds.to_csv(fn,index=False)
         print('-- saved:', fn)
-
+    print(f"-- Total: {tds.shape[0]}, start: {tds.iloc[0]['datetime']}")
+    
     tds = tds[tds.symbol==ric.replace('-','')]
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
