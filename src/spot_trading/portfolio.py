@@ -25,8 +25,9 @@ def _find_max_capital(df):
     print(f'-- max capital cost: $ {mx:.2f}')
     return mx
 
-def analyze_trades_cached() -> pd.DataFrame:
-    fn = fd + f'/tmp/binance_trades.csv'
+def analyze_trades_cached(ric) -> pd.DataFrame:
+    ric = ric.lower().replace('/','-')
+    fn = fd + f'/tmp/binance_trades_{ric}.csv'
     df = pd.read_csv(fn)
     df['datetime'] = df['datetime'].apply(pd.Timestamp)
     df.set_index('datetime',inplace=True)
@@ -51,7 +52,9 @@ def analyze_trades_cached() -> pd.DataFrame:
     return df
 
 def read_cached_trades(ric):
-    fn = fd + f'/tmp/binance_trades.csv'
+    ric = ric.lower().replace('/','-')
+    fn = fd + f'/tmp/binance_trades_{ric}.csv'
+    #fn = fd + f'/tmp/binance_trades.csv'
     if os.path.exists(fn):
         df = pd.read_csv( fn, index_col=False)
         df['index'] = df['id'];df.set_index('index',inplace=True)
@@ -69,7 +72,9 @@ def analyze_trades(ric, tds, days, save=True):
 
     tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
-        fn = fd + f'/tmp/binance_trades.csv'
+        ric = ric.lower().replace('/','-')
+        fn = fd + f'/tmp/binance_trades_{ric}.csv'
+        #fn = fd + f'/tmp/binance_trades.csv'
         for col in 'qty,price,commission'.split(','):
             tds[col] = tds[col].apply(float)
         tds['datetime'] = tds['datetime'].apply(str)
@@ -153,7 +158,7 @@ def portfolio_check(ric,days=3):
 @click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
 def main(ric,days,check_cached,spot): 
     if check_cached:
-        _ = analyze_trades_cached(72)
+        _ = analyze_trades_cached(ric)
         _ = BianceSpot.analyze_open_orders_cached(p0=spot)
     else:   
         portfolio_check(ric,days=days)
