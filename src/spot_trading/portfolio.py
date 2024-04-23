@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from spot_trading.bs_meta import BianceSpot
-from butil.butils import binance_spot
+from butil.butils import get_binance_spot
 
 fd = os.getenv('USER_HOME',"/Users/junma")
 
@@ -72,7 +72,6 @@ def analyze_trades(ric, tds, days, save=True):
             tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
         else:
             tds = old_tds
-
     tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
         ric = ric.lower().replace('/','-')
@@ -84,8 +83,9 @@ def analyze_trades(ric, tds, days, save=True):
         tds.to_csv(fn,index=False)
         print('-- saved:', fn)
     print(f"-- Total: {tds.shape[0]}, start: {tds.iloc[0]['datetime']}")
-    
-    tds = tds[tds.symbol==ric.replace('-','')]
+   
+    tds = tds[tds.symbol==ric.upper().replace('-','')]
+
     tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
     tds['qty'] = tds.sign * tds.qty.astype(float)
     tds['agg'] = tds.qty.cumsum()
@@ -130,7 +130,7 @@ def portfolio_check(ric,days=3):
             pceMap[s] = 1.
         else:
             feeric = f'{s}/USDT'
-            bid,ask = binance_spot( feeric )
+            bid,ask = get_binance_spot( feeric )
             pceMap[s] = bid
     tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
@@ -143,7 +143,7 @@ def portfolio_check(ric,days=3):
     holding_cost, holding_size = calc_avg_holding_price( tds )
     print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
 
-    pce,_ = binance_spot( ric.replace('-','/') )
+    pce,_ = get_binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
     print(f'-- gain (after liquidating and fee deduction @ ${pce}): $ {port_value:,.4f}')
     
