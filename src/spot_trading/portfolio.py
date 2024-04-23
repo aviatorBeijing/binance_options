@@ -93,6 +93,7 @@ def analyze_trades(ric, tds, days, save=True):
     tds['neutral'] = ''
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
+    print( tds.head(3) )
     print( tds.tail(10) )
     return tds
 
