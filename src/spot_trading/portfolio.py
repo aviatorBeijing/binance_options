@@ -66,9 +66,12 @@ def analyze_trades(ric, tds, days, save=True):
     tds = tds.copy()
     if not old_tds.empty:
         old_tds['id'] = old_tds['id'].apply(int)
-        tds['id'] = tds['id'].apply(int)
-        tds['index'] = tds['id'];tds.set_index('index',inplace=True)
-        tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
+        if not tds.empty:
+            tds['id'] = tds['id'].apply(int)
+            tds['index'] = tds['id'];tds.set_index('index',inplace=True)
+            tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
+        else:
+            tds = old_tds
 
     tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
@@ -96,8 +99,9 @@ def analyze_trades(ric, tds, days, save=True):
 def calc_avg_holding_price( tds = pd.DataFrame()) -> tuple:
     assert 'neutral' in tds and 'commAssetPrice' in tds, f"trades dataframe should have two special columns"
     neu_indices = list( tds[tds.neutral=='ok'].index )
-    assert len(neu_indices)>0, f"no neutral location found in trades history"
-    tds = tds.iloc[ neu_indices[-1]+1: ]
+    #assert len(neu_indices)>0, f"no neutral location found in trades history"
+    if len(neu_indices)>0:
+        tds = tds.iloc[ neu_indices[-1]+1: ]
     if tds.empty:
         return 0.,0.
     res_size = tds.qty.sum()

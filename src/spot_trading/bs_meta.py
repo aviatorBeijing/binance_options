@@ -12,6 +12,7 @@ class BianceSpot:
         # valid price digits
         if ric.startswith('DOGE'): self.ndigits = 5 
         elif ric.startswith('BTC'): self.ndigits = 2
+        elif ric.startswith('PENDLE'): self.ndigits = 4
         else:
             raise Exception(f'Unsupported ric: {ric}')
 
