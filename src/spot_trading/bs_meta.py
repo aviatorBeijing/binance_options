@@ -32,7 +32,7 @@ class BianceSpot:
         
         print('--[ orders ]\n',tabulate(df,headers="keys"))
         fn = os.getenv("USER_HOME","/Users/junma")
-        fn += '/tmp/binance_open_orders.csv'
+        fn += f'/tmp/binance_open_orders_{self.ric.lower().replace("/","-")}.csv'
         df.to_csv( fn, index=0)
         print('-- saved:', fn)
         return df  
@@ -50,9 +50,9 @@ class BianceSpot:
         return df 
 
     @staticmethod
-    def analyze_open_orders_cached(p0) ->pd.DateOffset:
+    def analyze_open_orders_cached(p0,ric) ->pd.DateOffset:
         fn = os.getenv("USER_HOME","/Users/junma")
-        fn += '/tmp/binance_open_orders.csv'
+        fn += f'/tmp/binance_open_orders_{ric.lower().replace("/","-")}.csv'
         df = pd.read_csv( fn )
         df['datetime'] = df['datetime'].apply(pd.Timestamp)
 
