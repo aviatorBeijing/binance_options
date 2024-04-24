@@ -134,7 +134,7 @@ class PriceGrid_:
         from spot_trading.portfolio import analyze_trades_cached
         from spot_trading.bs_meta import BianceSpot
         #tds = analyze_trades_cached()
-        odf = BianceSpot.analyze_open_orders_cached(ref_spot)
+        odf = BianceSpot.analyze_open_orders_cached(ref_spot, self.ric)
         odf = odf[odf.symbol==self.ric.replace('/','').replace('-','')]
         ni = ohlcv.shape[0]//2
         nx = 10

@@ -93,8 +93,8 @@ def analyze_trades(ric, tds, days, save=True):
     tds['neutral'] = ''
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
-    print( tds.head(3) )
-    print( tds.tail(10) )
+    print( tabulate(tds.head(3),headers="keys") )
+    print( tabulate(tds.tail(10),headers="keys") )
     return tds
 
 def calc_avg_holding_price( tds = pd.DataFrame()) -> tuple:
@@ -164,7 +164,7 @@ def portfolio_check(ric,days=3):
 def main(ric,days,check_cached,spot): 
     if check_cached:
         _ = analyze_trades_cached(ric)
-        _ = BianceSpot.analyze_open_orders_cached(p0=spot)
+        _ = BianceSpot.analyze_open_orders_cached(spot,ric)
     else:   
         portfolio_check(ric,days=days)
 
