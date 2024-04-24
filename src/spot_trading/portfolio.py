@@ -2,7 +2,9 @@ import click,datetime,os
 from tabulate import tabulate
 import pandas as pd
 import numpy as np 
+
 import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
 
 from spot_trading.bs_meta import BianceSpot
 from butil.butils import get_binance_spot
@@ -21,8 +23,8 @@ def _aug_trades(tds,ric):
         tds.loc[tds['agg']==0,'neutral'] = 'ok'
     return tds 
 
-def _find_max_capital(tds:pd.DataFrame,ric:str):
-    tds = _aug_trades(tds,ric)
+def _find_max_capital(tds:pd.DataFrame)->float:
+    #tds = _aug_trades(tds,ric)
     capitals= []
     prev_idx = -1
     for i, idx in enumerate(tds[tds['neutral']=='ok'].index):
@@ -35,7 +37,6 @@ def _find_max_capital(tds:pd.DataFrame,ric:str):
     max_capital = tds.loc[prev_idx:]['$agg'].min()
     capitals += [max_capital]
     mx = max( np.array(capitals)*-1. )
-    print(f'-- max capital cost: $ {mx:.2f}')
     return mx
 
 def analyze_trades_cached(ric) -> pd.DataFrame:
@@ -47,19 +48,40 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     print(f'-- [trades from cached: {fn}]')
     print(df)
 
-    max_capital = _find_max_capital(df,ric)
     df = _aug_trades( df, ric )
+    max_capital = _find_max_capital(df)
+    max_equity_amt = -(df.qty.cumsum().min())
     p = df[df['neutral']=='ok']['$agg']/max_capital*100
-    print('-- max capital invested: $', max_capital)
 
-    fig, ax1 = plt.subplots()
+    max_eq = max_equity_amt * df.iloc[0].price
+    capital_usage = max_capital + max_eq
+    print(f'-- capital usage: ${capital_usage:,.2f}')
+    print(f'  -- cash: \t\t${max_capital:.2f}')
+    print(f'  -- equity({ric.upper()}): {max_equity_amt} (${(max_eq):,.2f})')
+
+    fig, ((ax1,ax3), (ax5,ax7) )= plt.subplots(2,2,figsize=(18,15))
     ax2 = ax1.twinx()
-    #ax1.grid()
+    
+    df['cash'] = df['$agg']
+    df['asset'] = df.qty.cumsum()
+    df['portfolio'] = df['cash'] + df['asset']*df.price
+    port = df[['price','portfolio']].resample('1d').agg('last')
 
-    ax1.set_ylabel('$agg', color = 'blue') 
-    ax2.set_ylabel('agg rtn%', color = 'red') 
-    ax1.plot(df['$agg'], color='blue')
-    ax2.plot(p, color='red')
+    ax1.set_ylabel('profit %', color = 'blue') 
+    ax2.set_ylabel('equity $', color = 'gold') 
+    ax1.set_title(f'{ric.upper()}\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
+    (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=3)
+    (port.price).plot(ax=ax2,color='gold')
+    ax1.grid()
+    
+    df.qty.resample('1d').agg('sum').plot.bar(ax=ax3)
+    ax3.set_title(f'Daily long/short amt. of {ric.upper().split("-")[0]}')
+
+    df[['qty']].cumsum().plot(ax=ax5, color='blue')
+    ax5.set_ylabel(f'{ric.upper().split("-")[0]} #', color = 'blue') 
+    #ax5.set_title(f'Daily agg. amt. of {ric.upper().split("-")[0]}')
+    ax5.grid()
+
     fn =f"{fd}/tmp/binance_portfolio.png"
     plt.savefig(fn)
     print('-- saved portfolio:', fn)

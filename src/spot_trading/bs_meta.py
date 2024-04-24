@@ -58,7 +58,7 @@ class BianceSpot:
 
         df = BianceSpot.est_pnl_on_open_orders(df,p0)
 
-        print(f'-- [trades from cached file: {fn}]')
+        print(f'-- [open orders from cached file: {fn}]')
         print( tabulate(df, headers='keys') )
         return df
 
