@@ -9,17 +9,30 @@ from butil.butils import get_binance_spot
 
 fd = os.getenv('USER_HOME',"/Users/junma")
 
-def _find_max_capital(df):
+def _aug_trades(tds,ric):
+    tds = tds.copy()
+    if 'neutral' not in tds:
+        tds = tds[tds.symbol==ric.upper().replace('-','')]
+        tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
+        tds['qty'] = tds.sign * tds.qty.astype(float)
+        tds['agg'] = tds.qty.cumsum()
+        tds['$agg'] = -(tds.qty*tds.price.astype(float)).cumsum()
+        tds['neutral'] = ''
+        tds.loc[tds['agg']==0,'neutral'] = 'ok'
+    return tds 
+
+def _find_max_capital(tds:pd.DataFrame,ric:str):
+    tds = _aug_trades(tds,ric)
     capitals= []
     prev_idx = -1
-    for i, idx in enumerate(df[df['neutral']=='ok'].index):
+    for i, idx in enumerate(tds[tds['neutral']=='ok'].index):
         if i ==0:
-            max_capital = df.loc[:idx]['$agg'].min()
+            max_capital = tds.loc[:idx]['$agg'].min()
         else:
-            max_capital = df.loc[prev_idx:idx]['$agg'].min()
+            max_capital = tds.loc[prev_idx:idx]['$agg'].min()
         prev_idx = idx 
         capitals += [ max_capital]
-    max_capital = df.loc[prev_idx:]['$agg'].min()
+    max_capital = tds.loc[prev_idx:]['$agg'].min()
     capitals += [max_capital]
     mx = max( np.array(capitals)*-1. )
     print(f'-- max capital cost: $ {mx:.2f}')
@@ -34,7 +47,8 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     print(f'-- [trades from cached: {fn}]')
     print(df)
 
-    max_capital = _find_max_capital(df)
+    max_capital = _find_max_capital(df,ric)
+    df = _aug_trades( df, ric )
     p = df[df['neutral']=='ok']['$agg']/max_capital*100
     print('-- max capital invested: $', max_capital)
 
