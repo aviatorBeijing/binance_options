@@ -141,7 +141,7 @@ class PriceGrid_:
         ni = ohlcv.shape[0]//2
         nx = 10
         if not odf.empty:
-            for i, ord in odf[['side','price','origQty']].iterrows():
+            for i, ord in odf[['side','price','origQty']].sort_values('price',ascending=False).iterrows():
                 if ord.side == 'BUY':
                     ohlcv[f'buy_{i}'] = ord.price
                     ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='--',color='red')
