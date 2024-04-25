@@ -145,11 +145,11 @@ class PriceGrid_:
                 if ord.side == 'BUY':
                     ohlcv[f'buy_{i}'] = ord.price
                     ohlcv[[f'buy_{i}']].plot(ax=ax2,linewidth=1, style='--',color='red')
-                    ax2.text(ohlcv.index[nx], ord.price, f'{ord.price} ({ord.origQty})')
+                    ax2.text(ohlcv.index[nx], ord.price, f'{((ord.price-p0)/p0*100):.1f}% ${ord.price} ({ord.origQty})')
                 elif ord.side == 'SELL':
                     ohlcv[f'sell_{i}'] = ord.price
                     ohlcv[[f'sell_{i}']].plot(ax=ax2,linewidth=1, style='--',color='gold')  
-                    ax2.text(ohlcv.index[nx], ord.price, f'{ord.price} ({ord.origQty})')           
+                    ax2.text(ohlcv.index[nx], ord.price, f'{((ord.price-p0)/p0*100):.1f}% ${ord.price} ({ord.origQty})')           
                 nx += 50
                 if nx > ohlcv.shape[0]:
                     nx = 10

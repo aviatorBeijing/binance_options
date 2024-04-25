@@ -77,7 +77,9 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     df.qty.resample('1d').agg('sum').plot.bar(ax=ax3)
     ax3.set_title(f'Daily long/short amt. of {ric.upper().split("-")[0]}')
 
+    df['zeros'] = 0.
     df[['qty']].cumsum().plot(ax=ax5, color='blue')
+    df.zeros.plot(ax=ax5,color='grey',linestyle='--')
     ax5.set_ylabel(f'{ric.upper().split("-")[0]} #', color = 'blue') 
     #ax5.set_title(f'Daily agg. amt. of {ric.upper().split("-")[0]}')
     ax5.grid()
