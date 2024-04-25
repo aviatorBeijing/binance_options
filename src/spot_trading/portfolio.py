@@ -175,13 +175,13 @@ def portfolio_check(ric,days=3):
     for feeasset in list(set(tds.commissionAsset.values)):
         feex = tds[tds.commissionAsset==feeasset].commission.astype(float).sum()
         print(f'  -- #fee in {feeasset}: {feex}')
-    print(f'-- fee: ${fee:4f}')
-
-    holding_cost, holding_size = calc_avg_holding_price( tds )
-    print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
-
+    
     pce,_ = get_binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
+    holding_cost, holding_size = calc_avg_holding_price( tds )
+
+    print(f'-- fee: ${fee:4f} {((fee/(fee+port_value))*100):.1f%}')
+    print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
     print(f'-- gain (after liquidating and fee deduction @ ${pce}): $ {port_value:,.4f}')
     
     fn = fd + f'/tmp/binance_fee_gain.dat'

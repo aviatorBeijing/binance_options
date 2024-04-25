@@ -103,7 +103,9 @@ class PriceGrid_:
             return
         ohlcv = self.raw.copy()
         import matplotlib.pyplot as plt
-        fig, (ax2,ax1,) = plt.subplots(1,2,figsize=(16,8))
+        plt.style.use('fivethirtyeight')
+
+        fig, (ax2,ax1,) = plt.subplots(1,2,figsize=(18,9))
          
         ohlcv['index'] = ohlcv.timestamp.apply(pd.Timestamp)
         ohlcv.set_index('index', inplace=True)
