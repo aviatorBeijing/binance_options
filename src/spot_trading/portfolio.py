@@ -178,7 +178,7 @@ def portfolio_check(ric,days=3):
     
     pce,_ = get_binance_spot( ric.replace('-','/') )
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
-    holding_cost, holding_size = calc_avg_holding_price( tds )
+    holding_cost, holding_size = calc_avg_holding_price( _aug_trades(tds,ric) )
 
     print(f'-- fee: ${fee:4f} {((fee/(fee+port_value))*100):.1f}%')
     print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
