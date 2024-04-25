@@ -13,3 +13,6 @@ def balances() -> pd.DataFrame:
     bdf['ttl'] =  bdf['free'] +  bdf['locked']
     bdf.sort_values('ttl', ascending=False, inplace=True)
     return bdf[bdf.ttl>0]
+
+if __name__ == '__main__':
+    print( balances() )
