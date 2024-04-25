@@ -185,9 +185,11 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
         pce = (bid+ask)*.5
         assert centered_pair_dist > 20, f"{centered_pair_dist} is too low, suggest to > 20 or 50"
         e = float(centered_pair_dist)/10_000.
-        print('-- price diff:', 2*e*pce)
-        ex.buy( pce*(1-e*1.5), qty, ask ) # Buy relativly lower
-        ex.sell(pce*(1+e), qty, bid)
+        buy_pce = pce*(1-e*1.5)
+        sell_pce= pce*(1+e)
+        print('-- price diff:', sell_pce-buy_pce)
+        ex.buy( buy_pce, qty, ask ) # Buy relativly lower
+        ex.sell(sell_pce, qty, bid)
     elif sellbest or buybest:
         assert qty>0, f"qty is required"
         main_(ex,False,False,0.,qty,sellbest,buybest)
