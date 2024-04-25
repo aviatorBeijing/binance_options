@@ -181,11 +181,11 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
             ex.cancel_order( oid )
     elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
-        bid,ask = get_spot_(ex)
+        bid,ask = get_binance_spot(ric) #get_spot_(ex)
         pce = (bid+ask)*.5
         assert centered_pair_dist > 20, f"{centered_pair_dist} is too low, suggest to > 20 or 50"
         e = float(centered_pair_dist)/10_000.
-        buy_pce = pce*(1-e*1.5)
+        buy_pce = pce*(1-e)
         sell_pce= pce*(1+e)
         print('-- price diff:', sell_pce-buy_pce)
         ex.buy( buy_pce, qty, ask ) # Buy relativly lower
