@@ -178,8 +178,8 @@ def portfolio_check(ric,days=3):
         feex = tds[tds.commissionAsset==feeasset].commission.astype(float).sum()
         print(f'  -- #fee in {feeasset}: {feex}')
     
-    pce,_ = get_binance_spot( ric.replace('-','/') )
-    port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee 
+    pce,_ = get_binance_spot( ric.replace('-','/') ) # price now
+    port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee # position value + cash changes - fee
     holding_cost, holding_size = calc_avg_holding_price( _aug_trades(tds,ric) )
 
     print(f'-- fee: ${fee:4f} {((fee/(fee+port_value))*100):.1f}%')
