@@ -1,3 +1,6 @@
 #!/bin/bash
 
-$PYTHON spot_trading/market_data.py --ric DOGE/USDT --span 5m
+RIC=DOGE/USDT
+
+$PYTHON spot_trading/market_data.py --ric $RIC --span 5m
+$PYTHON spot_trading/market_data.py --ric $RIC --span 1h
