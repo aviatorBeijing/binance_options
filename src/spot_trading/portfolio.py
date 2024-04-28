@@ -47,7 +47,9 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     ohlcv.set_index('timestamp', inplace=True)
     for col in ['open','high','low','close','volume']: ohlcv[col] = ohlcv[col].apply(float)
     ohlcv = ohlcv.resample('1d').agg({'open':'first','high':'max','low':'min','close':'last','volume':'sum'})
-    #print(ohlcv)
+    ohlcv.index = list(map(lambda s: str(s)[:10], ohlcv.index))
+    import talib
+    ohlcv['atr'] = talib.ATR(ohlcv.high, ohlcv.low, ohlcv.close, timeperiod=14)
 
     ric = ric.lower().replace('/','-')
     fn = fd + f'/tmp/binance_trades_{ric}.csv'
@@ -76,17 +78,20 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
                     wspace=0.4, 
                     hspace=0.4)
     ax2 = ax1.twinx()
+    ax8 = ax7.twinx()
     
     df['cash'] = df['$agg']
     df['asset'] = df.qty.cumsum()
     df['portfolio'] = df['cash'] + df['asset']*df.price
     port = df[['price','portfolio']].resample('1d').agg('last')# * 2/3
-
+    port.index = list(map(lambda d: str(d)[:10], port.index))
+    port = pd.concat([port, ohlcv[['close']]], axis=1, ignore_index=False).dropna()
+    
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'gold') 
     ax1.set_title(f'{ric.upper()} (fee involved)\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
     (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=3)
-    (port.price).plot(ax=ax2,color='gold')
+    (port.close).plot(ax=ax2,color='gold')
     ax1.grid()
     
     _x = df.qty.resample('1d').agg('sum')
@@ -108,9 +113,12 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     daily_vol = df[['qty']].apply(abs).resample('1d').agg('sum')
     daily_vol.index = list(map(lambda s: str(s)[:10], daily_vol.index))
     daily_vol.plot(ax=ax7)
+    _atr = pd.concat([ohlcv[['atr']], daily_vol], axis=1,ignore_index=False).dropna()
+    _atr['atr'].plot(ax=ax8,color='red',linestyle='--') 
     #for tic in ax7.get_xticklabels(): tic.set_rotation(35)
     ax7.set_ylabel(f'# {ric.upper().split("-")[0]}') 
     ax7.set_title('Daily trading volume')
+    ax8.set_ylabel(f'14-day ATR',color='red') 
 
     fn =f"{fd}/tmp/binance_portfolio.png"
     plt.savefig(fn)

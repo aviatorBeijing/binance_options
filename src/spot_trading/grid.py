@@ -235,11 +235,13 @@ def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceG
     user_home = os.getenv('USER_HOME','')
     if is_test:
         fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
-        ohlcv = pd.read_csv( fn ).tail(200)
+        ohlcv = pd.read_csv( fn ).tail(300)
         ohlcv['rtn'] = (ohlcv.close - ohlcv.open)/ohlcv.open
         ohlcv['rtn_prev'] = ohlcv['rtn'].shift(1) 
         ohlcv.loc[(ohlcv.rtn_prev>-5/1000.) & (ohlcv.rtn_prev<5/1000.), 'rtn'] = 0
-        ohlcv = ohlcv[ohlcv.timestamp>start_ts]
+        # FIXME following is NOT working, why?
+        # FIXME notice the "tail(300)" 4 lines above
+        #ohlcv = ohlcv[ohlcv.timestamp>start_ts]
     else:
         ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
         if start_ts:
