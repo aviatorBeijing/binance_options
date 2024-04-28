@@ -40,6 +40,15 @@ def _find_max_capital(tds:pd.DataFrame)->float:
     return mx
 
 def analyze_trades_cached(ric) -> pd.DataFrame:
+    user_home = os.getenv('USER_HOME','')
+    fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_1d.csv'
+    ohlcv = pd.read_csv( fn )
+    ohlcv.timestamp = ohlcv.timestamp.apply(pd.Timestamp)
+    ohlcv.set_index('timestamp', inplace=True)
+    for col in ['open','high','low','close','volume']: ohlcv[col] = ohlcv[col].apply(float)
+    ohlcv = ohlcv.resample('1d').agg({'open':'first','high':'max','low':'min','close':'last','volume':'sum'})
+    #print(ohlcv)
+
     ric = ric.lower().replace('/','-')
     fn = fd + f'/tmp/binance_trades_{ric}.csv'
     df = pd.read_csv(fn)
@@ -60,29 +69,48 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     print(f'  -- equity({ric.upper()}): {max_equity_amt} (${(max_eq):,.2f})')
 
     fig, ((ax1,ax3), (ax5,ax7) )= plt.subplots(2,2,figsize=(18,15))
+    plt.subplots_adjust(left=0.1,
+                    bottom=0.1, 
+                    right=0.9, 
+                    top=0.9, 
+                    wspace=0.4, 
+                    hspace=0.4)
     ax2 = ax1.twinx()
     
     df['cash'] = df['$agg']
     df['asset'] = df.qty.cumsum()
     df['portfolio'] = df['cash'] + df['asset']*df.price
-    port = df[['price','portfolio']].resample('1d').agg('last')
+    port = df[['price','portfolio']].resample('1d').agg('last')# * 2/3
 
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'gold') 
-    ax1.set_title(f'{ric.upper()}\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
+    ax1.set_title(f'{ric.upper()} (fee involved)\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
     (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=3)
     (port.price).plot(ax=ax2,color='gold')
     ax1.grid()
     
-    df.qty.resample('1d').agg('sum').plot.bar(ax=ax3)
-    ax3.set_title(f'Daily long/short amt. of {ric.upper().split("-")[0]}')
+    _x = df.qty.resample('1d').agg('sum')
+    _x.index = list(map(lambda d: str(d)[:10], _x.index))
+    _x.plot.bar(ax=ax3)
+    ax3.set_title(f'Daily positions changes {ric.upper().split("-")[0]}')
+    #for tic in ax3.get_xticklabels(): tic.set_rotation(35)
 
     df['zeros'] = 0.
-    df[['qty']].cumsum().plot(ax=ax5, color='blue')
+    _x = df[['qty']].cumsum()#.resample('1d').agg('last')
+    #_x.index = list(map(lambda s: str(s)[:10],_x.index))
+    #_x.plot.step(ax=ax5, color='blue')
+    ax5.step( _x.index, _x.qty.values,color = 'blue' )
     df.zeros.plot(ax=ax5,color='grey',linestyle='--')
     ax5.set_ylabel(f'{ric.upper().split("-")[0]} #', color = 'blue') 
-    #ax5.set_title(f'Daily agg. amt. of {ric.upper().split("-")[0]}')
+    ax5.set_title(f'Agg. positions ({ric.upper().split("-")[0]})')
     ax5.grid()
+
+    daily_vol = df[['qty']].apply(abs).resample('1d').agg('sum')
+    daily_vol.index = list(map(lambda s: str(s)[:10], daily_vol.index))
+    daily_vol.plot(ax=ax7)
+    #for tic in ax7.get_xticklabels(): tic.set_rotation(35)
+    ax7.set_ylabel(f'# {ric.upper().split("-")[0]}') 
+    ax7.set_title('Daily trading volume')
 
     fn =f"{fd}/tmp/binance_portfolio.png"
     plt.savefig(fn)

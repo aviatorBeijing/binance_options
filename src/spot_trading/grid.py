@@ -240,8 +240,6 @@ def low_freq_price_range(ric, span='5m', start_ts=None, is_test=False) -> PriceG
         ohlcv['rtn_prev'] = ohlcv['rtn'].shift(1) 
         ohlcv.loc[(ohlcv.rtn_prev>-5/1000.) & (ohlcv.rtn_prev<5/1000.), 'rtn'] = 0
         ohlcv = ohlcv[ohlcv.timestamp>start_ts]
-        
-        print(ohlcv.columns)
     else:
         ohlcv = binance_kline(symbol=ric.replace('-','/'),span=span,grps=1)
         if start_ts:
