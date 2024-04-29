@@ -41,7 +41,7 @@ def _find_max_capital(tds:pd.DataFrame)->float:
 
 def analyze_trades_cached(ric) -> pd.DataFrame:
     user_home = os.getenv('USER_HOME','')
-    fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_1d.csv'
+    fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_1h.csv'
     ohlcv = pd.read_csv( fn )
     ohlcv.timestamp = ohlcv.timestamp.apply(pd.Timestamp)
     ohlcv.set_index('timestamp', inplace=True)
@@ -50,7 +50,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     ohlcv.index = list(map(lambda s: str(s)[:10], ohlcv.index))
     import talib
     ohlcv['atr'] = talib.ATR(ohlcv.high, ohlcv.low, ohlcv.close, timeperiod=14)
-
+    
     ric = ric.lower().replace('/','-')
     fn = fd + f'/tmp/binance_trades_{ric}.csv'
     df = pd.read_csv(fn)
@@ -70,7 +70,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     print(f'  -- cash: \t\t${max_capital:.2f}')
     print(f'  -- equity({ric.upper()}): {max_equity_amt} (${(max_eq):,.2f})')
 
-    fig, ((ax1,ax3), (ax5,ax7) )= plt.subplots(2,2,figsize=(18,15))
+    fig, ((ax1,ax7), (ax5,ax3) )= plt.subplots(2,2,figsize=(18,15))
     plt.subplots_adjust(left=0.1,
                     bottom=0.1, 
                     right=0.9, 
