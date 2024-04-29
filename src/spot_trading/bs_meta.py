@@ -14,6 +14,7 @@ class BianceSpot:
         elif ric.startswith('BTC'): self.ndigits = 2
         elif ric.startswith('PENDLE'): self.ndigits = 4
         elif ric.startswith('SOL'): self.ndigits = 2 
+        elif ric.startswith('SEI'): self.ndigits = 4
         else:
             raise Exception(f'Unsupported ric: {ric}')
 
