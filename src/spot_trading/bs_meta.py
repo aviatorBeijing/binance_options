@@ -202,12 +202,12 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
     elif buyup>0:
         bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
-        ex.buy(bid,qty,ask)
+        ex.buy(bid,buyup,ask)
         ex.sell(ask*(1.+50./10_000),qty,bid)
     elif selldown>0:
         bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
-        ex.sell(ask,qty,bid)
+        ex.sell(ask,selldown,bid)
         ex.buy(bid*(1.-50./10_000),qty,ask)
     else:
         price = float(price)
