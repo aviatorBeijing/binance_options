@@ -172,7 +172,9 @@ import click
 @click.option('--buybest',  is_flag=True, default=False,help='judge from bid price, automatic create an order close to ask price')
 @click.option('--centered_pair', is_flag=True, default=False, help='generate a pair of orders set apart by 100bsp around the bid/ask')
 @click.option('--centered_pair_dist', default=50., help='generate a pair of orders set apart by # (bps) around the bid/ask')
-def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist):
+@click.option('--buyup', default=0., help='use the best price to buy the quantity, simultaneously sell same qty at 50bps up')
+@click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
+def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,buyup,selldown):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -184,6 +186,8 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
     elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
         bid,ask = get_binance_spot(ric) #get_spot_(ex)
+        spread = (ask-bid)/(ask+bid)*2
+        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         pce = (bid+ask)*.5
         assert centered_pair_dist > 20, f"{centered_pair_dist} is too low, suggest to > 20 or 50"
         e = float(centered_pair_dist)/10_000.
@@ -195,6 +199,16 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
     elif sellbest or buybest:
         assert qty>0, f"qty is required"
         main_(ex,False,False,0.,qty,sellbest,buybest)
+    elif buyup>0:
+        bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+        ex.buy(bid,qty,ask)
+        ex.sell(ask*(1.+50./10_000),qty,bid)
+    elif selldown>0:
+        bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+        ex.sell(ask,qty,bid)
+        ex.buy(bid*(1.-50./10_000),qty,ask)
     else:
         price = float(price)
         qty = float(qty)

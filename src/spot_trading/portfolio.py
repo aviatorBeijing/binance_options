@@ -50,7 +50,8 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     ohlcv.index = list(map(lambda s: str(s)[:10], ohlcv.index))
     import talib
     ohlcv['atr'] = talib.ATR(ohlcv.high, ohlcv.low, ohlcv.close, timeperiod=14)
-    
+    ohlcv['volume_rank'] = ohlcv.volume.rolling(14*2).rank(pct=True)*100
+
     ric = ric.lower().replace('/','-')
     fn = fd + f'/tmp/binance_trades_{ric}.csv'
     df = pd.read_csv(fn)
@@ -70,7 +71,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     print(f'  -- cash: \t\t${max_capital:.2f}')
     print(f'  -- equity({ric.upper()}): {max_equity_amt} (${(max_eq):,.2f})')
 
-    fig, ((ax1,ax7), (ax5,ax3) )= plt.subplots(2,2,figsize=(18,15))
+    fig, ((ax1,ax7), (ax01,ax02), (ax5,ax3) )= plt.subplots(3,2,figsize=(27,15))
     plt.subplots_adjust(left=0.1,
                     bottom=0.1, 
                     right=0.9, 
@@ -78,7 +79,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
                     wspace=0.4, 
                     hspace=0.4)
     ax2 = ax1.twinx()
-    ax8 = ax7.twinx()
+    ax8 = ax02.twinx()
     
     df['cash'] = df['$agg']
     df['asset'] = df.qty.cumsum()
@@ -89,10 +90,26 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'gold') 
-    ax1.set_title(f'{ric.upper()} (fee involved)\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
+    ax1.set_title(f'Return v.s. spot (fee involved)\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
     (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=3)
     (port.close).plot(ax=ax2,color='gold')
     ax1.grid()
+
+    ax77 = ax7.twinx()
+    daily_vol = pd.concat([port[['portfolio']], ohlcv[['atr']]],axis=1,ignore_index=False).dropna()
+    (daily_vol.portfolio/capital_usage*100).plot(ax=ax7,color='blue',linewidth=3)
+    daily_vol.atr.plot(ax=ax77,color='red')
+    ax7.set_ylabel(f'profit %',color='blue') 
+    ax7.set_title('Return v.s. ATR')
+    ax77.set_ylabel(f'ATR',color='red') 
+
+    ax011 = ax01.twinx()
+    (port.portfolio/capital_usage*100).plot(ax=ax01,color='blue',linewidth=3)
+    _vrank = pd.concat([ohlcv[['volume_rank']], port.portfolio], axis=1,ignore_index=False).dropna()
+    _vrank['volume_rank'].plot(ax=ax011,color='red',linestyle='--') 
+    ax01.set_ylabel(f'portfolio %') 
+    ax01.set_title('Return v.s. volume')
+    ax011.set_ylabel(f'Mkt. volume ranking %',color='red') 
     
     _x = df.qty.resample('1d').agg('sum')
     _x.index = list(map(lambda d: str(d)[:10], _x.index))
@@ -101,9 +118,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     #for tic in ax3.get_xticklabels(): tic.set_rotation(35)
 
     df['zeros'] = 0.
-    _x = df[['qty']].cumsum()#.resample('1d').agg('last')
-    #_x.index = list(map(lambda s: str(s)[:10],_x.index))
-    #_x.plot.step(ax=ax5, color='blue')
+    _x = df[['qty']].cumsum()
     ax5.step( _x.index, _x.qty.values,color = 'blue' )
     df.zeros.plot(ax=ax5,color='grey',linestyle='--')
     ax5.set_ylabel(f'{ric.upper().split("-")[0]} #', color = 'blue') 
@@ -112,13 +127,13 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
 
     daily_vol = df[['qty']].apply(abs).resample('1d').agg('sum')
     daily_vol.index = list(map(lambda s: str(s)[:10], daily_vol.index))
-    daily_vol.plot(ax=ax7)
-    _atr = pd.concat([ohlcv[['atr']], daily_vol], axis=1,ignore_index=False).dropna()
-    _atr['atr'].plot(ax=ax8,color='red',linestyle='--') 
+    daily_vol.plot(ax=ax02)
+    _vrank = pd.concat([ohlcv[['volume_rank']], daily_vol], axis=1,ignore_index=False).dropna()
+    _vrank['volume_rank'].plot(ax=ax8,color='red',linestyle='--') 
     #for tic in ax7.get_xticklabels(): tic.set_rotation(35)
-    ax7.set_ylabel(f'# {ric.upper().split("-")[0]}') 
-    ax7.set_title('Daily trading volume')
-    ax8.set_ylabel(f'14-day ATR',color='red') 
+    ax02.set_ylabel(f'# {ric.upper().split("-")[0]}') 
+    ax02.set_title('Trading qty v.s. market volume')
+    ax8.set_ylabel(f'Mkt. volume ranking %',color='red') 
 
     fn =f"{fd}/tmp/binance_portfolio.png"
     plt.savefig(fn)
