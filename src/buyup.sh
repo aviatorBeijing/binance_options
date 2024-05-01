@@ -1,0 +1,1 @@
+./spot_trading/doge/buyup.sh
