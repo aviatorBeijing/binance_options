@@ -99,6 +99,7 @@ def _multicontracts_main(contracts:list):
         dfs += [df]
 
     df = pd.concat(dfs,axis=1,ignore_index=False)
+    df['price'] = df.index
     df['dp'] = (df.price-sbid).apply(abs)/sbid
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
