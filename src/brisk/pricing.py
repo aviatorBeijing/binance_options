@@ -76,7 +76,7 @@ def _multicontracts_main(contracts:list):
     assert spread < 1/1000, f'Spread is too large. {contracts[0]}, {sbid},{sask},{spread}'
     print('waiting for options data...')
     time.sleep(5)
-    
+
     recs= []
     for contract in contracts:
         sym, T, K, ctype = extract_specs(contract)
@@ -94,8 +94,9 @@ def _multicontracts_main(contracts:list):
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [sym,S,option_price,contract] ]
     df = pd.DataFrame.from_records( recs, columns=['spot','price','BS', 'contract'] )
-    df['atm'] = (df.price-sbid).apply(abs) / sbid < 1./100
-    df.atm = df.atm.apply(lambda s: '*' if s else '')
+    df['dp'] = (df.price-sbid).apply(abs)/sbid
+    df['moneyness'] = df.dp < 1./100
+    df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     print( tabulate(df,headers='keys'))
 
 @click.command()
