@@ -97,6 +97,7 @@ def _multicontracts_main(contracts:list):
     df['dp'] = (df.price-sbid).apply(abs)/sbid
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
+    df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
     print( tabulate(df,headers='keys'))
 
 @click.command()
