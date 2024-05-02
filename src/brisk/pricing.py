@@ -6,7 +6,7 @@ import numpy  as np
 from multiprocessing import Process
 
 from butil.bsql import fetch_bidask 
-from butil.butils import ( DATADIR,DEBUG, binance_spot,
+from butil.butils import ( DATADIR,DEBUG, binance_spot, bjnow_str,
                 get_binance_next_funding_rate, get_binance_spot,
                 get_maturity, get_underlying )
 from brisk.bfee import calc_fee
@@ -91,7 +91,7 @@ def _multicontracts_main(contracts:list):
             func_ = callprice
         elif ctype == 'put':
             func_ = putprice
-        for S in np.arange( sbid*(1-0.1), sbid*(1+0.1), 100):
+        for S in np.arange( sbid*(1-0.1), sbid*(1+0.1), 200):
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [S,option_price,contract] ]
         df = pd.DataFrame.from_records( recs, columns=['price',f'BS_{ctype.upper()}', ctype.upper()] )
@@ -106,6 +106,7 @@ def _multicontracts_main(contracts:list):
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
     df = df[['CALL','BS_CALL','dp','BS_PUT','PUT','moneyness']]
     print( tabulate(df,headers='keys'))
+    print( bjnow_str() )
 
 @click.command()
 @click.option('--contract', help="contract name")
