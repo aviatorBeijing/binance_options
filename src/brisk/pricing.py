@@ -11,8 +11,7 @@ from butil.butils import ( DATADIR,DEBUG, binance_spot,
                 get_maturity, get_underlying )
 from brisk.bfee import calc_fee
 from ws_bcontract import _main as ws_connector
-from strategy.delta_gamma import callprice,putprice
-from butil.options_calculator import extract_specs, invert_callprice,invert_putprice
+from butil.options_calculator import extract_specs, invert_callprice,invert_putprice,callprice,putprice
 
 
 def _main(contract,user_cost, reference_spot):
@@ -59,6 +58,9 @@ def _main(contract,user_cost, reference_spot):
 def _multiprocess_main(contract,user_cost):
     print('-- waiting data...')
     bid,ask = binance_spot( get_underlying(contract))
+    spread = (bid-ask)/(bid+ask)*2
+    assert spread < 1/1000, f'Spread is too large. {contract}, {bid},{ask},{spread}'
+
     time.sleep(2)
     while True:
         try:
@@ -68,13 +70,48 @@ def _multiprocess_main(contract,user_cost):
             print("-- Exiting --")
             break
 
+def _multicontracts_main(contracts:list):
+    sbid,sask = binance_spot( get_underlying(contracts[0]))
+    spread = (sbid-sask)/(sbid+sask)*2
+    assert spread < 1/1000, f'Spread is too large. {contracts[0]}, {sbid},{sask},{spread}'
+
+    recs= []
+    for contract in contracts:
+        sym, T, K, ctype = extract_specs(contract)
+        cdata = fetch_bidask(contract.upper())
+        bid = float(cdata['bid'])
+        ask = float(cdata['ask'])
+        sigma = float(cdata['impvol_bid'])
+
+        func_ = None
+        if ctype == 'call':
+            func_ = callprice
+        elif ctype == 'put':
+            func_ = putprice
+        for S in np.arange( sbid*(1-0.2), sbid*(1+0.2), 100):
+            option_price = func_(S,K,T/365,sigma,0.)
+            recs += [ [sym,S,option_price,contract] ]
+    df = pd.DataFrame.from_records( recs, columns=['spot','price','BS', 'contract'] )
+    df['atm'] = (df.price-sbid).apply(abs) / sbid < 1./100
+    df.atm = df.atm.apply(lambda s: '*' if s else '')
+    print( tabulate(df,headers='keys'))
+
 @click.command()
 @click.option('--contract', help="contract name")
 @click.option('--user_cost', help="average cost of traded option")
-def main(contract,user_cost):
+@click.option('--contracts', help="multiple contracts",default="")
+def main(contract,user_cost,contracts):
 
-    conn = Process( target=ws_connector, args=(f"{contract}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(contract, user_cost) )
+    if not contracts and contract:
+        calc = Process( target=_multiprocess_main, args=(contract, user_cost) )
+    else:
+        calc = Process( target=_multicontracts_main, args=(contracts.split(','),) )
+    
+    if not contracts:
+        assert contract, 'Must provide contract'
+        contracts = contract
+    conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
+    
     conn.start()
     calc.start()
     
