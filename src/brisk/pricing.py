@@ -94,7 +94,7 @@ def _multicontracts_main(contracts:list):
         for S in np.arange( sbid*(1-0.1), sbid*(1+0.1), 100):
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [S,option_price,contract] ]
-        df = pd.DataFrame.from_records( recs, columns=['price','BS', 'contract'] )
+        df = pd.DataFrame.from_records( recs, columns=['price',f'BS_{ctype.upper()}', ctype.upper()] )
         df.set_index('price',inplace=True)
         dfs += [df]
 
@@ -104,6 +104,7 @@ def _multicontracts_main(contracts:list):
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
+    df = df[['CALL','BS_CALL','dp','BS_PUT','PUT','moneyness']]
     print( tabulate(df,headers='keys'))
 
 @click.command()
