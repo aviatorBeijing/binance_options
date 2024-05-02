@@ -74,7 +74,9 @@ def _multicontracts_main(contracts:list):
     sbid,sask = binance_spot( get_underlying(contracts[0]))
     spread = (sbid-sask)/(sbid+sask)*2
     assert spread < 1/1000, f'Spread is too large. {contracts[0]}, {sbid},{sask},{spread}'
-
+    print('waiting for options data...')
+    time.sleep(5)
+    
     recs= []
     for contract in contracts:
         sym, T, K, ctype = extract_specs(contract)
