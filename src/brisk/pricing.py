@@ -70,13 +70,19 @@ def _multiprocess_main(contract,user_cost):
             print("-- Exiting --")
             break
 
+def _multicontracts_loop(contracts:list):
+    print('waiting for options data...')
+    time.sleep(5)
+    while True:
+        _multicontracts_main(contracts)
+        print( bjnow_str(), ', next calc in 10 secs','\n' )
+        time.sleep(10)
+
 def _multicontracts_main(contracts:list):
     sbid,sask = get_binance_spot( get_underlying(contracts[0]))
     spread = (sbid-sask)/(sbid+sask)*2
     assert spread < 1/1000, f'Spread is too large. {contracts[0]}, {sbid},{sask},{spread}'
-    print('waiting for options data...')
-    time.sleep(5)
-
+    
     dfs = []
     for contract in contracts:
         recs= []
@@ -106,7 +112,6 @@ def _multicontracts_main(contracts:list):
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
     df = df[['CALL','BS_CALL','dp','BS_PUT','PUT','moneyness']]
     print( tabulate(df,headers='keys'))
-    print( bjnow_str() )
 
 @click.command()
 @click.option('--contract', help="contract name")
@@ -117,7 +122,7 @@ def main(contract,user_cost,contracts):
     if not contracts and contract:
         calc = Process( target=_multiprocess_main, args=(contract, user_cost) )
     else:
-        calc = Process( target=_multicontracts_main, args=(contracts.split(','),) )
+        calc = Process( target=_multicontracts_loop, args=(contracts.split(','),) )
     
     if not contracts:
         assert contract, 'Must provide contract'
