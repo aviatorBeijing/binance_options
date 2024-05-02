@@ -7,7 +7,7 @@ from multiprocessing import Process
 
 from butil.bsql import fetch_bidask 
 from butil.butils import ( DATADIR,DEBUG, binance_spot,
-                get_binance_next_funding_rate,
+                get_binance_next_funding_rate, get_binance_spot,
                 get_maturity, get_underlying )
 from brisk.bfee import calc_fee
 from ws_bcontract import _main as ws_connector
@@ -71,14 +71,15 @@ def _multiprocess_main(contract,user_cost):
             break
 
 def _multicontracts_main(contracts:list):
-    sbid,sask = binance_spot( get_underlying(contracts[0]))
+    sbid,sask = get_binance_spot( get_underlying(contracts[0]))
     spread = (sbid-sask)/(sbid+sask)*2
     assert spread < 1/1000, f'Spread is too large. {contracts[0]}, {sbid},{sask},{spread}'
     print('waiting for options data...')
     time.sleep(5)
 
-    recs= []
+    dfs = []
     for contract in contracts:
+        recs= []
         sym, T, K, ctype = extract_specs(contract)
         cdata = fetch_bidask(contract.upper())
         bid = float(cdata['bid'])
@@ -92,8 +93,12 @@ def _multicontracts_main(contracts:list):
             func_ = putprice
         for S in np.arange( sbid*(1-0.2), sbid*(1+0.2), 100):
             option_price = func_(S,K,T/365,sigma,0.)
-            recs += [ [sym,S,option_price,contract] ]
-    df = pd.DataFrame.from_records( recs, columns=['spot','price','BS', 'contract'] )
+            recs += [ [S,option_price,contract] ]
+        df = pd.DataFrame.from_records( recs, columns=['price','BS', 'contract'] )
+        df.set_index('price',inplace=True)
+        dfs += [df]
+
+    df = pd.concat(dfs,axis=1,ignore_index=False)
     df['dp'] = (df.price-sbid).apply(abs)/sbid
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
