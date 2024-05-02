@@ -91,7 +91,7 @@ def _multicontracts_main(contracts:list):
             func_ = callprice
         elif ctype == 'put':
             func_ = putprice
-        for S in np.arange( sbid*(1-0.2), sbid*(1+0.2), 100):
+        for S in np.arange( sbid*(1-0.1), sbid*(1+0.1), 100):
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [S,option_price,contract] ]
         df = pd.DataFrame.from_records( recs, columns=['price','BS', 'contract'] )
