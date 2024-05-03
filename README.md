@@ -40,6 +40,11 @@ python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=-0.2  
 python strategy/grid_trading.py --ric BTC/USDT --nominal=0.01 --stop_loss=-0.2 --max_pos=100   (use max_pos to mimic sizing)
 ```
 
+Example #$ (Term-structure of C/P pair, ignoring volatility changes, and interest rate)
+```
+python brisk/pricing.py --contracts BTC-240506-59000-C,BTC-240506-59000-P
+```
+
 Notes:
 ```
 Only support BTC,BNB, and DOGE contracts, for now.
