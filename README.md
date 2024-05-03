@@ -1,4 +1,4 @@
-# Options Trading Strategies (via Binance API)
+# Options Trading Strategies: Spot & Options (via Binance API)
 
 ```
 python -m pip install -r requirements.txt
