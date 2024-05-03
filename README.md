@@ -1,4 +1,4 @@
-# Options Trading Toolkits: Spot & Options (via Binance API)
+# Trading Toolkits: Spot & Options (via Binance API)
 
 ```
 python -m pip install -r requirements.txt
