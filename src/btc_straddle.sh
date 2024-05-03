@@ -5,8 +5,8 @@
 CRYPTO=BTC
 DT=240504
 
-PUT=58000
-CALL=58000
+PUT=56750
+CALL=56750
 
 echo $PYTHON ws_bcontract.py --channel ticker --rics $CRYPTO-$DT-$PUT-P,$CRYPTO-$DT-$CALL-C
 # $PYTHON ws_bcontract.py --channel ticker --rics $CRYPTO-$DT-$PUT-P,$CRYPTO-$DT-$CALL-C
