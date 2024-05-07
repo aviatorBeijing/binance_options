@@ -225,10 +225,16 @@ def portfolio_check(ric,days=3):
             pceMap[s] = bid
     tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
-    
+   
+    n_doge = 0.
     for feeasset in list(set(tds.commissionAsset.values)):
         feex = tds[tds.commissionAsset==feeasset].commission.astype(float).sum()
         print(f'  -- #fee in {feeasset}: {feex}')
+        if feeasset == 'DOGE':
+            n_doge = feex
+
+    net_doge_deficit = tds.iloc[-1]['agg'] - n_doge
+    print(f'  -- net DOGE deficite: {net_doge_deficit:.0f}')
     
     pce,_ = get_binance_spot( ric.replace('-','/') ) # price now
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee # position value + cash changes - fee
