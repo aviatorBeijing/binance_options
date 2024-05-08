@@ -33,7 +33,68 @@ class BinancePerp:
         return df
 
     def account_pnl(self):
+        """
+        acc[info]:
+
+{'assets': [{'asset': 'FDUSD',
+             'availableBalance': '0.00000000',
+             'crossUnPnl': '0.00000000',
+             'crossWalletBalance': '0.00000000',
+             'initialMargin': '0.00000000',
+             'maintMargin': '0.00000000',
+             'marginAvailable': True,
+             'marginBalance': '0.00000000',
+             'maxWithdrawAmount': '0.00000000',
+             'openOrderInitialMargin': '0.00000000',
+             'positionInitialMargin': '0.00000000',
+             'unrealizedProfit': '0.00000000',
+             'updateTime': '0',
+             'walletBalance': '0.00000000'},
+            ],
+ 'availableBalance': '135.86137852',
+ 'canDeposit': True,
+ 'canTrade': True,
+ 'canWithdraw': True,
+ 'feeTier': '0',
+ 'maxWithdrawAmount': '135.86137852',
+ 'multiAssetsMargin': False,
+ 'positions': [{'askNotional': '0',
+                'bidNotional': '0',
+                'breakEvenPrice': '0.0',
+                'entryPrice': '0.0',
+                'initialMargin': '0',
+                'isolated': False,
+                'isolatedWallet': '0',
+                'leverage': '20',
+                'maintMargin': '0',
+                'maxNotional': '25000',
+                'notional': '0',
+                'openOrderInitialMargin': '0',
+                'positionAmt': '0',
+                'positionInitialMargin': '0',
+                'positionSide': 'BOTH',
+                'symbol': 'SNTUSDT',
+                'unrealizedProfit': '0.00000000',
+                'updateTime': '0'},
+            ],
+ 'totalCrossUnPnl': '-0.05593770',
+ 'totalCrossWalletBalance': '148.80855699',
+ 'totalInitialMargin': '12.88479692',
+ 'totalMaintMargin': '0.07736471',
+ 'totalMarginBalance': '148.75261929',
+ 'totalOpenOrderInitialMargin': '5.14832500',
+ 'totalPositionInitialMargin': '7.73647192',
+ 'totalUnrealizedProfit': '-0.05593770',
+ 'totalWalletBalance': '148.80855699',
+ 'tradeGroupId': '-1',
+ 'updateTime': '0'}
+        """
         acc = self.ex.fetch_balance()
+        
+        poss = acc['info']['positions']; pdf = pd.DataFrame.from_records(poss)
+        pdf = pdf[pdf.entryPrice.astype(float)!=0]
+        print( pdf )
+
         bal = float(acc['info']['totalWalletBalance'])
         pos = float(acc['info']['totalUnrealizedProfit'])
         account_pnl = bal - pos
