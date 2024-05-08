@@ -93,6 +93,7 @@ class BinancePerp:
         
         poss = acc['info']['positions']; pdf = pd.DataFrame.from_records(poss)
         pdf = pdf[pdf.entryPrice.astype(float)!=0]
+        pdf = pdf['symbol,leverage,unrealizedProfit,entryPrice,breakEvenPrice,positionInitialMargin'.split(',')]
         print( pdf )
 
         bal = float(acc['info']['totalWalletBalance'])
