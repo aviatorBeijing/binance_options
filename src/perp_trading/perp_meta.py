@@ -4,6 +4,8 @@ from tabulate import tabulate
 import datetime,os
 from butil.butils import get_binance_spot
 
+from bbroker.settings import perp_ex
+
 class BinancePerp:
     def __init__(self,ric, ex=None) -> None:
         self.ric = ric 
@@ -44,7 +46,7 @@ class BinancePerp:
         df = df['symbol,type,side,status,orderId,price,origQty,executedQty,updateTime'.split(',')] #cummulativeQuoteQty
         df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('updateTime', ascending=False)
-        bid,ask = get_binance_spot(self.ric.upper())
+        bid,ask = adhoc_ticker(self.ric.upper())
         df = BinancePerp.est_pnl_on_open_orders(df, (bid+ask)*.5)
         
         print('--[ orders ]\n',tabulate(df,headers="keys"))
@@ -73,7 +75,7 @@ class BinancePerp:
         df = pd.read_csv( fn )
         df['datetime'] = df['datetime'].apply(pd.Timestamp)
 
-        df = BianceSpot.est_pnl_on_open_orders(df,p0)
+        df = BinancePerp.est_pnl_on_open_orders(df,p0)
 
         print(f'-- [open orders from cached file: {fn}]')
         print( tabulate(df, headers='keys') )
@@ -151,14 +153,8 @@ class BinancePerp:
                 print(f'  -- oid={oid} canceled ok')
                 print(f'  -- oid={oid} filled before cancelation')
 
-def get_spot_(ex):
-    bid,ask = get_binance_spot(ex.ric.replace('-','/'))
-    bid = float(bid)
-    ask = float(ask)
-    return bid,ask
-
 def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
-    bid,ask = get_spot_(ex)
+    bid,ask = adhoc_ticker(ex.ric)
     print(f'-- current bid={bid}, ask={ask}; requesting: price={price}, qty={qty}, {"sell" if csell else "buy" if cbuy else "unknown"}')
     if cbuy:
         ex.buy(price,qty,ask)
@@ -175,6 +171,13 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
     else:
         print('*** nothing to do.')
 
+
+def adhoc_ticker(symbol='BTC/USDT')->tuple:
+    symbol = symbol.replace('-','/')
+    qts = perp_ex.fetch_ticker(symbol)
+    bid,ask = qts['bid'],qts['ask']
+    return float(bid),float(ask)
+
 import click
 @click.command()
 @click.option('--ric')
@@ -190,7 +193,6 @@ import click
 @click.option('--buyup', default=0., help='use the best price to buy the quantity, simultaneously sell same qty at 50bps up')
 @click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
 def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,buyup,selldown):
-    from bbroker.settings import perp_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
     ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)
@@ -200,7 +202,7 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
             ex.cancel_order( oid )
     elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
-        bid,ask = get_binance_spot(ric) #get_spot_(ex)
+        bid,ask = adhoc_ticker(ric)
         spread = (ask-bid)/(ask+bid)*2
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         pce = (bid+ask)*.5
@@ -215,12 +217,12 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
         assert qty>0, f"qty is required"
         main_(ex,False,False,0.,qty,sellbest,buybest)
     elif buyup>0:
-        bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+        bid,ask = adhoc_ticker(ric);spread = (ask-bid)/(ask+bid)*2
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         ex.buy(bid,buyup,ask)
         ex.sell(ask*(1.+50./10_000),buyup,bid)
     elif selldown>0:
-        bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+        bid,ask = adhoc_ticker(ric);spread = (ask-bid)/(ask+bid)*2
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         ex.sell(ask,selldown,bid)
         ex.buy(bid*(1.-50./10_000),selldown,ask)
