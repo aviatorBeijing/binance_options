@@ -32,6 +32,11 @@ class BinancePerp:
         df = pd.concat([freed,used,ttl],ignore_index=False,axis=1)
         return df
 
+    def account_pnl(self):
+        acc = self.ex.fetch_balance()
+        account_pnl = acc['info']['totalWalletBalance'] - acc['info']['totalUnrealizedProfit']
+        print("-- Account P&L:", account_pnl)
+
     def check_open_orders(self) -> pd.DataFrame:
         ods = self.ex.fetchOpenOrders(self.ric)
         if not ods:
@@ -207,7 +212,7 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
         t = ex.check_trades_today();t=t.sort_values('datetime',ascending=True);print(tabulate(t,headers="keys"))
         print('\n-- outstanding orders:')
         ex.check_open_orders() 
-        
+        ex.account_pnl()
     elif cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
