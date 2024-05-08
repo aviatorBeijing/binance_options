@@ -182,7 +182,7 @@ def adhoc_ticker(symbol='BTC/USDT')->tuple:
 import click
 @click.command()
 @click.option('--ric')
-@click.option('--check')
+@click.option('--check',is_flag=True, default=False)
 @click.option('--cbuy', is_flag=True,  default=False)
 @click.option('--csell', is_flag=True,  default=False)
 @click.option('--cancel', default='', help='comma-separated order ids to be canceled')
