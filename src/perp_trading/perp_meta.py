@@ -51,11 +51,13 @@ class BinancePerp:
         print('-- fair price (perp): $', fairprice)
         df = BinancePerp.est_pnl_on_open_orders(df, fairprice)
         
-        print('--[ orders ]\n',tabulate(df,headers="keys"))
         fn = os.getenv("USER_HOME","/Users/junma")
         fn += f'/tmp/binance_perp_open_orders_{self.ric.lower().replace("/","-")}.csv'
         df.to_csv( fn, index=0)
         print('-- saved:', fn)
+
+        print('--[ orders ]\n',tabulate(df.sort_values('datetime',ascending=True),headers="keys"))
+
         return df  
     
     @staticmethod
