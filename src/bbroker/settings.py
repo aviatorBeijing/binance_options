@@ -23,3 +23,19 @@ spot_ex = ccxt.binance({
     }
 })
 spot_ex.load_markets()
+
+perp_ex = ccxt.binance({
+    'apiKey': apikey,
+    'secret': secret,
+    'enableRateLimit': True,
+    'options':{
+        'defaultType': 'future',
+    }
+})
+"""
+response = exchange.fapiPrivate_post_leverage({
+    'symbol': exchange.market_id(symbol),
+    'leverage': leverage
+})
+"""
+perp_ex.load_markets()
