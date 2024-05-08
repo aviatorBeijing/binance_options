@@ -200,7 +200,7 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
 
     if check:
         ex.check_open_orders() 
-        ex.check_trades_today()
+        t = ex.check_trades_today();print(tabulate(t,headers="keys"))
     elif cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
