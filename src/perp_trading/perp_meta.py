@@ -6,6 +6,56 @@ from butil.butils import get_binance_spot
 
 from bbroker.settings import perp_ex
 
+
+fd = os.getenv('USER_HOME',"/Users/junma")
+
+def read_cached_trades(ric):
+    ric = ric.lower().replace('/','-')
+    fn = fd + f'/tmp/binance_perp_trades_{ric}.csv'
+    #fn = fd + f'/tmp/binance_trades.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv( fn, index_col=False)
+        df['index'] = df['id'];df.set_index('index',inplace=True)
+        return df 
+    return pd.DataFrame()
+
+def analyze_trades(ric, tds, days, save=True):
+    old_tds = read_cached_trades(ric)
+    tds = tds.copy()
+    if not old_tds.empty:
+        old_tds['id'] = old_tds['id'].apply(int)
+        if not tds.empty:
+            tds['id'] = tds['id'].apply(int)
+            tds['index'] = tds['id'];tds.set_index('index',inplace=True)
+            tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
+        else:
+            tds = old_tds
+    tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
+    if save:
+        ric = ric.lower().replace('/','-')
+        fn = fd + f'/tmp/binance_perp_trades_{ric}.csv'
+        #fn = fd + f'/tmp/binance_trades.csv'
+        for col in 'qty,price,commission'.split(','):
+            tds[col] = tds[col].apply(float)
+        tds['datetime'] = tds['datetime'].apply(str)
+        tds.to_csv(fn,index=False)
+        print('-- saved:', fn)
+    print(f"-- Total: {tds.shape[0]}, start: {tds.iloc[0]['datetime']}")
+   
+    tds = tds[tds.symbol==ric.upper().replace('-','')]
+
+    tds['sign'] = tds.side.apply(lambda s: 1 if s=='BUY' else -1)
+    tds['qty'] = tds.sign * tds.qty.astype(float)
+    tds['agg'] = tds.qty.cumsum()
+    tds['$agg'] = -(tds.qty*tds.price.astype(float)).cumsum()
+    tds['neutral'] = ''
+    tds.loc[tds['agg']==0,'neutral'] = 'ok'
+    print('-- [trades]')
+    if tds.shape[0]>10:
+        print( tabulate(tds.head(3),headers="keys") )
+    print( tabulate(tds.tail(10),headers="keys") )
+    return tds
+
 class BinancePerp:
     def __init__(self,ric, ex=None) -> None:
         self.ric = ric 
@@ -94,6 +144,7 @@ class BinancePerp:
         poss = acc['info']['positions']; pdf = pd.DataFrame.from_records(poss)
         pdf = pdf[pdf.entryPrice.astype(float)!=0]
         pdf = pdf['symbol,leverage,unrealizedProfit,positionAmt,entryPrice,breakEvenPrice,openOrderInitialMargin,positionInitialMargin'.split(',')]
+        print('-- [ positions ]')
         print( pdf )
 
         bal = float(acc['info']['totalWalletBalance'])
@@ -277,6 +328,9 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
         print('\n-- outstanding orders:')
         ex.check_open_orders() 
         ex.account_pnl()
+
+        tds = analyze_trades( ric, tds, 3)
+
     elif cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
