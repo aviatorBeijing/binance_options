@@ -323,13 +323,12 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
     ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)
 
     if check:
-        print('-- today\'s trades:')
-        t = ex.check_trades_today();t=t.sort_values('datetime',ascending=True);print(tabulate(t,headers="keys"))
         print('\n-- outstanding orders:')
         ex.check_open_orders() 
         ex.account_pnl()
 
-        tds = analyze_trades( ric, t, 3)
+        tds = ex.check_trades_today()
+        tds = analyze_trades( ric, tds, 3)
 
     elif cancel:
         for oid in cancel.split(','):
