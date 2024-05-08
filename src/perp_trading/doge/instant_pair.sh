@@ -1,5 +1,6 @@
 #!/bin/bash
 
 QTY=$1
-
-$PYTHON perp_trading/perp_meta.py --ric DOGE/USDT --centered_pair --centered_pair_dist=25 --qty=$QTY
+RIC=DOGE/USDT
+$PYTHON perp_trading/perp_meta.py --ric $RIC --centered_pair --centered_pair_dist=25 --qty=$QTY
+$PYTHON perp_trading/perp_meta.py --ric $RIC --check
