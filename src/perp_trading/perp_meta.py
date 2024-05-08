@@ -202,7 +202,7 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
 
     if check:
         print('-- today\'s trades:')
-        t = ex.check_trades_today();t=t.sort_values('datetime',ascending=False);print(tabulate(t,headers="keys"))
+        t = ex.check_trades_today();t=t.sort_values('datetime',ascending=True);print(tabulate(t,headers="keys"))
         print('\n-- outstanding orders:')
         ex.check_open_orders() 
         
