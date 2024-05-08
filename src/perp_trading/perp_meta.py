@@ -48,7 +48,7 @@ class BinancePerp:
         df = df.sort_values('updateTime', ascending=False)
         bid,ask = adhoc_ticker(self.ric.upper())
         fairprice = (bid+ask)*.5
-        print('-- fair price (perp):', fairprice)
+        print('-- fair price (perp): $', fairprice)
         df = BinancePerp.est_pnl_on_open_orders(df, fairprice)
         
         print('--[ orders ]\n',tabulate(df,headers="keys"))
