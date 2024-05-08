@@ -317,11 +317,10 @@ import click
 @click.option('--centered_pair_dist', default=50., help='generate a pair of orders set apart by # (bps) around the bid/ask')
 @click.option('--buyup', default=0., help='use the best price to buy the quantity, simultaneously sell same qty at 50bps up')
 @click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
-def main(ric,check,pnl,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,buyup,selldown):
+def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,buyup,selldown):
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
-    if not pnl:
-        ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)
+    ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)
 
     if check:
         tds = ex.check_trades_today()
