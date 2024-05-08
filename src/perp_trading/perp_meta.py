@@ -95,8 +95,7 @@ class BinancePerp:
             print('*** No outstanding orders.')
             return pd.DataFrame()
         #df['dt'] = (tnow - df.updateTime.apply(int))/1000
-        df = df['id,symbol,qty,price,commission,commissionAsset,maker,buyer,time'.split(',')]
-        df['side'] = df.isBuyer.apply(lambda v: 'SELL' if not v else "BUY")
+        df = df['id,symbol,qty,price,side,commission,commissionAsset,maker,buyer,time'.split(',')]
         df = df['id,symbol,side,qty,price,commission,commissionAsset,maker,time'.split(',')]
         df['datetime'] = df.time.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('time', ascending=True)
