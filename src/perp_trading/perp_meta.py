@@ -47,7 +47,9 @@ class BinancePerp:
         df['datetime'] = df.updateTime.apply(int).apply(lambda v: datetime.datetime.fromtimestamp(v/1000))
         df = df.sort_values('updateTime', ascending=False)
         bid,ask = adhoc_ticker(self.ric.upper())
-        df = BinancePerp.est_pnl_on_open_orders(df, (bid+ask)*.5)
+        fairprice = (bid+ask)*.5
+        print('-- fair price (perp):', fairprice)
+        df = BinancePerp.est_pnl_on_open_orders(df, fairprice)
         
         print('--[ orders ]\n',tabulate(df,headers="keys"))
         fn = os.getenv("USER_HOME","/Users/junma")
