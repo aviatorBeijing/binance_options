@@ -174,8 +174,9 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
 
 def adhoc_ticker(symbol='BTC/USDT')->tuple:
     symbol = symbol.replace('-','/')
-    qts = perp_ex.fetch_ticker(symbol)
-    bid,ask = qts['bid'],qts['ask']
+    #qts = perp_ex.fetch_ticker(symbol)
+    qts = perp_ex.public_get_ticker_bookticker({'symbol': symbol.replace('/','').replace('-','').upper()})
+    bid,ask = qts['bidPrice'],qts['askPrice'] # bidQty,askQty
     return float(bid),float(ask)
 
 import click

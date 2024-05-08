@@ -12,7 +12,7 @@ ex = ccxt.binance({
         'defaultType': 'option',
     }
 })
-ex.load_markets()
+_ = ex.load_markets()
 
 spot_ex = ccxt.binance({
     'apiKey': apikey,
@@ -22,7 +22,7 @@ spot_ex = ccxt.binance({
         'defaultType': 'spot',
     }
 })
-spot_ex.load_markets()
+_ = spot_ex.load_markets()
 
 perp_ex = ccxt.binance({
     'apiKey': apikey,
@@ -38,4 +38,4 @@ response = exchange.fapiPrivate_post_leverage({
     'leverage': leverage
 })
 """
-perp_ex.load_markets()
+_ = perp_ex.load_markets()
