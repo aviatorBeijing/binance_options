@@ -329,7 +329,7 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
         ex.check_open_orders() 
         ex.account_pnl()
 
-        tds = analyze_trades( ric, tds, 3)
+        tds = analyze_trades( ric, t, 3)
 
     elif cancel:
         for oid in cancel.split(','):
