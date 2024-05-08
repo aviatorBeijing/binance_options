@@ -34,7 +34,7 @@ class BinancePerp:
 
     def account_pnl(self):
         acc = self.ex.fetch_balance()
-        account_pnl = acc['info']['totalWalletBalance'] - acc['info']['totalUnrealizedProfit']
+        account_pnl = float(acc['info']['totalWalletBalance']) - float(acc['info']['totalUnrealizedProfit'])
         print("-- Account P&L:", account_pnl)
 
     def check_open_orders(self) -> pd.DataFrame:
