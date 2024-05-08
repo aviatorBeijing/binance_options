@@ -90,7 +90,6 @@ class BinancePerp:
         tds = self.ex.fetchMyTrades(self.ric, since=dt, limit=None, params={})
         tds = list(map(lambda e: e['info'],tds))
         df = pd.DataFrame.from_records(tds)
-        print('$'*50,'\n', df)
         if df.empty: 
             print('*** No outstanding orders.')
             return pd.DataFrame()
