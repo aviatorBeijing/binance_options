@@ -34,8 +34,10 @@ class BinancePerp:
 
     def account_pnl(self):
         acc = self.ex.fetch_balance()
-        account_pnl = float(acc['info']['totalWalletBalance']) - float(acc['info']['totalUnrealizedProfit'])
-        print("-- Account P&L:", account_pnl)
+        bal = float(acc['info']['totalWalletBalance'])
+        pos = float(acc['info']['totalUnrealizedProfit'])
+        account_pnl = bal - pos
+        print("-- Account P&L:", account_pnl, f", position P&L: {pos}")
 
     def check_open_orders(self) -> pd.DataFrame:
         ods = self.ex.fetchOpenOrders(self.ric)
