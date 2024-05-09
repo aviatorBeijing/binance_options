@@ -334,11 +334,13 @@ def adhoc_status(ex,ric):
     ex.check_open_orders() 
     acc = ex.account_pnl()
 
+    ps = 'LONG' if (acc["position_amt"]>0) else 'SHORT' if (acc["position_amt"]<0) else ""
+
     print('-- P&L')
     print(f'  -- realized  : $ {realized_pnl:.6f}')
     print(f'  -- unrealized: $ {acc["pnl_unrealized"]:.6f}')
     print(f'  -- outstanding: ')
-    print(f'    -- pos              : {acc["position_amt"]}')
+    print(f'    -- pos              : {ps} {acc["position_amt"]}')
     print(f'    -- margin (max loss): $ {acc["position_margin"]}')
     print(f'    -- entry: $ {acc["position_entry"]:.6f}, { ((acc["position_entry"]-mid)/mid*10_000):.1f} bps')
     print(f'  -- wallet: $ {acc["wallet"]:.6f}')
