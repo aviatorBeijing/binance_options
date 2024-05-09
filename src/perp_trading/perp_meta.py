@@ -329,7 +329,7 @@ def adhoc_status(ex,ric):
     print(f'  -- unrealized: $ {acc["pnl_unrealized"]:.6f}')
     print(f'  -- outstanding: {ps} {acc["position_amt"]}')
     print(f'    -- margin (max loss): $ {acc["position_margin"]}')
-    print(f'    -- entry: $ {acc["position_entry"]:.6f}, { (-(acc["position_entry"]-mid)/mid*10_000):.1f} bps')
+    print(f'    -- entry: $ {acc["position_entry"]:.6f}, { ((acc["position_entry"]-mid)/mid*10_000):.1f} bps')
     print(f'  -- wallet: $ {acc["wallet"]:.6f}')
 
 @click.command()
