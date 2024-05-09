@@ -183,7 +183,7 @@ class BinancePerp:
         df = df.sort_values('updateTime', ascending=False)
         bid,ask = adhoc_ticker(self.ric.upper())
         fairprice = (bid+ask)*.5
-        print('-- fair price (perp): $', fairprice)
+        print(f'-- fair price (perp): $ {fairprice:.6f}')
         df = BinancePerp.est_pnl_on_open_orders(df, fairprice)
         
         fn = os.getenv("USER_HOME","/Users/junma")
