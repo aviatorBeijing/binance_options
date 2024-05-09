@@ -313,7 +313,8 @@ def adhoc_status(ex,ric):
     tds = ex.check_trades_today()
     tds = analyze_trades( ric, tds, 3)
         
-    bid,ask = adhoc_ticker(ric);mid=(bid+ask)*.5
+    bid,ask = adhoc_ticker(ric)
+    mid=(bid+ask)*.5
     from perp_trading.risks import pnl_from_trades
     realized_pnl, res = pnl_from_trades( ric, tds, mid )
 
