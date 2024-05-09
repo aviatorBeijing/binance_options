@@ -23,7 +23,7 @@ def pnl_from_trades( ric, tds, p0):
     res = (tds.qty).sum()
     
     print(f'  -- res: {res} {ric}')
-    print(f'  -- fee: $ {fee}')
+    print(f'  -- fee: $ {fee} ({(fee/gains*100):.2f}%)')
     print(f'  -- gains: $ {gains:.6f} ($ {(gains-fee):.6f}, fee deducted)')
 
     return gains-fee, res
