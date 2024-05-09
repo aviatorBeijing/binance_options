@@ -4,6 +4,7 @@ from tabulate import tabulate
 import datetime,os,click
 
 from bbroker.settings import perp_ex
+from perp_trading.marketdata import adhoc_ticker 
 
 fd = os.getenv('USER_HOME',"/Users/junma")
 
@@ -307,20 +308,6 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
         ex.sell(pce,qty,bid)
     else:
         print('*** nothing to do.')
-
-
-def adhoc_ticker(symbol='BTC/USDT')->tuple:
-    symbol = symbol.replace('-','/')
-    #qts = perp_ex.fetch_ticker(symbol)
-    qts = perp_ex.public_get_ticker_bookticker({'symbol': symbol.replace('/','').replace('-','').upper()})
-    bid,ask = qts['bidPrice'],qts['askPrice'] # bidQty,askQty
-    bid = float(bid)
-    ask = float(ask)
-
-    spread = (ask-bid)/(ask+bid)*2
-    assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
-
-    return float(bid),float(ask)
 
 def adhoc_status(ex,ric):
     tds = ex.check_trades_today()
