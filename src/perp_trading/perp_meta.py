@@ -336,7 +336,7 @@ def adhoc_status(ex,ric):
 
     ps = 'LONG' if (acc["position_amt"]>0) else 'SHORT' if (acc["position_amt"]<0) else ""
 
-    print(f'-- P&L (bid/ask: {bid:.6f, ask:.6f})')
+    print(f'-- P&L (bid/ask: {bid:.6f}, {ask:.6f})')
     print(f'  -- realized  : $ {realized_pnl:.6f}')
     print(f'  -- unrealized: $ {acc["pnl_unrealized"]:.6f}')
     print(f'  -- outstanding: ')
