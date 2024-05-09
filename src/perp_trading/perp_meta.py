@@ -1,11 +1,9 @@
 from sys import is_finalizing
 import pandas as pd 
 from tabulate import tabulate
-import datetime,os
-from butil.butils import get_binance_spot
+import datetime,os,click
 
 from bbroker.settings import perp_ex
-
 
 fd = os.getenv('USER_HOME',"/Users/junma")
 
@@ -143,14 +141,30 @@ class BinancePerp:
         
         poss = acc['info']['positions']; pdf = pd.DataFrame.from_records(poss)
         pdf = pdf[pdf.entryPrice.astype(float)!=0]
+        pdf = pdf[[pdf.symbol==self.ric.replace('/','').replace('-','').upper()]]
         pdf = pdf['symbol,leverage,unrealizedProfit,positionAmt,entryPrice,breakEvenPrice,openOrderInitialMargin,positionInitialMargin'.split(',')]
         print('-- [ positions ]')
         print( pdf )
 
-        bal = float(acc['info']['totalWalletBalance'])
-        pos = float(acc['info']['totalUnrealizedProfit'])
-        account_pnl = bal - pos
-        print(f"-- Position P&L: ${pos}; Account ttl: ${account_pnl}")
+        outstanding_pos,outstanding_pos_margin = 0.,0.
+        entry = 0.
+        if not pdf.empty:
+            assert pdf.shape[0]==1, f'Why more than one row fo {self.ric}:\n{pdf}'
+            outstanding_pos = float( pdf.iloc[0].positionAmt )
+            outstanding_pos_margin = float( pdf.iloc[0].positionInitialMargin)
+            entry = float(pdf.iloc[0].entryPrice)
+
+        wallet_balance = bal = float(acc['info']['totalWalletBalance'])
+        unrealized_pnl = float(acc['info']['totalUnrealizedProfit'])
+        account_pnl = bal - unrealized_pnl
+        print(f"-- Position P&L: ${unrealized_pnl}; Account ttl: ${account_pnl}")
+        return {
+            'wallet': wallet_balance,
+            'pnl_unrealized':unrealized_pnl,
+            'position_amt': outstanding_pos,
+            'position_margin': outstanding_pos_margin,
+            'position_entry': entry,
+        }
 
     def check_open_orders(self) -> pd.DataFrame:
         ods = self.ex.fetchOpenOrders(self.ric)
@@ -300,9 +314,33 @@ def adhoc_ticker(symbol='BTC/USDT')->tuple:
     #qts = perp_ex.fetch_ticker(symbol)
     qts = perp_ex.public_get_ticker_bookticker({'symbol': symbol.replace('/','').replace('-','').upper()})
     bid,ask = qts['bidPrice'],qts['askPrice'] # bidQty,askQty
+
+    spread = (ask-bid)/(ask+bid)*2
+    assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+
     return float(bid),float(ask)
 
-import click
+def adhoc_status(ex,ric):
+    tds = ex.check_trades_today()
+    tds = analyze_trades( ric, tds, 3)
+        
+    bid,ask = adhoc_ticker(ric);mid=(bid+ask)*.5
+    from perp_trading.risks import pnl_from_trades
+    realized_pnl, res = pnl_from_trades( ric, tds, mid )
+
+    print('\n-- outstanding orders:')
+    ex.check_open_orders() 
+    acc = ex.account_pnl()
+
+    print('-- P&L')
+    print(f'  -- realized  : $ {realized_pnl:.6f}')
+    print(f'  -- unrealized: $ {acc["pnl_unrealized"]:.6f}')
+    print(f'  -- outstanding: ')
+    print(f'    -- pos              : {acc["position_amt"]}')
+    print(f'    -- margin (max loss): $ {acc["position_margin"]}')
+    print(f'    -- entry: $ {acc["position_entry"]}, { ((acc["position_entry"]-mid)/mid*10_000):.1f} bps')
+    print(f'  -- wallet: $ {acc["wallet"]:.6f}')
+
 @click.command()
 @click.option('--ric')
 @click.option('--check',is_flag=True, default=False)
@@ -323,20 +361,15 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
     ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)
 
     if check:
-        tds = ex.check_trades_today()
-        tds = analyze_trades( ric, tds, 3)
+        adhoc_status(ex,ric)
 
-        print('\n-- outstanding orders:')
-        ex.check_open_orders() 
-        ex.account_pnl()
     elif cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
     elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
         bid,ask = adhoc_ticker(ric)
-        spread = (ask-bid)/(ask+bid)*2
-        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+        
         pce = (bid+ask)*.5
         assert centered_pair_dist > 20, f"{centered_pair_dist} is too low, suggest to > 20 or 50"
         e = float(centered_pair_dist)/10_000.
