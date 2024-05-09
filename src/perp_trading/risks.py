@@ -19,10 +19,9 @@ def pnl_from_trades( ric, tds, p0):
     tds = tds.copy()
     tds = tds[tds.symbol==ric.replace('/','').replace('-','').upper()]
     fee = tds.commission.astype(float).sum()
-    tds['sign'] = tds.side.apply(lambda e: 1 if e=='BUY' else -1)
-    gains = (tds.sign * (p0 - tds.price) * tds.qty).sum()
-    res = (tds.sign * tds.qty).sum()
-
+    gains = ( (p0 - tds.price) * tds.qty).sum()
+    res = (tds.qty).sum()
+    
     print(f'  -- res: {res} {ric}')
     print(f'  -- fee: $ {fee}')
     print(f'  -- gains: $ {gains:.6f} ($ {(gains-fee):.6f}, fee deducted)')
