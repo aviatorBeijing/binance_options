@@ -152,7 +152,7 @@ class BinancePerp:
             assert pdf.shape[0]==1, f'Why more than one row fo {self.ric}:\n{pdf}'
             outstanding_pos = float( pdf.iloc[0].positionAmt )
             outstanding_pos_margin = float( pdf.iloc[0].positionInitialMargin)
-            entry = float(pdf.iloc[0].entryPrice)
+            entry = float(pdf.iloc[0].breakEvenPrice) #.entryPrice)
 
         wallet_balance = bal = float(acc['info']['totalWalletBalance'])
         unrealized_pnl = float(acc['info']['totalUnrealizedProfit'])
