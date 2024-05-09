@@ -141,7 +141,7 @@ class BinancePerp:
         
         poss = acc['info']['positions']; pdf = pd.DataFrame.from_records(poss)
         pdf = pdf[pdf.entryPrice.astype(float)!=0]
-        pdf = pdf[[pdf.symbol==self.ric.replace('/','').replace('-','').upper()]]
+        pdf = pdf[pdf.symbol==self.ric.replace('/','').replace('-','').upper()]
         pdf = pdf['symbol,leverage,unrealizedProfit,positionAmt,entryPrice,breakEvenPrice,openOrderInitialMargin,positionInitialMargin'.split(',')]
         print('-- [ positions ]')
         print( pdf )
