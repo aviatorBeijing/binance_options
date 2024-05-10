@@ -1,4 +1,3 @@
-from sys import is_finalizing
 import pandas as pd 
 from tabulate import tabulate
 import datetime,os,click
