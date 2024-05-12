@@ -38,7 +38,7 @@ def get_perp_klines(ric, span)->pd.DataFrame:
     df = pd.DataFrame.from_records(h, columns=cols)
 
     # cach
-    fn = os.getenv('USER_HONE','/Users/junma')
+    fn = os.getenv('USER_HOME','/Users/junma')
     fn = f'{fn}/tmp/perp_{ric.lower()}_{span}.csv'
     df.to_csv( fn, index=0)
     print('-- saved: ',fn)
