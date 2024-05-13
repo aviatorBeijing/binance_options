@@ -162,9 +162,10 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
 
 def split_orders_buyup(rg,n,bid,ask):
     p0 = bid
+    n = n-1
     recs = []
     for i in range(n):
-        r = rg/n*i
+        r = rg/(n-1)*i
         pi = p0 * (1+ r )
         recs += [{'pce': pi, 'bps': r*10_000}]
     df = pd.DataFrame.from_records( recs )
@@ -174,7 +175,7 @@ def split_orders_selldown(rg,n,bid,ask):
     p0 = ask
     recs = []
     for i in range(n):
-        r = rg/n*i
+        r = rg/(n-1)*i
         pi = p0 * (1 - r )
         recs += [{'pce': pi, 'bps': -r*10_000}]
     df = pd.DataFrame.from_records( recs )
