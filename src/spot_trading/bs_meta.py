@@ -166,7 +166,7 @@ def split_orders_buyup(rg,n,bid,ask):
     for i in range(n):
         r = rg/n*i
         pi = p0 * (1+ r )
-        recs += [{'pce': pi, 'bps': r*100}]
+        recs += [{'pce': pi, 'bps': r*10_000}]
     df = pd.DataFrame.from_records( recs )
     return df
     
