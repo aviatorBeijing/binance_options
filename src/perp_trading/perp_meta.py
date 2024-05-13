@@ -418,7 +418,7 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
             splits = int(conf['splits'])
             ttl = float(conf['total_qty'])
 
-            bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+            bid,ask = adhoc_ticker(ric);spread = (ask-bid)/(ask+bid)*2
             assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
             pces = split_orders_buyup(rg,splits,bid,ask,ttl)
             print( pces )
@@ -430,7 +430,7 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
             splits = int(conf['splits'])
             ttl = float(conf['total_qty'])
 
-            bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+            bid,ask = adhoc_ticker(ric);spread = (ask-bid)/(ask+bid)*2
             assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
             pces = split_orders_selldown(rg,splits,bid,ask,ttl)
             print( pces )
