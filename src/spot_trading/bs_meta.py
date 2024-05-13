@@ -160,25 +160,27 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
     else:
         print('*** nothing to do.')
 
-def split_orders_buyup(rg,n,bid,ask):
+def split_orders_buyup(rg,n,bid,ask,ttl):
     p0 = bid
     n = n-1
     recs = []
+    x = ttl/(n*(n+1)/2.)
     for i in range(n):
         r = rg/(n-1)*i
         pi = p0 * (1+ r )
-        recs += [{'pce': pi, 'bps': r*10_000}]
+        recs += [{'pce': pi, 'bps': r*10_000, 'qty': x*(n-i)}]
     df = pd.DataFrame.from_records( recs )
     df['bps'] = df['bps'].apply(lambda e: f"{e:.1f}")
     return df
 
-def split_orders_selldown(rg,n,bid,ask):
+def split_orders_selldown(rg,n,bid,ask,ttl):
     p0 = ask
     recs = []
+    x = ttl/(n*(n+1)/2.)
     for i in range(n):
         r = rg/(n-1)*i
         pi = p0 * (1 - r )
-        recs += [{'pce': pi, 'bps': -r*10_000}]
+        recs += [{'pce': pi, 'bps': -r*10_000, 'qty': x*(n-i)}]
     df = pd.DataFrame.from_records( recs )
     df['bps'] = df['bps'].apply(lambda e: f"{e:.1f}")
     return df
@@ -243,10 +245,11 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
             conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
             rg = float(conf['range'])
             splits = int(conf['splits'])
+            ttl = float(conf['total_qty'])
 
             bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
             assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
-            pces = split_orders_buyup(rg,splits,bid,ask)
+            pces = split_orders_buyup(rg,splits,bid,ask,ttl)
             print( pces )
     elif selldown_split:
         import yaml
@@ -254,10 +257,11 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
             conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
             rg = float(conf['range'])
             splits = int(conf['splits'])
+            ttl = float(conf['total_qty'])
 
             bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
             assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
-            pces = split_orders_selldown(rg,splits,bid,ask)
+            pces = split_orders_selldown(rg,splits,bid,ask,ttl)
             print( pces )
     else:
         price = float(price)
