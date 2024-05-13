@@ -375,6 +375,7 @@ def split_orders_selldown(rg,n,bid,ask,ttl):
 def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,
             buyup,selldown,
             buyup_split,selldown_split):
+    print('*'*50, 'Perpetual Trading', '*'*50)
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
     ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)

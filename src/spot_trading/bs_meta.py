@@ -205,6 +205,7 @@ import click
 def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist
                 ,buyup,selldown,
                 buyup_split, selldown_split):
+    print('*'*50, 'Spot Trading', '*'*50)
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
