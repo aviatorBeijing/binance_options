@@ -169,6 +169,7 @@ def split_orders_buyup(rg,n,bid,ask):
         pi = p0 * (1+ r )
         recs += [{'pce': pi, 'bps': r*10_000}]
     df = pd.DataFrame.from_records( recs )
+    df['bps'] = df['bps'].apply(lambda e: f"{e:.1f}")
     return df
 
 def split_orders_selldown(rg,n,bid,ask):
@@ -179,6 +180,7 @@ def split_orders_selldown(rg,n,bid,ask):
         pi = p0 * (1 - r )
         recs += [{'pce': pi, 'bps': -r*10_000}]
     df = pd.DataFrame.from_records( recs )
+    df['bps'] = df['bps'].apply(lambda e: f"{e:.1f}")
     return df
     
 
