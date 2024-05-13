@@ -160,6 +160,17 @@ def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
     else:
         print('*** nothing to do.')
 
+def split_orders_buyup(rg,n,bid,ask):
+    p0 = bid
+    recs = []
+    for i in range(n):
+        r = rg/n*i
+        pi = p0 * (1+ r )
+        recs += [{'pce': pi, 'bps': r*100}]
+    df = pd.DataFrame.from_records( recs )
+    return df
+    
+
 import click
 @click.command()
 @click.option('--ric')
@@ -217,6 +228,13 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
         import yaml
         with open(buyup_split, 'r') as fh:
             conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
+            rg = float(conf['range'])
+            splits = int(conf['splits'])
+
+            bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+            assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+            pces = split_orders_buyup(rg,splits,bid,ask)
+            print( pces )
     elif selldown_split:
         pass
     else:
