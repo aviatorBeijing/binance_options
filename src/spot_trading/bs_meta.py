@@ -247,7 +247,7 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
             print( pces )
     elif selldown_split:
         import yaml
-        with open(buyup_split, 'r') as fh:
+        with open(selldown_split, 'r') as fh:
             conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
             rg = float(conf['range'])
             splits = int(conf['splits'])
