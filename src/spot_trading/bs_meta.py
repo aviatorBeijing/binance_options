@@ -174,7 +174,11 @@ import click
 @click.option('--centered_pair_dist', default=50., help='generate a pair of orders set apart by # (bps) around the bid/ask')
 @click.option('--buyup', default=0., help='use the best price to buy the quantity, simultaneously sell same qty at 50bps up')
 @click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
-def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,buyup,selldown):
+@click.option('--buyup_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the BUY split configs: total qty, percentage range of split, etc.')
+@click.option('--selldown_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the SELL split configs: total qty, percentage range of split, etc.')
+def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist
+                ,buyup,selldown,
+                buyup_split, selldown_split):
     from bbroker.settings import spot_ex
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -209,6 +213,12 @@ def main(ric, cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centere
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         ex.sell(ask,selldown,bid)
         ex.buy(bid*(1.-60./10_000),selldown,ask)
+    elif buyup_split:
+        import yaml
+        with open(buyup_split, 'r') as fh:
+            conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
+    elif selldown_split:
+        pass
     else:
         price = float(price)
         qty = float(qty)
