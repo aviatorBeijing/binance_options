@@ -331,6 +331,31 @@ def adhoc_status(ex,ric):
     print(f'    -- entry: $ {acc["position_entry"]:.6f}, { ((acc["position_entry"]-mid)/mid*10_000):.1f} bps')
     print(f'  -- wallet: $ {acc["wallet"]:.6f}')
 
+def split_orders_buyup(rg,n,bid,ask,ttl):
+    p0 = bid
+    n = n-1
+    recs = []
+    x = ttl/(n*(n+1)/2.)
+    for i in range(n):
+        r = rg/(n-1)*i
+        pi = p0 * (1+ r )
+        recs += [{'pce': pi, 'bps': r*10_000, 'qty': x*(n-i)}]
+    df = pd.DataFrame.from_records( recs )
+    df['bps'] = df['bps'].apply(lambda e: f"{e:.1f}")
+    return df
+
+def split_orders_selldown(rg,n,bid,ask,ttl):
+    p0 = ask
+    recs = []
+    x = ttl/(n*(n+1)/2.)
+    for i in range(n):
+        r = rg/(n-1)*i
+        pi = p0 * (1 - r )
+        recs += [{'pce': pi, 'bps': -r*10_000, 'qty': x*(n-i)}]
+    df = pd.DataFrame.from_records( recs )
+    df['bps'] = df['bps'].apply(lambda e: f"{e:.1f}")
+    return df
+
 @click.command()
 @click.option('--ric')
 @click.option('--check',is_flag=True, default=False)
@@ -345,7 +370,11 @@ def adhoc_status(ex,ric):
 @click.option('--centered_pair_dist', default=50., help='generate a pair of orders set apart by # (bps) around the bid/ask')
 @click.option('--buyup', default=0., help='use the best price to buy the quantity, simultaneously sell same qty at 50bps up')
 @click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
-def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,buyup,selldown):
+@click.option('--buyup_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the BUY split configs: total qty, percentage range of split, etc.')
+@click.option('--selldown_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the SELL split configs: total qty, percentage range of split, etc.')
+def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,
+            buyup,selldown,
+            buyup_split,selldown_split):
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
     ex = BinancePerp(ric.replace('-','/'), ex=perp_ex)
@@ -381,6 +410,30 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
         assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         ex.sell(ask,selldown,bid)
         ex.buy(bid*(1.-50./10_000),selldown,ask)
+    elif buyup_split:
+        import yaml
+        with open(buyup_split, 'r') as fh:
+            conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
+            rg = float(conf['range'])
+            splits = int(conf['splits'])
+            ttl = float(conf['total_qty'])
+
+            bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+            assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+            pces = split_orders_buyup(rg,splits,bid,ask,ttl)
+            print( pces )
+    elif selldown_split:
+        import yaml
+        with open(selldown_split, 'r') as fh:
+            conf = yaml.safe_load(fh) #,Loader=yaml.FullLoader)
+            rg = float(conf['range'])
+            splits = int(conf['splits'])
+            ttl = float(conf['total_qty'])
+
+            bid,ask = get_binance_spot(ric);spread = (ask-bid)/(ask+bid)*2
+            assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+            pces = split_orders_selldown(rg,splits,bid,ask,ttl)
+            print( pces )
     else:
         price = float(price)
         qty = float(qty)
