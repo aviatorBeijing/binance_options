@@ -169,6 +169,19 @@ def analyze_trades(ric, tds, days, save=True):
         for col in 'qty,price,commission'.split(','):
             tds[col] = tds[col].apply(float)
         tds['datetime'] = tds['datetime'].apply(str)
+
+        pceMap = {}
+        syms = list(set(tds.commissionAsset.values))
+        for s in syms:
+            if s =='USDT':
+                pceMap[s] = 1.
+            else:
+                feeric = f'{s}/USDT'
+                bid,ask = get_binance_spot( feeric )
+                pceMap[s] = bid
+        tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
+        tds['fee'] = tds.commission.astype(float)*tds.commAssetPrice
+
         tds.to_csv(fn,index=False)
         print('-- saved:', fn)
     print(f"-- Total: {tds.shape[0]}, start: {tds.iloc[0]['datetime']}")
@@ -214,16 +227,17 @@ def portfolio_check(ric,days=3):
     tds = mkt.check_trades(hours=days*24)
     tds = analyze_trades( ric, tds, days)
     
-    pceMap = {}
-    syms = list(set(tds.commissionAsset.values))
-    for s in syms:
-        if s =='USDT':
-            pceMap[s] = 1.
-        else:
-            feeric = f'{s}/USDT'
-            bid,ask = get_binance_spot( feeric )
-            pceMap[s] = bid
-    tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
+    if 'commAssetPrice' not in tds:
+        pceMap = {}
+        syms = list(set(tds.commissionAsset.values))
+        for s in syms:
+            if s =='USDT':
+                pceMap[s] = 1.
+            else:
+                feeric = f'{s}/USDT'
+                bid,ask = get_binance_spot( feeric )
+                pceMap[s] = bid
+        tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
    
     n_doge = 0.
