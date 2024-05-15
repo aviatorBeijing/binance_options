@@ -83,14 +83,15 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     
     df['cash'] = df['$agg']
     df['asset'] = df.qty.cumsum()
-    df['portfolio'] = df['cash'] + df['asset']*df.price
+    fee_cumsum = df['fee'].astype(float).cumsum()
+    df['portfolio'] = df['cash'] + df['asset']*df.price -fee_cumsum
     port = df[['price','portfolio']].resample('1d').agg('last')# * 2/3
     port.index = list(map(lambda d: str(d)[:10], port.index))
     port = pd.concat([port, ohlcv[['close']]], axis=1, ignore_index=False).dropna()
     
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'gold') 
-    ax1.set_title(f'Return v.s. spot (fee involved)\ncash: ${max_capital:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
+    ax1.set_title(f'Net return v.s. spot\ncash: ${max_capital:.2f},fee \${fee_cumsum.iloc[-1]:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
     (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=3)
     (port.close).plot(ax=ax2,color='gold')
     ax1.grid()
@@ -108,7 +109,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     _vrank = pd.concat([ohlcv[['volume_rank']], port.portfolio], axis=1,ignore_index=False).dropna()
     _vrank['volume_rank'].plot(ax=ax011,color='red',linestyle='--') 
     ax01.set_ylabel(f'portfolio %') 
-    ax01.set_title('Return v.s. volume')
+    ax01.set_title('Return v.s. market volume')
     ax011.set_ylabel(f'Mkt. volume ranking %',color='red') 
     
     _x = df.qty.resample('1d').agg('sum')
