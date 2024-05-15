@@ -39,8 +39,8 @@ def get_perp_klines(ric, span)->pd.DataFrame:
     df = pd.DataFrame.from_records(h, columns=cols)
 
     print(tabulate(df.tail(5),headers="keys"))
-    rk_last = df.volume.rolling(100).rank(pct=True).iloc[-2:]
-    print(f'-- latest volumes: ', rk_last)
+    rk_last = df.volume.rolling(100).rank(pct=True).iloc[-2:].values
+    print(f'-- latest volumes: {(rk_last[0]*100):.1f}%, {(rk_last[1]*100):.1f}%')
 
     # cache
     fn = os.getenv('USER_HOME','/Users/junma')
