@@ -168,6 +168,7 @@ def main(rics, atms, base_symbol, channel):
         fn = os.getenv('USER_HOME','/Users/junma') + f'/tmp/_atms_{base_symbol.lower()}.csv'
         with open(fn,'r') as fh:
             rics = fh.readline().strip()
+            print(f'  -- {len(rics.split(","))} rics')
             _main(rics, channel)
 
 if __name__ == '__main__':
