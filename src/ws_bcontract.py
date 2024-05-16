@@ -141,11 +141,9 @@ def sync_fetch_ticker( contract:str, handler=None ):
         time.sleep(1)
         return
 
-def _main(rics:str, channel=''):
+def _main(ric:str, channel=''):
     import websocket
-    if not isinstance(rics, list):
-        rics = rics.split(',')
-    print('  --', rics )
+    rics = [ric] # FIXME only support single ric for now. How to support more?
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics) )
     websocket.enableTrace(False) #True)
     for uri in uris:
@@ -180,10 +178,7 @@ def main(rics, atms, base_symbol, channel):
             
             with Pool(5) as pool:
                 recs = []
-                for i in range(2):
-                    r = rics.split(",")[i*5:(i+1)*5]
-                    recs += [r]
-                p = pool.map( partial(_main, channel=channel), recs )
+                p = pool.map( partial(_main, channel=channel), rics.split(","), )
 
                 print('-- [mt] starting ...')
                 p.close();p.join()
