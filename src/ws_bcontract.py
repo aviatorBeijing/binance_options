@@ -141,7 +141,7 @@ def sync_fetch_ticker( contract:str, handler=None ):
         time.sleep(1)
         return
 
-def _main(rics, channel=''):
+def _main(rics:str, channel=''):
     import websocket
     if not isinstance(rics, list):
         rics = rics.split(',')
