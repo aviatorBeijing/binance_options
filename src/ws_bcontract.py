@@ -143,8 +143,9 @@ def sync_fetch_ticker( contract:str, handler=None ):
 
 def _main(rics:str, channel=''):
     import websocket
-    rics = rics.split(',')
-    print( rics )
+    if not isinstance(rics, list):
+        rics = rics.split(',')
+    print('***', rics )
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )
     websocket.enableTrace(False) #True)
     for uri in uris:
@@ -177,15 +178,14 @@ def main(rics, atms, base_symbol, channel):
             print(f'  -- {len(rics.split(","))} rics: ', rics.split(",")[:5], ' ...')
             
             with Pool(5) as pool:
-                ps = []
+                recs = []
                 for i in range(2):
                     r = rics.split(",")[i*5:(i+1)*5]
-                    print(r)
-                    p = pool.map( partial(_main, channel=channel), ','.join( r ) )
+                    recs += [r]
+                p = pool.map( partial(_main, channel=channel), recs )
 
                 print('-- [mt] starting ...')
-                for p in ps:
-                    p.close();p.join()
+                p.close();p.join()
                 #_main(rics, channel)
 
 if __name__ == '__main__':
