@@ -178,7 +178,9 @@ def main(rics, atms, base_symbol, channel):
             with Pool(5) as pool:
                 ps = []
                 for i in range(2):
-                    p = pool.map( partial(_main, channel=channel), ','.join( rics[i*5:(i+1)*5]) )
+                    r = rics[i*5:(i+1)*5]
+                    print(r)
+                    p = pool.map( partial(_main, channel=channel), ','.join( r ) )
 
                 print('-- [mt] starting ...')
                 for p in ps:
