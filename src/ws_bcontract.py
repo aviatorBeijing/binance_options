@@ -34,6 +34,9 @@ def on_message(ws, message):
     msg = json.loads( message )
     df = pd.DataFrame.from_records([ msg ] )
     
+    if df.empty:
+        return 
+        
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
     
