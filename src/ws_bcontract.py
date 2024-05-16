@@ -141,7 +141,7 @@ def sync_fetch_ticker( contract:str, handler=None ):
         time.sleep(1)
         return
 
-def _main(rics:str, channel):
+def _main(rics:str, channel=''):
     import websocket
     rics = rics.split(',')
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )
