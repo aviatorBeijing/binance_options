@@ -180,6 +180,7 @@ def main(rics, atms, base_symbol, channel):
                 for i in range(2):
                     p = pool.map( partial(_main, channel=channel), ','.join( rics[i*5:(i+1)*5]) )
 
+                print('-- [mt] starting ...')
                 for p in ps:
                     p.close();p.join()
                 #_main(rics, channel)
