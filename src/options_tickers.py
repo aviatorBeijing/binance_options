@@ -12,7 +12,8 @@ def main(contracts):
         row = options_bidask( c ) 
         recs += [row]
     df = pd.DataFrame.from_records(recs)
+    df['ts_beijing'] = df['ts_beijing'].apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
     print( tabulate(df,headers='keys'))
-    
+
 if __name__ == '__main__':
     main()
