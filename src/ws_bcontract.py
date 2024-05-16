@@ -156,10 +156,19 @@ def _main(rics:str, channel):
 
 @click.command()
 @click.option('--rics')
+@click.option('--all_contracts', is_flag=True, default=False)
+@click.option('--base_symbol', default='btc')
 @click.option('--channel', default="trade")
-def main(rics, channel):
+def main(rics, all_contracts, base_symbol, channel):
     print('-- channel:', channel)
-    _main(rics, channel)
+    if not all_contracts:
+        _main(rics, channel)
+    else:
+        print('-- rev. ALL contracts data')
+        fn = os.getenv('USER_HOME','/Users/junma') + f'/tmp/_all_binance_contracts_{base_symbol.lower()}.csv'
+        df = pd.read_csv(fn)
+        rics = ','.join(df.symbol.values)
+        _main(rics, channel)
 
 if __name__ == '__main__':
     main()
