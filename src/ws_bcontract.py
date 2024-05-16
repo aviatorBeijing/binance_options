@@ -36,7 +36,7 @@ def on_message(ws, message):
     
     if df.empty:
         return 
-        
+
     avg = ( df['ao'].astype(float)+df['bo'].astype(float) )/2
     df['spread'] = df['ao'].astype(float)-df['bo'].astype(float)
     
@@ -108,7 +108,7 @@ def on_message(ws, message):
                     update_bidask_tbl(data)
             
 def on_error(ws, error):
-    print('error:', error)
+    print('binance ws error:', error)
 
 def on_close(ws, close_status_code, close_msg):
     print("### closed ###")
