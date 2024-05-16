@@ -65,7 +65,7 @@ def fetch_bidask(contract) ->dict:
         t0 = d['ts_beijing']
         t1 = datetime.datetime.utcnow() +datetime.timedelta(hours=8)
         t1 = t1.timestamp()
-        assert (t1-t0)<10, f'{contract}, data latency = {t1-t0} secs. Websocket data pipe is NOT alive.'
+        assert (t1-t0)<10, f'{contract}, data latency = {t1-t0} secs. Websocket data pipe is NOT alive or market is stalling.'
         
     cols = ["last_trade","bid","ask","bidv","askv","delta","gamma","theta",
                         "vega","impvol","impvol_bid","impvol_ask",
