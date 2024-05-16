@@ -146,6 +146,7 @@ def _main(rics:str, channel=''):
     if not isinstance(rics, list):
         rics = rics.split(',')
     print('***', rics )
+
     uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )
     websocket.enableTrace(False) #True)
     for uri in uris:
