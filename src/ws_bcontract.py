@@ -159,30 +159,11 @@ def _main(ric:str, channel=''):
     rel.dispatch()
 
 @click.command()
-@click.option('--rics')
-@click.option('--atms', is_flag=True, default=False)
-@click.option('--base_symbol', default='btc')
+@click.option('--ric')
 @click.option('--channel', default="trade")
-def main(rics, atms, base_symbol, channel):
-    from multiprocessing import Pool
-    from functools import partial
+def main(ric, channel):
     print('-- channel:', channel)
-    if not atms:
-        _main(rics, channel)
-    else:
-        print('-- rev. ALL contracts data')
-        fn = os.getenv('USER_HOME','/Users/junma') + f'/tmp/_atms_{base_symbol.lower()}.csv'
-        with open(fn,'r') as fh:
-            rics = fh.readline().strip()
-            print(f'  -- {len(rics.split(","))} rics: ', rics.split(",")[:5], ' ...')
-            
-            with Pool(5) as pool:
-                recs = []
-                p = pool.map( partial(_main, channel=channel), rics.split(","), )
-
-                print('-- [mt] starting ...')
-                p.close();p.join()
-                #_main(rics, channel)
+    _main(ric, channel)
 
 if __name__ == '__main__':
     main()
