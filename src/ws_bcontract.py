@@ -166,9 +166,9 @@ def main(rics, atms, base_symbol, channel):
     else:
         print('-- rev. ALL contracts data')
         fn = os.getenv('USER_HOME','/Users/junma') + f'/tmp/_atms_{base_symbol.lower()}.csv'
-        df = pd.read_csv(fn)
-        rics = ','.join(df.symbol.values)
-        _main(rics, channel)
+        with open(fn,'r') as fh:
+            rics = fh.readline().strip()
+            _main(rics, channel)
 
 if __name__ == '__main__':
     main()
