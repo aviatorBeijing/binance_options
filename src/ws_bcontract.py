@@ -178,7 +178,7 @@ def main(rics, atms, base_symbol, channel):
             with Pool(5) as pool:
                 ps = []
                 for i in range(2):
-                    r = rics[i*5:(i+1)*5]
+                    r = rics.split(",")[i*5:(i+1)*5]
                     print(r)
                     p = pool.map( partial(_main, channel=channel), ','.join( r ) )
 
