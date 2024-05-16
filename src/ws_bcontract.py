@@ -146,9 +146,10 @@ def _main(rics:str, channel=''):
     if not isinstance(rics, list):
         rics = rics.split(',')
     print('  --', rics )
-    uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics ) )
+    uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics) )
     websocket.enableTrace(False) #True)
     for uri in uris:
+        print( uri )
         ws = websocket.WebSocketApp(uri, #wss://api.gemini.com/v1/marketdata/BTCUSD",
                               on_open=on_open,
                               on_message=on_message,
