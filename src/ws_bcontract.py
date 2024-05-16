@@ -163,6 +163,8 @@ def _main(rics:str, channel):
 @click.option('--base_symbol', default='btc')
 @click.option('--channel', default="trade")
 def main(rics, atms, base_symbol, channel):
+    from multiprocessing import Pool
+    from functools import partial
     print('-- channel:', channel)
     if not atms:
         _main(rics, channel)
@@ -172,7 +174,15 @@ def main(rics, atms, base_symbol, channel):
         with open(fn,'r') as fh:
             rics = fh.readline().strip()
             print(f'  -- {len(rics.split(","))} rics: ', rics.split(",")[:5], ' ...')
-            _main(rics, channel)
+            
+            with Pool(5) as pool:
+                ps = []
+                for i in range(2):
+                    p = pool.map( partial(_main, channel=channel), ','.join( rics[i*5:(i+1)*5]) )
+
+                for p in ps:
+                    p.close();p.join()
+                #_main(rics, channel)
 
 if __name__ == '__main__':
     main()
