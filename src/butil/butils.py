@@ -25,6 +25,7 @@ def bjnow_str():
 ex_binance = ccxt.binance({'enableRateLimit': True})
 ex_bmex = ccxt.bitmex({'enableRateLimit': True})
 ex_bybit = ccxt.bybit({'enableRateLimit': True})
+ex_okx = ccxt.okx({'enableRateLimit': True})
 
 def get_bmex_next_funding_rate(spot_symbol)->tuple: 
     if 'BTC' in spot_symbol: spot_symbol.replace('BTC','XBT')
@@ -36,19 +37,20 @@ def get_bmex_next_funding_rate(spot_symbol)->tuple:
     annual = (1+rt)**(365*3)-1 # Every 8 hours
     return annual, rt, ts
 
-def get_binance_next_funding_rate(spot_symbol)->tuple:
+def get_binance_next_funding_rate(spot_symbol, use_cached=False)->tuple:
     symbol = spot_symbol.replace('/','').replace('-','')    
     
     # Cache
-    cached_files =  os.listdir(FUNDINGDIR)
-    fd = list(filter(lambda s: s.startswith(symbol), cached_files))
-    if len(fd) == 1:
-        fd = fd[0]
-        with open(f"{FUNDINGDIR}/{fd}", 'r') as fh:
-            t, annual,rt,ts = fh.read().split('\n')
-            cachedt = datetime.datetime.fromisoformat( t )
-            if (bjnow() - cachedt).seconds < 10: # less than 10 sec
-                return float(annual), float(rt), ts
+    if not use_cached:
+        cached_files =  os.listdir(FUNDINGDIR)
+        fd = list(filter(lambda s: s.startswith(symbol), cached_files))
+        if len(fd) == 1:
+            fd = fd[0]
+            with open(f"{FUNDINGDIR}/{fd}", 'r') as fh:
+                t, annual,rt,ts = fh.read().split('\n')
+                cachedt = datetime.datetime.fromisoformat( t )
+                if (bjnow() - cachedt).seconds < 10: # less than 10 sec
+                    return float(annual), float(rt), ts
 
     resp = ex_binance.fapiPublicGetPremiumIndex()
     r = list(filter(lambda e: symbol == e['symbol'],resp ) )
