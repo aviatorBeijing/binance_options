@@ -5,6 +5,7 @@ SERVER=3.114.152.67
 
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_5m.csv ./ && mv doge-usdt_5m.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_1h.csv ./ && mv doge-usdt_1h.csv ~/tmp
+
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/perp_dogeusdt_5m.csv ./ && mv perp_dogeusdt_5m.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/perp_dogeusdt_1h.csv ./ && mv perp_dogeusdt_1h.csv ~/tmp
 
