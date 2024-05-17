@@ -12,11 +12,13 @@ def main(ric):
     apr, r, ts = get_binance_next_funding_rate(ric)
     print( apr, r, ts)
 
-    bid,ask = get_perp_ticker(ric)
-    print( bid, ask )
+    pbid,pask = get_perp_ticker(ric)
+    print( pbid, pask )
 
-    bid,ask = get_binance_spot(ric)
-    print( bid, ask)
+    sbid,sask = get_binance_spot(ric)
+    print( sbid, sask)
+
+    print( (sbid-pbid)/(pbid*sbid)*2*10_000 )
 
 if __name__ == '__main__':
     main()
