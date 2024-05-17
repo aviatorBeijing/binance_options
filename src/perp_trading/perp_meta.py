@@ -190,7 +190,7 @@ class BinancePerp:
         df.to_csv( fn, index=0)
         print('-- saved:', fn)
 
-        print('--[ orders ]\n',tabulate(df.sort_values('datetime',ascending=True),headers="keys"))
+        print('--[ orders ]\n',tabulate(df.sort_values('datetime',ascending=False),headers="keys"))
 
         return df  
     
