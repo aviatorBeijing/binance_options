@@ -20,8 +20,8 @@ def main(ric):
 
     x = (sask-pbid)/(pbid+sask)*2*10_000 
     y = (pask-sbid)/(sbid+pask)*2*10_000 
-    print(f"sask-pbid: {x:.1f} bps")
-    print(f"pask-sbid: {y:.1f} bps")
+    print(f"buy spot/sell perp: {x:.1f} bps")
+    print(f"buy perp/sell spot: {y:.1f} bps")
 
 if __name__ == '__main__':
     main()
