@@ -18,8 +18,10 @@ def main(ric):
     sbid,sask = get_binance_spot(ric)
     print( sbid, sask)
 
-    print( (sask-pbid)/(pbid+sask)*2*10_000 )
-    print( (pask-sbid)/(sbid+pask)*2*10_000 )
+    x = (sask-pbid)/(pbid+sask)*2*10_000 
+    y = (pask-sbid)/(sbid+pask)*2*10_000 
+    print(f"sask-pbid: {x:.1f} bps")
+    print(f"pask-sbid: {y:.1f} bps")
 
 if __name__ == '__main__':
     main()
