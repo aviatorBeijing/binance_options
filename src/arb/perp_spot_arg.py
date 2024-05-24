@@ -10,13 +10,13 @@ from perp_trading.marketdata import adhoc_ticker as get_perp_ticker
 def main(ric):
     ric = ric.upper()
     apr, r, ts = get_binance_next_funding_rate(ric)
-    print( apr, r, ts)
+    print( 'funding:',apr, r, ts)
 
     pbid,pask = get_perp_ticker(ric)
-    print( pbid, pask )
+    print( 'perp:', pbid, pask )
 
     sbid,sask = get_binance_spot(ric)
-    print( sbid, sask)
+    print('spot:', sbid, sask)
 
     x = (sask-pbid)/(pbid+sask)*2*10_000 
     y = (pask-sbid)/(sbid+pask)*2*10_000 
