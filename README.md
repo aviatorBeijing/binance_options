@@ -1,4 +1,4 @@
-# Trading Toolkits: Spot & Options (via Binance API)
+# Trading Toolkits: Spot, Perpetual & Options (via Binance API)
 
 ( Be aware there are some PSQL database settings needed. I'll update later.)
 ```
