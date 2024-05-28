@@ -259,12 +259,13 @@ def portfolio_check(ric,days=3):
     print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
     print(f'-- gain (after liquidating and fee deduction @ ${pce}): $ {port_value:,.4f}')
     
-    fn = fd + f'/tmp/binance_fee_gain.dat'
-    with open(fn,'w') as fp:
-        fp.writelines([f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}'])
-    
     # orders
     openDf = mkt.check_open_orders()
+
+    res = openDf.shape[0]
+    fn = fd + f'/tmp/binance_fee_gain_{ric.lower().replace("/","-")}.dat'
+    with open(fn,'w') as fp:
+        fp.writelines([f'ric:{ric}\n', f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}\n',f'price:${pce}\n',f'holding:{holding_size}\n',f'orders:{res}'])
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")

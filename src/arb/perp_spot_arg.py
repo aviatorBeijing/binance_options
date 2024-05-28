@@ -18,8 +18,8 @@ def main(ric):
     sbid,sask = get_binance_spot(ric)
     print('spot:', sbid, sask)
 
-    x = (sask-pbid)/(pbid+sask)*2*10_000 
-    y = (pask-sbid)/(sbid+pask)*2*10_000 
+    x = (-sask+pbid)/(pbid+sask)*2*10_000 
+    y = (-pask+sbid)/(sbid+pask)*2*10_000 
     print(f"buy spot/sell perp: {x:.1f} bps")
     print(f"buy perp/sell spot: {y:.1f} bps")
 
