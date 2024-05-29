@@ -34,7 +34,11 @@ def _find_max_capital(tds:pd.DataFrame)->float:
             max_capital = tds.loc[prev_idx:idx]['$agg'].min()
         prev_idx = idx 
         capitals += [ max_capital]
-    max_capital = tds.loc[prev_idx:]['$agg'].min()
+    
+    if prev_idx == -1: # Never happened
+        max_capital = tds['$agg'].min()
+    else:
+        max_capital = tds.loc[prev_idx:]['$agg'].min() # cost is negative, so use min() here.
     capitals += [max_capital]
     mx = max( np.array(capitals)*-1. )
     return mx
@@ -136,7 +140,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     ax02.set_title('Trading qty v.s. market volume')
     ax8.set_ylabel(f'Mkt. volume ranking %',color='red') 
 
-    fn =f"{fd}/tmp/binance_portfolio.png"
+    fn =f"{fd}/tmp/binance_portfolio_{ric.lower().replace('/','-')}.png"
     plt.savefig(fn)
     print('-- saved portfolio:', fn)
     return df

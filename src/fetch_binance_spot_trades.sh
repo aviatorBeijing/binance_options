@@ -3,6 +3,10 @@
 SERVER=3.114.152.67
 # Go to server to run: binance_options/src/p.sh first
 
+for s in sol-usdt pendle-usdt sei-usdt ace-usdt;do
+	scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/${s}_1h.csv ./ && mv ${s}_1h.csv ~/tmp
+done
+
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_5m.csv ./ && mv doge-usdt_5m.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_1h.csv ./ && mv doge-usdt_1h.csv ~/tmp
 
@@ -17,3 +21,7 @@ scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_fee_gain.d
 mv binance_*.csv ~/tmp
 python spot_trading/portfolio.py --check_cached
 python spot_trading/grid.py --ric doge/usdt --test --ref_spot=0.13908 --start_ts 2024-04-13T22:30:00.000Z
+
+for s in sol-usdt pendle-usdt ace-usdt sei-usdt;do
+    python spot_trading/portfolio.py --check_cached --ric $s
+done
