@@ -11,7 +11,7 @@ function _dat(){
 echo "reading:"
 for s in doge sol pendle ace sei
 do
-        echo #_fee $s
+        _fee $s
 done 
 
 echo "check:"
