@@ -117,8 +117,12 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     ax011.set_ylabel(f'Mkt. volume ranking %',color='red') 
     
     _x = df.qty.resample('1d').agg('sum')
-    _x.index = list(map(lambda d: str(d)[:10], _x.index))
-    _x.plot.bar(ax=ax3)
+    _xx = _x.copy() 
+    if _xx.shape[0]>30: # Bar plotting will not be consolidate automatically, hence can be messy. 
+        _xx = _xx[-30:]
+    _xx.index = list(map(lambda d: str(d)[:10], _xx.index))
+    #_x.index = range(0, _x.shape[0])
+    _xx.plot.bar(ax=ax3)
     ax3.set_title(f'Daily positions changes {ric.upper().split("-")[0]}')
     #for tic in ax3.get_xticklabels(): tic.set_rotation(35)
 
@@ -245,15 +249,16 @@ def portfolio_check(ric,days=3):
         tds['commAssetPrice'] = tds.commissionAsset.apply(lambda s: pceMap[s])
     fee = (tds.commission.astype(float)*tds.commAssetPrice).sum()
    
+    sym = ric.upper().split("-")[0].split("/")[0]
     n_doge = 0.
     for feeasset in list(set(tds.commissionAsset.values)):
         feex = tds[tds.commissionAsset==feeasset].commission.astype(float).sum()
         print(f'  -- #fee in {feeasset}: {feex}')
-        if feeasset == 'DOGE':
+        if feeasset == sym: #'DOGE':
             n_doge = feex
 
     net_doge_deficit = tds.iloc[-1]['agg'] - n_doge
-    print(f'  -- net DOGE deficite: {net_doge_deficit:.0f}')
+    print(f'  -- net {sym} deficite: {net_doge_deficit:.0f}')
     
     pce,_ = get_binance_spot( ric.replace('-','/') ) # price now
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee # position value + cash changes - fee
