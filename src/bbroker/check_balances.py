@@ -28,7 +28,13 @@ def balances() -> pd.DataFrame:
     bdf['value'] = bdf['asset'].apply(valuation)
     bdf['value'] = bdf['value'] * bdf['ttl']
     bdf.sort_values('value', ascending=False, inplace=True)
+    
+    fn = os.getenv("USER_HOME","")+'/tmp/bal.csv'
+    bdf.to_csv( fn, index=0 )
+    print('-- written:', fn )
+
     bdf['_val'] = bdf['value'].apply(lambda v: f"$ {v:,.2f}" ) 
+
     return bdf
 
 if __name__ == '__main__':
