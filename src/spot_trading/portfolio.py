@@ -72,9 +72,10 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     max_eq = max_equity_amt * df.iloc[0].price
     capital_usage = max_capital + max_eq
     print(f'-- capital usage: ${capital_usage:,.2f}')
-    print(f'  -- cash: \t\t${max_capital:.2f}')
-    print(f'  -- equity({ric.upper()}): {max_equity_amt} (${(max_eq):,.2f})')
+    print(f'  -- max cash: \t\t${max_capital:.2f}')
+    print(f'  -- max equity({ric.upper()}): {max_equity_amt} (${(max_eq):,.2f})')
 
+    sym = ric.upper().split('/')[0].split('-')[0]
     fig, ((ax1,ax7), (ax01,ax02), (ax5,ax3) )= plt.subplots(3,2,figsize=(27,15))
     plt.subplots_adjust(left=0.1,
                     bottom=0.1, 
@@ -94,11 +95,11 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     port = pd.concat([port, ohlcv[['close']]], axis=1, ignore_index=False).dropna()
     
     ax1.set_ylabel('profit %', color = 'blue') 
-    ax2.set_ylabel('equity $', color = 'gold') 
-    ax1.set_title(f'Net return v.s. spot\ncash: ${max_capital:.2f},fee \${fee_cumsum.iloc[-1]:.2f}\nequity: ${max_eq:.2f} ({max_equity_amt})')
-    (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=3)
-    (port.close).plot(ax=ax2,color='gold')
-    ax1.grid()
+    ax2.set_ylabel('equity $', color = 'orange') 
+    ax2.set_title(f'Net return v.s. spot ({sym})\nmax cash: ${max_capital:.2f}\nmax equity: ${abs(max_eq):.2f} (#{abs(max_equity_amt)})\nfee \${fee_cumsum.iloc[-1]:.2f}')
+    (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=5)
+    (port.close).plot(ax=ax2,color='orange')
+    ax2.grid()
 
     ax77 = ax7.twinx()
     daily_vol = pd.concat([port[['portfolio']], ohlcv[['atr']]],axis=1,ignore_index=False).dropna()
@@ -276,6 +277,44 @@ def portfolio_check(ric,days=3):
     with open(fn,'w') as fp:
         fp.writelines([f'ric:{ric}\n', f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}\n',f'price:${pce}\n',f'holding:{holding_size}\n',f'orders:{res}'])
 
+def assets():
+    fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
+    if os.path.exists( fn ):
+        df = pd.read_csv( fn )
+        df['ref'] = df['value'] / df['ttl']
+        #df = df[df.asset != 'BTC']
+
+        fig, (ax1,ax2) = plt.subplots(1,2,figsize=(16,8))
+        dim = df.shape[0]
+        w = 0.75
+        dimw = w / 2
+        x = np.arange( df.shape[0] )
+        ax1.bar(x, df['ttl'], dimw, bottom=0.001)
+        ax1.bar(x + dimw, df['free'], dimw, bottom=0.001)
+        #ax1.bar(x + 2*dimw, df['locked'], dimw, bottom=0.001)
+        
+        ax1.set_xticks(x + dimw / 2, labels=map(str, x))
+        ax1.set_yscale('log')
+        ax1.set_ylabel('count')
+        ax1.set_xlabel('')
+        ax1.set_xticks( x, df.asset, rotation=15 ) 
+
+        wedges, texts, autotexts = ax2.pie(
+            df['value'],labels=df['asset'], autopct='%1.1f%%')
+        ax1.legend(
+            wedges, 
+            df['value'].apply(lambda v: f"${v:.2f}"),
+            title="Assets",
+            loc="center left",
+            bbox_to_anchor=(1, 0, 0.5, 1)
+            )
+
+        fn = os.getenv("USER_HOME",'')+'/tmp/bal.png'
+        plt.savefig(fn)
+        print('-- saved:', fn)
+    else:
+        print(f'*** {fn} doesn\'s exit.')
+
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
 @click.option('--days',default=3)
@@ -286,6 +325,7 @@ def main(ric,days,check_cached,spot):
     if check_cached:
         _ = analyze_trades_cached(ric)
         _ = BianceSpot.analyze_open_orders_cached(spot,ric)
+        _ = assets()
     else:   
         portfolio_check(ric,days=days)
 

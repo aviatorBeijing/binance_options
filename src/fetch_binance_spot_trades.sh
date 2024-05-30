@@ -3,6 +3,8 @@
 SERVER=3.114.152.67
 # Go to server to run: binance_options/src/p.sh first
 
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/bal.csv ./ && mv bal.csv ~/tmp
+
 for s in sol-usdt pendle-usdt sei-usdt ace-usdt;do
 	scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/${s}_1h.csv ./ && mv ${s}_1h.csv ~/tmp
 done
