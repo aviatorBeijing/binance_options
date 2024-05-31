@@ -33,7 +33,7 @@ def balances() -> pd.DataFrame:
     fn = os.getenv("USER_HOME","")+'/tmp/bal.csv'
     bdf.to_csv( fn, index=0 )
     print('-- written:', fn )
-
+    print(f'-- ttl: ${(bdf["value"].sum() ):.2f}')
     bdf['_val'] = bdf['value'].apply(lambda v: f"$ {v:,.2f}" ) 
 
     return bdf.reset_index(drop=True)
