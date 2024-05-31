@@ -26,6 +26,7 @@ def balances() -> pd.DataFrame:
     bdf = bdf[bdf.asset != 'ETHW'] 
 
     bdf['value'] = bdf['asset'].apply(valuation)
+    bdf['pce'] = bdf['value']
     bdf['value'] = bdf['value'] * bdf['ttl']
     bdf.sort_values('value', ascending=False, inplace=True)
     
@@ -35,7 +36,7 @@ def balances() -> pd.DataFrame:
 
     bdf['_val'] = bdf['value'].apply(lambda v: f"$ {v:,.2f}" ) 
 
-    return bdf
+    return bdf.reset_index(drop=True)
 
 if __name__ == '__main__':
     print( balances() )
