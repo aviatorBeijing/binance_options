@@ -12,6 +12,10 @@ done
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_5m.csv ./ && mv doge-usdt_5m.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_1h.csv ./ && mv doge-usdt_1h.csv ~/tmp
 
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_1d.csv ./ && mv doge-usdt_1d.csv ~/tmp
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/sei-usdt_1d.csv ./ && mv sei-usdt_1d.csv ~/tmp
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/sol-usdt_1d.csv ./ && mv sol-usdt_1d.csv ~/tmp
+
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/btc-usdt_1h.csv ./ && mv btc-usdt_1h.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/btc-usdt_1d.csv ./ && mv btc-usdt_1d.csv ~/tmp
 

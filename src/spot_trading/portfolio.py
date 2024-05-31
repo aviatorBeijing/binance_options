@@ -306,7 +306,7 @@ def assets():
             df['value'],labels=df['asset'], autopct='%1.1f%%')
         ax1.legend(
             wedges, 
-            df['asset'].apply(lambda s: s[:2]) + df['value'].apply(lambda v: f"${v:.2f}"),
+            df['asset'].apply(lambda s: s[:3]) + df['value'].apply(lambda v: f"${v:.2f}"),
             title="Assets",
             loc="center left",
             bbox_to_anchor=(1, 0, 0.5, 1)
