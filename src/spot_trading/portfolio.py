@@ -96,7 +96,10 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'orange') 
-    ax2.set_title(f'Net return v.s. spot ({sym})\nmax cash: ${max_capital:.2f}\nmax equity: ${abs(max_eq):.2f} (#{abs(max_equity_amt)})\nfee \${fee_cumsum.iloc[-1]:.2f}')
+    ax2.set_title(f'Net return v.s. spot ({sym})\n'
+                +f'max cash: ${max_capital:.2f}\n'
+                +f'max equity: ${abs(max_eq):.2f} (#{abs(max_equity_amt)})\n'
+                +f'fee \${fee_cumsum.iloc[-1]:.2f}')
     (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=5)
     (port.close).plot(ax=ax2,color='orange')
     ax2.grid()
@@ -284,7 +287,7 @@ def assets():
         df['ref'] = df['value'] / df['ttl']
         #df = df[df.asset != 'BTC']
 
-        fig, (ax1,ax2) = plt.subplots(1,2,figsize=(16,8))
+        fig, (ax1,ax2) = plt.subplots(1,2,figsize=(18,8))
         dim = df.shape[0]
         w = 0.75
         dimw = w / 2
@@ -303,7 +306,7 @@ def assets():
             df['value'],labels=df['asset'], autopct='%1.1f%%')
         ax1.legend(
             wedges, 
-            df['value'].apply(lambda v: f"${v:.2f}"),
+            df['asset'].apply(lambda s: s[:2]) + df['value'].apply(lambda v: f"${v:.2f}"),
             title="Assets",
             loc="center left",
             bbox_to_anchor=(1, 0, 0.5, 1)
