@@ -3,18 +3,23 @@ import pandas as pd
 import numpy as np
 import talib
 import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
 
 """
 - Purelly technical valleys, not related to any * motivations *.
-- For motivation driven valleys, ref: Net Unrealized Profit/loss (NUPL) on-chain.
+- For motivation driven valleys, ref: Net Unrealized price_delta/loss (NUPL) on-chain.
 """
 
-def find_valleys(ts, closes,volume):
+def find_reversals(sym, ts, closes,volume,volt=50):
+    months = 9 # volume ranking window
+    trade_horizon = 30*2    # how long to wait to sell after buy
+
+    wd = 30*months
     rtn = closes.pct_change()
     cumrtn = (1+rtn).cumprod()
     cum_max = cumrtn.cummax()
     volume = talib.EMA(volume, timeperiod=5)
-    volrank = volume.rolling(30*9).rank(pct=True)
+    volrank = volume.rolling(wd).rank(pct=True)
     dd = (cumrtn - cum_max)/cum_max
     
     # remove nan
@@ -22,12 +27,15 @@ def find_valleys(ts, closes,volume):
     ts = ts[1:]
     volume = volume[1:]
     volrank = volrank[1:]
+    closes = closes[1:]
     
     # find min
     i_mm = np.argmin(dd)
     if i_mm+1 != dd.shape[0]-1:
         i_mm += 1
-    print( i_mm, ts[i_mm], volrank[i_mm], f'{(dd[i_mm]*100):.1f}%')
+    print( '-- max drawdown:', ts[i_mm] )
+    print( f'  -- volume rank: {(volrank[i_mm]*100):.1f}%')
+    print( f'  -- max drawdown: {(dd[i_mm]*100):.1f}%', '\n')
 
     df = pd.DataFrame()
     df['ts'] = ts;df.ts = df.ts.apply(pd.Timestamp)
@@ -35,27 +43,121 @@ def find_valleys(ts, closes,volume):
     df['closes'] = closes
     df['volrank'] = volrank
     df.set_index('ts',inplace=True)
+    df = df[wd:]
     #df = df[ -365: ]
+    
+    #rank_xing = (df.volrank.shift(3) <= volt/100) & (df.volrank.shift(2) <= volt/100) & (df.volrank.shift(1) >= volt/100) & (df.volrank>=volt/100)
+    rank_xing = (df.volrank.shift(2) <= volt/100) & (df.volrank.shift(1) <= volt/100) & (df.volrank>=volt/100)
+    #(df.dd<-0.5)&
+    
+    df.loc[ rank_xing, 'sig'] = df.closes
+    df.loc[ rank_xing, 'r1'] = df.volrank
 
-    fig, (ax1,ax2) = plt.subplots(1,2,figsize=(16,6))
+    # remove high frequency xing
+    """fwd = 21
+    df['sig_count'] = df.sig.fillna(0).rolling(fwd).apply(lambda arr: np.count_nonzero( np.array(arr) ) )
+    df.loc[ df.sig_count>1, 'sig'] = np.nan;df.loc[ df.sig_count>1, 'r1'] = np.nan
+    """
+
+    df['bought'] = df.sig.shift(trade_horizon) # after one month
+    xdf = df[df.bought>0][['bought','closes']].copy()
+    xdf['price_delta'] = df.closes-df.bought
+    xdf['return'] = xdf.price_delta/xdf.bought
+    aggrtn =  (((xdf['return']+1).prod() -1 )*100)
+    
+    annual = np.log(aggrtn/100+1)/(df.shape[0]/365)
+    annual = ( np.exp(annual)- 1)*100
+    ds = df.shape[0]
+    #print( xdf )
+    #print(xdf.sort_values('return'))
+    latest = df[df.sig>0].tail(1)
+    lastsell = xdf.tail(1)
+
+    cap = init_capital = 10_000
+    if not latest.empty:
+        print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
+    if not lastsell.empty:
+        print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
+    
+    print(f'-- gain: ${(xdf["return"].sum()*cap ):,.2f} (initial capital: ${cap:,.2f}, fixed investment mode)')
+    print(f'-- ttl return: {aggrtn:.1f}% ({ds} days, {(ds/365):.1f} yrs, reinvest mode)')
+    print(f'  -- cagr: {annual:.1f}%')
+    print(f'  -- single max gain: {(xdf["return"].max()*100):.1f}%' )
+    print(f'  -- single max loss: {(xdf["return"].min()*100):.1f}%' )
+    print(f'  -- {xdf.shape[0]}, wins: {xdf[xdf["price_delta"]>0].shape[0]}, losses: {xdf[xdf["price_delta"]<0].shape[0]}')
+
+    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(24,8))
     ax11 = ax1.twinx()
 
     df['dd'].plot(ax=ax1,color='red')
     df['volrank'].plot(ax=ax11,alpha=0.5)
-    df['closes'].plot(ax=ax2)
-    fn = os.getenv("USER_HOME",'')+'/tmp/reversal.pdf'
+    
+    df['closes'].plot(ax=ax2,linewidth=1.5)
+
+    df['sig'].plot(ax=ax2,marker="^",linestyle="none",color="red", alpha=0.6)
+    df['r1'].plot(ax=ax11,marker="^",linestyle="none",color="red", alpha=0.6)
+    
+    ax1.set_title('drawdown v.s. volume ranking')
+    ax2.set_title('price & buying signals')
+    fn = os.getenv("USER_HOME",'')+f'/tmp/reversal_{sym}.pdf'
     plt.savefig(fn)
     print('-- saved:',fn)
 
+    if not latest.empty:
+        print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
+    if not lastsell.empty:
+        print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
 
-def main():
-    fn = os.getenv("USER_HOME","") + '/tmp/doge-usdt_1d.csv'
-    df = pd.read_csv( fn,index_col=0 )
+    return {
+        'crypto': sym.upper(),
+        'start': df.index[0],
+        'end': df.index[-1],
+        'wins': xdf[xdf["price_delta"]>0].shape[0],
+        'losses': xdf[xdf["price_delta"]<0].shape[0],
+        'single_max_gain_pct': xdf["return"].max()*100,
+        'single_max_loss_pct': xdf["return"].min()*100,
+        'cagr_pct': annual,
+        'days': ds,
+        'last_buy': f'{latest.index[0]},{latest.closes.iloc[0]}' if not latest.empty else "",
+        'last_sell': f'{lastsell.index[0]},{lastsell.closes.iloc[0]},{lastsell.bought.iloc[0]}' if not lastsell.empty else "",
+    }
+
+def _main(sym, volt):
+    print('-'*14)
+    print(f'|    {sym.upper()}    |')
+    print('-'*14)
+
+    sym = sym.lower()
+    fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+    if not os.path.exists(fn):
+        print(f'*** {fn} doesn\'t exist.')
+        from butil.butils import binance_kline
+        df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=5)
+    else:
+        df = pd.read_csv( fn,index_col=0 )
 
     ts = df.timestamp
     closes = df.close
     volume = df.volume 
-    valleys = find_valleys( ts, closes, volume )
+    rec = find_reversals(sym, ts, closes, volume,volt )
+    return rec
+
+@click.command()
+@click.option("--sym", default='doge')
+@click.option("--syms", default='')
+@click.option("--volt", default=50, help="percentage of volume considered to be significant")
+def main(sym,syms,volt):
+    if syms:
+        recs = []
+        for sym in syms.split(','):
+            rec = _main(sym, volt )
+            recs += [rec]
+        df = pd.DataFrame.from_records( recs )
+        df.sort_values('last_buy', ascending=False, inplace=True)
+        print(df)
+    else:
+       rec = _main(sym,volt)
+    
 
 if __name__ == '__main__':
     main()
