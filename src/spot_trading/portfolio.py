@@ -262,7 +262,7 @@ def portfolio_check(ric,days=3):
             n_doge = feex
 
     net_doge_deficit = tds.iloc[-1]['agg'] - n_doge
-    print(f'  -- net {sym} deficite: {net_doge_deficit:.0f}')
+    print(f'  -- net {sym}: {net_doge_deficit:.3f} (deficite if negative)')
     
     pce,_ = get_binance_spot( ric.replace('-','/') ) # price now
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee # position value + cash changes - fee
