@@ -73,6 +73,10 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     latest = df[df.sig>0].tail(1)
     lastsell = xdf.tail(1)
 
+    bh = (df.closes.iloc[-1] - df.closes.iloc[0])/df.closes.iloc[0]*100
+    bh_annual = np.log(bh/100+1)/(df.shape[0]/365)
+    bh_annual = ( np.exp(bh_annual)- 1)*100
+
     cap = init_capital = 10_000
     if not latest.empty:
         print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
@@ -81,6 +85,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     
     print(f'-- gain: ${(xdf["return"].sum()*cap ):,.2f} (initial capital: ${cap:,.2f}, fixed investment mode)')
     print(f'-- ttl return: {aggrtn:.1f}% ({ds} days, {(ds/365):.1f} yrs, reinvest mode)')
+    print(f'  -- buy&hold: {bh:.1f}%, {bh_annual:.1f}%')
     print(f'  -- cagr: {annual:.1f}%')
     print(f'  -- single max gain: {(xdf["return"].max()*100):.1f}%' )
     print(f'  -- single max loss: {(xdf["return"].min()*100):.1f}%' )
