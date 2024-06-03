@@ -90,16 +90,20 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     df['asset'] = df.qty.cumsum()
     fee_cumsum = df['fee'].astype(float).cumsum()
     df['portfolio'] = df['cash'] + df['asset']*df.price -fee_cumsum
-    port = df[['price','portfolio']].resample('1d').agg('last')# * 2/3
+    port = df[['price','portfolio','asset']].resample('1d').agg('last')# * 2/3
     port.index = list(map(lambda d: str(d)[:10], port.index))
-    port = pd.concat([port, ohlcv[['close']]], axis=1, ignore_index=False).dropna()
+    port = pd.concat([port, ohlcv[['close']]],axis=1, ignore_index=False).dropna()
+
+    today_close = ohlcv.iloc[-1]['close']
+    pv = port.iloc[-1].asset * ( today_close - port.iloc[-1].price ) 
+    pv += port.iloc[-1].portfolio
     
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'orange') 
     ax2.set_title(f'Net return v.s. spot ({sym})\n'
                 +f'max cash: ${max_capital:.2f}\n'
                 +f'max equity: ${abs(max_eq):.2f} (#{abs(max_equity_amt)})\n'
-                +f'fee \${fee_cumsum.iloc[-1]:.2f}')
+                +f'net gain: \${pv:.2f} @ ${ohlcv.iloc[-1]["close"]} (fee: \${fee_cumsum.iloc[-1]:.2f})')
     (port.portfolio/capital_usage*100).plot(ax=ax1,color='blue',linewidth=5)
     (port.close).plot(ax=ax2,color='orange')
     ax2.grid()
@@ -287,7 +291,7 @@ def assets():
         df['ref'] = df['value'] / df['ttl']
         #df = df[df.asset != 'BTC']
 
-        fig, (ax1,ax2) = plt.subplots(1,2,figsize=(18,8))
+        fig, (ax2,ax1) = plt.subplots(1,2,figsize=(18,8))
         dim = df.shape[0]
         w = 0.75
         dimw = w / 2
@@ -312,7 +316,7 @@ def assets():
             bbox_to_anchor=(1, 0, 0.5, 1)
             )
 
-        fn = os.getenv("USER_HOME",'')+'/tmp/bal.png'
+        fn = os.getenv("USER_HOME",'')+'/tmp/bal.pdf'
         plt.savefig(fn)
         print('-- saved:', fn)
     else:
