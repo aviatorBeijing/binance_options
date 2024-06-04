@@ -16,8 +16,8 @@ def _main(sym,wd,dt,prev):
     df['dir'] = df['dir'].apply(lambda d: '+' if d else '-')
     df.volrank = df.volrank.apply(lambda v: f"{(v*100):.1f}%")
     df.rtnrank = df.rtnrank.apply(lambda v: f"{(v*100):.1f}%")
-    print(df.tail(5) )
-    print(f'-- {sym.upper()}/USDT activity based on dt={dt}, window={wd} (in unit of "dt")')
+    #print(df.tail(5) )
+    #print(f'-- {sym.upper()}/USDT activity based on dt={dt}, window={wd} (in unit of "dt")')
     x = -1 if not prev else -2
     return {
             'ric': sym.upper(),
