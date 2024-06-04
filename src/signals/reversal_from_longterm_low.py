@@ -14,16 +14,16 @@ plt.style.use('fivethirtyeight')
 - For motivation driven valleys, ref: Net Unrealized price_delta/loss (NUPL) on-chain.
 """
 
-def pseudo_trade(sym, df):
+def pseudo_trade(sym, df, ax=None):
     df = df.copy()
 
     # settings
     init_cap = 1_000_000;cash=init_cap;pos=0;fees=0.
-    cash_utility_factor = 0.3 # Each buy can use up to 50%
-    profit_margin = 100/100.
+    cash_utility_factor = 0.1 # Each buy can use up to 50%
+    profit_margin = 100/100. # Useless if trading_horizon>0
     ff = 8/10000 # fee rate
     # --
-    trading_horizon = 30*2 # days
+    trading_horizon = 30*1 # days
     order_by_order = trading_horizon<0 # sell when reaching profit margin
     hold_fix_days = not order_by_order   # sell on a fixed trading_horizon
 
@@ -33,7 +33,7 @@ def pseudo_trade(sym, df):
     # trading
     buys = [];nbuys=0;nsells=0
     max_cost = 0;max_cash = 0
-    portfolio = []
+    portfolio = [];assets=[]
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         if row.sig>0:
@@ -73,18 +73,36 @@ def pseudo_trade(sym, df):
                 raise Exception('Strategy is not specified.')
         if cash > max_cash: max_cash = cash
         portfolio += [ cash + pos * row.closes - fees ]
-    pdf = pd.DataFrame.from_dict({'v': portfolio})
+        assets += [ pos ]
+    pdf = pd.DataFrame.from_dict({'v': portfolio, 'assets': assets})
     pdf.index = list( map(lambda e: pd.Timestamp(e), df.index ))
     pdf  = pdf.resample('1d').agg('sum')
+    
+    pdf = pdf[pdf.v>0]
+    
+    r1 = pdf['v'].pct_change()
+    rr = df['closes'].pct_change()
+    rinc = r1.sum()/rr.sum()
+    max_dd = max_drawdowns( r1 )
+    max_lev = 1./(-max_dd)
+    #r1 *= max_lev 
 
-    fig, ax1 = plt.subplots(1,1,figsize=(24,8))
+    if not ax:
+        fig, ax1 = plt.subplots(1,1,figsize=(24,8))
+    else:
+        ax1 = ax
     ax11 = ax1.twinx()
-    pdf['v'].pct_change().cumsum().plot(ax=ax1)
-    df['closes'].pct_change().cumsum().plot(ax=ax11,color='gray',alpha=0.5)
-    ax1.set_title( sym )
-    fn = os.getenv("USER_HOME","")+f"/tmp/port_{sym}.png"
-    plt.savefig( fn )
-    print('-- saved:', fn)
+    r1.cumsum().plot(ax=ax1)
+    pdf['assets'].plot(ax=ax11,color='gray',alpha=0.5)
+    #df['closes'].pct_change().cumsum().plot(ax=ax11,color='gray',alpha=0.5)
+    ax1.set_ylabel('Return%',color='blue')
+    ax11.set_ylabel('Position (#)',color='gray')
+    ax1.set_title( f'{sym}\nsell in {trading_horizon} days after each buy, max lev: {max_lev:.1f}, r1/rr: {(rinc):.1f} (w/ lev:{(rinc*max_lev):.1f})' )
+    
+    if not ax:
+        fn = os.getenv("USER_HOME","")+f"/tmp/port_{sym}.png"
+        plt.savefig( fn )
+        print('-- saved:', fn)
 
     val = cash+pos*float(df.iloc[-1].closes)-fees
     rtn = val/init_cap*100
@@ -92,9 +110,7 @@ def pseudo_trade(sym, df):
     cagr = np.log(1+rtn/100) / (df.shape[0]/365)
     cagr = (np.exp( cagr ) -1 )*100
 
-    r1 = pdf['v'].pct_change()
-    rr = df['closes'].pct_change()
-    max_dd = max_drawdowns( r1 )
+    
     max_dd_ref = max_drawdowns( rr )
     sortino1 = sortino(r1)
     sortino_ref = sortino(rr)
@@ -129,6 +145,9 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     volume = talib.EMA(volume, timeperiod=5)
     volrank = volume.rolling(wd).rank(pct=True)
     dd = (cumrtn - cum_max)/cum_max
+
+    #dd = dd.rolling(wd).rank(pct=True)
+    #dd = dd-1
     
     # remove nan
     dd = dd[1:]
@@ -152,22 +171,25 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df['volrank'] = volrank
     df.set_index('ts',inplace=True)
     df = df[wd:]
-    df = df[ -365*2: ]
+    #df = df[ -365*2: ]
     #rank_xing = (df.volrank.shift(3) <= volt/100) & (df.volrank.shift(2) <= volt/100) & (df.volrank.shift(1) >= volt/100) & (df.volrank>=volt/100)
     rank_xing = (df.volrank.shift(2) <= volt/100) & (df.volrank.shift(1) <= volt/100) & (df.volrank>=volt/100)
-    #(df.dd<-0.5)&
-    
+    # (df.dd<-0.5) & 
+
     df.loc[ rank_xing, 'sig'] = df.closes
     df.loc[ rank_xing, 'r1'] = df.volrank
 
     # remove high frequency xing
-    fwd = 21
-    df['sig_count'] = df.sig.fillna(0).rolling(fwd).apply(lambda arr: np.count_nonzero( np.array(arr) ) )
-    df.loc[ df.sig_count>1, 'sig'] = np.nan;df.loc[ df.sig_count>1, 'r1'] = np.nan
-    
-    pseudo_metrics = pseudo_trade(sym, df)
+    fwd = 14
+    if fwd>0:
+        df['sig_count'] = df.sig.fillna(0).rolling(fwd).apply(lambda arr: np.count_nonzero( np.array(arr) ) )
+        df.loc[ df.sig_count>1, 'sig'] = np.nan;df.loc[ df.sig_count>1, 'r1'] = np.nan
 
-    df['bought'] = df.sig.shift(trade_horizon) # after one month
+    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(24,18))
+
+    pseudo_metrics = pseudo_trade(sym, df, ax3) # a different trading strategy!
+
+    df['bought'] = df.sig.shift(trade_horizon) # after one month (trading strategy)
     xdf = df[df.bought>0][['bought','closes']].copy()
     xdf['price_delta'] = df.closes-df.bought
     xdf['return'] = xdf.price_delta/xdf.bought
@@ -176,8 +198,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     annual = np.log(aggrtn/100+1)/(df.shape[0]/365)
     annual = ( np.exp(annual)- 1)*100
     ds = df.shape[0]
-    #print( xdf )
-    #print(xdf.sort_values('return'))
+
     latest = df[df.sig>0].tail(1)
     lastsell = xdf.tail(1)
 
@@ -200,19 +221,18 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     print(f'  -- single max loss: {(xdf["return"].min()*100):.1f}%' )
     print(f'  -- {xdf.shape[0]}, wins: {xdf[xdf["price_delta"]>0].shape[0]}, losses: {xdf[xdf["price_delta"]<0].shape[0]}')
 
-    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(24,8))
+    
     ax11 = ax1.twinx()
 
     df['dd'].plot(ax=ax1,color='red')
     df['volrank'].plot(ax=ax11,alpha=0.5)
-    
     df['closes'].plot(ax=ax2,linewidth=1.5)
-
     df['sig'].plot(ax=ax2,marker="^",linestyle="none",color="red", alpha=0.6)
     df['r1'].plot(ax=ax11,marker="^",linestyle="none",color="red", alpha=0.6)
     
-    ax1.set_title('drawdown v.s. volume ranking')
+    ax1.set_title(f'equity drawdown v.s. volume ranking')
     ax2.set_title('price & buying signals')
+    ax2.set_ylabel('price ($)')
     fn = os.getenv("USER_HOME",'')+f'/tmp/reversal_{sym}.pdf'
     plt.savefig(fn)
     print('-- saved:',fn)
@@ -233,7 +253,8 @@ def find_reversals(sym, ts, closes,volume,volt=50):
         'cagr_pct': annual,
         'days': ds,
         'last_buy': f'{latest.index[0]},{latest.closes.iloc[0]}' if not latest.empty else "",
-        'last_sell': f'{lastsell.index[0]},{lastsell.closes.iloc[0]},{lastsell.bought.iloc[0]}' if not lastsell.empty else "",
+        'price': df.iloc[-1].closes,
+        #'last_sell': f'{lastsell.index[0]},{lastsell.closes.iloc[0]},{lastsell.bought.iloc[0]}' if not lastsell.empty else "",
         'pseudo_trade': pseudo_metrics,
     }
 
@@ -250,7 +271,6 @@ def _main(sym, volt):
         df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=5)
     else:
         df = pd.read_csv( fn,index_col=0 )
-
     ts = df.timestamp
     closes = df.close
     volume = df.volume 
@@ -281,6 +301,7 @@ def main(sym,syms,volt):
             list(df.pseudo_trade),
             columns=['crypto', 'cagr','max_dd','max_dd_ref','#buys','#sells',
             'dd_inc','cagr_inc','sharpe_inc','sortino_inc'])
+        pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * (1/(-pseudo_df['max_dd']))
         pseudo_df = pseudo_df.sort_values(['cagr','max_dd'], ascending=False)
         print()
         print( tabulate(pseudo_df,headers='keys') )
