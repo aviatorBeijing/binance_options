@@ -1,7 +1,9 @@
 #!/bin/bash
 
 function _fee(){
-   ./spot_trading/$1/portfolio.sh
+   cd spot_trading/$1/
+   ./p
+   cd ../..
 }
 
 function _dat(){
