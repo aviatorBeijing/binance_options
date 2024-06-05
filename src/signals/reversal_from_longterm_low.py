@@ -305,17 +305,17 @@ def find_reversals(sym, ts, closes,volume,volt=50):
         'pseudo_trade': pseudo_metrics,
     }
 
-def _main(sym, volt):
+def _main(sym, volt,offline=False):
     print('-'*14)
     print(f'|    {sym.upper()}    |')
     print('-'*14)
 
     sym = sym.lower()
     fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
-    if not os.path.exists(fn):
-        print(f'*** {fn} doesn\'t exist.')
+    if not offline or not os.path.exists(fn):
         from butil.butils import binance_kline
         df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=5)
+        print(df.tail(3))
     else:
         df = pd.read_csv( fn,index_col=0 )
     ts = df.timestamp
@@ -328,18 +328,19 @@ def _main(sym, volt):
 @click.option("--sym", default='doge')
 @click.option("--syms", default='')
 @click.option("--volt", default=50, help="percentage of volume considered to be significant")
-def main(sym,syms,volt):
-    global cash_utility_factor, trading_horizon,profit_margin
+@click.option("--offline", is_flag=True, default=False)
+def main(sym,syms,volt,offline):
+    global cash_utility_factor, trading_horizon
     if syms:
         recs = []
         if len(syms.split(","))>1:
             import multiprocessing,functools
             with multiprocessing.Pool(5) as pool:
-                recs = pool.map( functools.partial(_main, volt=volt), syms.split(","))
+                recs = pool.map( functools.partial(_main, volt=volt,offline=offline), syms.split(","))
                 pool.close();pool.join()
         else:
             for sym in syms.split(','):
-                rec = _main(sym, volt )
+                rec = _main(sym, volt, offline )
                 recs += [rec]
         df = pd.DataFrame.from_records( recs )
         df.sort_values('last_buy', ascending=False, inplace=True)
@@ -356,7 +357,7 @@ def main(sym,syms,volt):
         print()
         print( tabulate(pseudo_df,headers='keys') )
     else:
-       rec = _main(sym,volt)
+       rec = _main(sym,volt,offline)
     
     print('-- settings:')
     if trading_horizon>0:
