@@ -4,8 +4,7 @@ from tabulate import tabulate
 
 from butil.butils import binance_kline
 
-def _main(sym,wd,dt,prev):
-    df = binance_kline(f'{sym.upper()}/USDT', span=dt, grps=5)
+def _rank(df,sym,wd,dt,prev):
     volume = df.volume
     df.volume = talib.EMA(volume, timeperiod=5)
     df['volrank'] = volume.dropna().rolling(wd).rank(pct=True)
@@ -30,6 +29,10 @@ def _main(sym,wd,dt,prev):
             'wd': wd,
             'span': dt,
             }
+
+def _main(sym,wd,dt,prev):
+    df = binance_kline(f'{sym.upper()}/USDT', span=dt, grps=5)
+    return _rank(df,sym,wd,dt,prev)
 
 @click.command()
 @click.option('--sym',default='')

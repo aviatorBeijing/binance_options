@@ -11,10 +11,10 @@ class BianceSpot:
 
         # valid price digits
         if ric.startswith('DOGE'): self.ndigits = 5 
-        elif ric.startswith('BTC'): self.ndigits = 2
+        elif ric.startswith('BTC') or ric.startswith('AVAX'): self.ndigits = 2
         elif ric.startswith('PENDLE'): self.ndigits = 4
         elif ric.startswith('SOL'): self.ndigits = 2 
-        elif ric.startswith('SEI'): self.ndigits = 4
+        elif ric.startswith('SEI') or ric.startswith('TRX'): self.ndigits = 4
         elif ric.startswith('ACE'): self.ndigits = 3
         else:
             raise Exception(f'Unsupported ric: {ric}')
