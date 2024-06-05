@@ -183,7 +183,8 @@ def pseudo_trade(sym, df, ax=None):
         nbuys,nsells,stoplosses, \
         (int(max_dd_ref/max_dd*100)/100), \
         (int(rinc*100)/100), \
-        (int(sharpe1/sharpe_ref*100)/100), (int(sortino1/sortino_ref*100)/100)
+        (int(sharpe1/sharpe_ref*100)/100), (int(sortino1/sortino_ref*100)/100), \
+        r1, rr
 
 def find_reversals(sym, ts, closes,volume,volt=50):
     months = 9 # volume ranking window
@@ -335,6 +336,14 @@ def _main(sym, volt,offline=False):
 @click.option("--offline", is_flag=True, default=False)
 def main(sym,syms,volt,offline):
     global cash_utility_factor, trading_horizon, init_cap
+    def _settings():
+        print('-- settings:')
+        if trading_horizon>0:
+            print(f'  trading horizon: {trading_horizon} days after a buy')
+        else:
+            print(f'  tp/sl: {(profit_margin*100):.1f}%/-{(sl*100):.1f}% (for every buy order)')
+        print(f'  cash_utility_factor: {(cash_utility_factor*100):.1f}%')
+
     if syms:
         recs = []
         if len(syms.split(","))>1:
@@ -353,7 +362,8 @@ def main(sym,syms,volt,offline):
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
             columns=['crypto', 'days', 'cagr','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','#sl',
-            'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref'])
+            'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref',
+            'r1','rr'])
         pseudo_df['lev'] = 1/(-pseudo_df['max_dd']);pseudo_df.lev = pseudo_df.lev.apply(lambda v: int(v*10)/10)
         pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
         pseudo_df['tt_rtn/ref (lev.)'] = pseudo_df['tt_rtn/ref'] * pseudo_df['lev']
@@ -367,17 +377,31 @@ def main(sym,syms,volt,offline):
         pseudo_df['cash_util'] *= 100
         for col in ['max_dd','max_dd_ref','cagr','cagr (lev.)','cash_util']: 
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):.1f}%")
+        
+        from signals.mpt import optimized_mpt
+        r1 = list(pseudo_df.r1.values)
+        r1 = pd.concat(r1,axis=1).dropna()
+        r1.columns = pseudo_df.crypto.values
+        
+        pseudo_df.drop(['r1','rr'],axis=1,inplace=True)
         print()
         print( tabulate(pseudo_df,headers='keys') )
+        print('\n[cash_util: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
+        _settings()
+
+        print()
+        o = optimized_mpt(r1,10_000,5./100,do_plot=False)
+        rp = r1.dot(np.array( list(
+            map(lambda c: o['allocation_pct'][c], r1.columns)
+        ))/100 )
+        for col in r1:
+            r1[col].cumsum().plot(linewidth=1)
+        rp.cumsum().plot(linewidth=3) 
+        fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.pdf'
+        plt.savefig(fn)
+        print('-- saved:', fn)
     else:
        rec = _main(sym,volt,offline)
-    print('\n[cash_util: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
-    print('-- settings:')
-    if trading_horizon>0:
-        print(f'  trading horizon: {trading_horizon} days after a buy')
-    else:
-        print(f'  tp/sl: {(profit_margin*100):.1f}%/-{(sl*100):.1f}% (for every buy order)')
-    print(f'  cash_utility_factor: {(cash_utility_factor*100):.1f}%')
     
 if __name__ == '__main__':
     main()
