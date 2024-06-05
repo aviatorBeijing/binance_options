@@ -14,28 +14,43 @@ plt.style.use('fivethirtyeight')
 - For motivation driven valleys, ref: Net Unrealized price_delta/loss (NUPL) on-chain.
 """
 
-# settings
-init_cap = 1_000_000;cash=init_cap;pos=0;fees=0.
-cash_utility_factor = 0.1 # Each buy can use up to 50%
-profit_margin = 100/100. # Useless if trading_horizon>0
+#------------- Settings ------------
+init_cap = 1_000_000
 ff = 8/10000 # fee rate
-# --
-trading_horizon = 30*2 # days
+
+#strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
+trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
+cash_utility_factor = 0.2 # Each buy can use up to 50%
+tp = profit_margin = 20/100. # Useless if trading_horizon>0
+sl = 5/100.
+
+#data
+def select_data(df): return df[ -365*2: ] # Recent 3 years (since) are considered a "normal" market.
+
+#flags
 order_by_order = trading_horizon<0 # sell when reaching profit margin
 hold_fix_days = not order_by_order   # sell on a fixed trading_horizon
+#------------------------------------
 
 if order_by_order: print('-- [order_by_order]')
 elif hold_fix_days: print('-- [hold_fix_days]')
 else: print('*** unknown')
 
+def _cl(s): return str(s).replace('00:00:00+00:00','')
+
 def pseudo_trade(sym, df, ax=None):
     df = df.copy()
+    print('-- latest data:', df.index[-1], f"${df.iloc[-1].closes}")
 
     if trading_horizon>0:
         df['bought'] = df.sig.shift(trading_horizon)
 
+    cash=init_cap
+    pos=0
+    fees=0.
+
     # trading
-    buys = [];nbuys=0;nsells=0
+    buys = [];nbuys=0;nsells=0;stoplosses=0
     max_cost = 0;max_cash = 0
     portfolio = [];assets=[]
     cash = init_cap;pos=0;fees=0
@@ -51,23 +66,40 @@ def pseudo_trade(sym, df, ax=None):
                 fees += sz*pce*ff
                 nbuys += 1
                 if sz*pce > max_cost: max_cost = sz*pce
+                print('  [buy]', _cl(str(i)), f'${pce}, sz: {sz} {sym}')
             else:
                 print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
         else:
             pce = row.closes;ts=i 
             if order_by_order:
                 if buys:
+                    # tp
                     _buys = list(map(lambda e: e[1], buys))
                     _ix = np.argmin( _buys )
                     #ts0, last_buy, last_buy_sz = buys[-1]
                     ts0, last_buy, last_buy_sz = buys[_ix]
-                    if (pce-last_buy)/last_buy > profit_margin: # 10% profit
+                    if (pce-last_buy)/last_buy > profit_margin: # met the profit traget
+                        print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}') #, (pce-last_buy)/last_buy,'>', profit_margin)
                         #_ = buys.pop()
                         buys = buys[:_ix] + buys[_ix+1:] if (_ix+1)<len(buys) else []
                         cash += pce*last_buy_sz*(1-ff)
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
                         nsells += 1
+                    # sl
+                    if buys:
+                        _buys = list(map(lambda e: e[1], buys))
+                        _ix = np.argmax( _buys )
+                        ts0, last_buy, last_buy_sz = buys[_ix]
+                        if (pce-last_buy)/last_buy < -sl: # met the profit traget
+                            print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}' ) #, (pce-last_buy)/last_buy,'<', -sl)
+                            buys = buys[:_ix] + buys[_ix+1:] if (_ix+1)<len(buys) else []
+                            cash += pce*last_buy_sz*(1-ff)
+                            pos -= last_buy_sz
+                            fees += last_buy_sz * pce * ff
+                            nsells += 1
+                            stoplosses += 1
+                        
             elif hold_fix_days:
                 if row.bought>0:
                     sz = 0; ix = -1
@@ -138,9 +170,10 @@ def pseudo_trade(sym, df, ax=None):
     print(f'    -- fees: ${fees:,.2f}, {(fees/profits*100):,.2f}%')
     print()
     
-    return sym, int(cagr*10)/10, \
+    return sym, df.shape[0], \
+        int(cagr*10)/10, \
         int(max_dd*100)/100, int(max_dd_ref*100)/100, \
-        nbuys,nsells, \
+        nbuys,nsells,stoplosses, \
         (int(max_dd_ref/max_dd*100)/100), \
         (int(rinc*100)/100), \
         (int(sharpe1/sharpe_ref*100)/100), (int(sortino1/sortino_ref*100)/100)
@@ -182,7 +215,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df['volrank'] = volrank
     df.set_index('ts',inplace=True)
     df = df[wd:]
-    df = df[ -365*2: ]
+    df = select_data(df)
 
     #------------------------- Signals ---------------------
     #rank_xing = (df.volrank.shift(3) <= volt/100) & (df.volrank.shift(2) <= volt/100) & (df.volrank.shift(1) >= volt/100) & (df.volrank>=volt/100)
@@ -296,7 +329,7 @@ def _main(sym, volt):
 @click.option("--syms", default='')
 @click.option("--volt", default=50, help="percentage of volume considered to be significant")
 def main(sym,syms,volt):
-    global cash_utility_factor, trading_horizon
+    global cash_utility_factor, trading_horizon,profit_margin
     if syms:
         recs = []
         if len(syms.split(","))>1:
@@ -314,10 +347,11 @@ def main(sym,syms,volt):
 
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
-            columns=['crypto', 'cagr','max_dd','max_dd_ref','#buys','#sells',
-            'dd_inc','tt_rtn_inc','sharpe_inc','sortino_inc'])
+            columns=['crypto', 'days', 'cagr','max_dd','max_dd_ref','#buys','#sells','#sl',
+            'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref'])
         pseudo_df['lev'] = 1/(-pseudo_df['max_dd']);pseudo_df.lev = pseudo_df.lev.apply(lambda v: int(v*10)/10)
-        pseudo_df['tt_cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
+        pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
+        pseudo_df['tt_rtn/ref (lev.)'] = pseudo_df['tt_rtn/ref'] * pseudo_df['lev']
         pseudo_df = pseudo_df.sort_values(['max_dd'], ascending=False)
         print()
         print( tabulate(pseudo_df,headers='keys') )
@@ -325,7 +359,10 @@ def main(sym,syms,volt):
        rec = _main(sym,volt)
     
     print('-- settings:')
-    print(f'  trading horizon: {trading_horizon} days after a buy')
+    if trading_horizon>0:
+        print(f'  trading horizon: {trading_horizon} days after a buy')
+    else:
+        print(f'  tp/sl: {(profit_margin*100):.1f}%/{(sl*100):.1f}% (for every buy order)')
     print(f'  cash_utility_factor: {(cash_utility_factor*100):.1f}%')
     
 
