@@ -20,9 +20,9 @@ ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
 trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
-cash_utility_factor = 0.5 # Each buy can use up to 50%
-tp = profit_margin = 30/100. # Useless if trading_horizon>0
-sl = 15/100.
+cash_utility_factor = 0.6 # Each buy can use up to 50%
+tp = profit_margin = 20/100. # Useless if trading_horizon>0
+sl = 5/100.
 
 #data
 def select_data(df): return df[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
@@ -352,25 +352,26 @@ def main(sym,syms,volt,offline):
 
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
-            columns=['crypto', 'days', 'cagr','sortino','cash_eff','max_dd','max_dd_ref','#buys','#sells','#sl',
+            columns=['crypto', 'days', 'cagr','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','#sl',
             'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref'])
         pseudo_df['lev'] = 1/(-pseudo_df['max_dd']);pseudo_df.lev = pseudo_df.lev.apply(lambda v: int(v*10)/10)
         pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
         pseudo_df['tt_rtn/ref (lev.)'] = pseudo_df['tt_rtn/ref'] * pseudo_df['lev']
         pseudo_df = pseudo_df.sort_values(['max_dd'], ascending=False)
         
-        pseudo_df['cash_eff']=init_cap/pseudo_df['cash_eff']
-        for col in ['sortino','cash_eff']:
+        pseudo_df['cash_util']=1 - pseudo_df['cash_util']/init_cap # FIXME TODO
+        for col in ['sortino']:
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{v:.1f}")
         pseudo_df['max_dd'] *= 100
         pseudo_df['max_dd_ref'] *= 100
-        for col in ['max_dd','max_dd_ref','cagr','cagr (lev.)']: 
+        pseudo_df['cash_util'] *= 100
+        for col in ['max_dd','max_dd_ref','cagr','cagr (lev.)','cash_util']: 
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):.1f}%")
         print()
         print( tabulate(pseudo_df,headers='keys') )
     else:
        rec = _main(sym,volt,offline)
-    print('\n[cash_eff: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
+    print('\n[cash_util: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
     print('-- settings:')
     if trading_horizon>0:
         print(f'  trading horizon: {trading_horizon} days after a buy')
