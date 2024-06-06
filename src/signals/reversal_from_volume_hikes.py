@@ -20,7 +20,7 @@ ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
 trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
-cash_utility_factor = 0.6 # Each buy can use up to 50%
+cash_utility_factor = 0.2 # Each buy can use up to 50%
 tp = profit_margin = 20/100. # Useless if trading_horizon>0
 sl = 5/100.
 
@@ -73,7 +73,7 @@ def pseudo_trade(sym, df, ax=None):
                 nbuys += 1
                 if cash < cash_min: cash_min = cash # record the cash usage
                 if sz*pce > max_cost: max_cost = sz*pce
-                print('  [buy]', _cl(str(i)), f'${pce}, sz: {sz} {sym}')
+                print('  [buy]', _cl(str(i)), f'${pce}, sz: {sz} {sym}', len(buys))
             else:
                 print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
         else:
@@ -86,21 +86,21 @@ def pseudo_trade(sym, df, ax=None):
                     #ts0, last_buy, last_buy_sz = buys[-1]
                     ts0, last_buy, last_buy_sz = buys[_ix]
                     if (pce-last_buy)/last_buy > profit_margin: # met the profit traget
-                        print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}') #, (pce-last_buy)/last_buy,'>', profit_margin)
                         #_ = buys.pop()
-                        buys = buys[:_ix] + buys[_ix+1:] if (_ix+1)<len(buys) else []
+                        buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
+                        print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix) #, (pce-last_buy)/last_buy,'>', profit_margin)
                         cash += pce*last_buy_sz*(1-ff)
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
                         nsells += 1
-                    # sl
-                    if buys:
+                # sl
+                if buys:
                         _buys = list(map(lambda e: e[1], buys))
                         _ix = np.argmax( _buys )
                         ts0, last_buy, last_buy_sz = buys[_ix]
-                        if (pce-last_buy)/last_buy < -sl: # met the profit traget
-                            print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}' ) #, (pce-last_buy)/last_buy,'<', -sl)
-                            buys = buys[:_ix] + buys[_ix+1:] if (_ix+1)<len(buys) else []
+                        if (pce-last_buy)/last_buy < -sl: # sl
+                            buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
+                            print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix ) #, (pce-last_buy)/last_buy,'<', -sl)
                             cash += pce*last_buy_sz*(1-ff)
                             pos -= last_buy_sz
                             fees += last_buy_sz * pce * ff
@@ -382,6 +382,10 @@ def main(sym,syms,volt,offline):
         r1 = list(pseudo_df.r1.values)
         r1 = pd.concat(r1,axis=1).dropna()
         r1.columns = pseudo_df.crypto.values
+
+        rr = list(pseudo_df.rr.values)
+        rr = pd.concat(rr,axis=1).dropna()
+        rr.columns = pseudo_df.crypto.values
         
         pseudo_df.drop(['r1','rr'],axis=1,inplace=True)
         print()
@@ -390,25 +394,37 @@ def main(sym,syms,volt,offline):
         _settings()
 
         #-- MPT
-        print()
-        o = optimized_mpt(r1,10_000,5./100,do_plot=False)
-        wts = np.array( list( # optimized weights
-            map(lambda c: o['allocation_pct'][c], r1.columns)
-        ))/100
-        rp = r1.dot(wts)
-        print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}')
-        
-        fig,(ax1,ax2)=plt.subplots(1,2,figsize=(24,12))
-        for col in r1:
-            r1[col].cumsum().plot(ax=ax1,linewidth=1)
-        rp.cumsum().plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
-        ax1.set_ylabel('returns',color='blue')
-        
-        rpl = r1.dot(np.array(list(pseudo_df.lev.values)) * wts)
-        rpl.cumsum().plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
-        ax2.set_ylabel('returns (lev.)',color='blue')
+        fig,((ax1,ax2), (ax3,ax4))=plt.subplots(2,2,figsize=(24,24))
+        def _mpt(r1, ax1, ax2):
+            print()
+            o = optimized_mpt(r1,10_000,5./100,do_plot=False)
+            wts = np.array( list( # optimized weights
+                map(lambda c: o['allocation_pct'][c], r1.columns)
+            ))/100
+            levs = list(
+                map(lambda arr: -1./max_drawdowns(arr), [r1[col] for col in r1 ])
+            )
+            #levs = np.array(list(pseudo_df.lev.values))
+            rp = r1.dot(wts)
+            print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}, Max DD: {max_drawdowns(rp)*100:.1f}%')
+            
+            for col in r1:
+                r1[col].cumsum().plot(ax=ax1,linewidth=1)
+            rp.cumsum().plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
+            ax1.set_ylabel('returns',color='blue')
+            
+            for i, col in enumerate(r1):
+                (r1[col]*levs[i]).cumsum().plot(ax=ax2,linewidth=1)
+            rpl = r1.dot(levs * wts)
+            rpl.cumsum().plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
+            ax2.set_ylabel('returns (lev.)',color='blue')
 
-        plt.legend(r1.columns)
+            ax1.legend(r1.columns)
+            ax2.legend(r1.columns)
+            ax1.set_title('Returns by wts')
+            ax2.set_title('Returns by wts & leverages')
+        _mpt(r1, ax1, ax2)
+        _mpt(rr, ax3, ax4)
         fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.png'
         plt.savefig(fn)
         print('-- saved:', fn)
