@@ -57,7 +57,7 @@ def optimize_on_efficient_frontier(columns, mean_returns, cov_matrix, num_portfo
         plt.xlabel('annualized volatility')
         plt.ylabel('annualized returns')
         plt.legend(labelspacing=1.2)
-        fn = os.getenv('USER_HOME','')+'/tmp/reversal_from_volume_hikes__mpt.pdf'
+        fn = os.getenv('USER_HOME','')+'/tmp/reversal_from_volume_hikes__mpt_frontier.png'
         plt.savefig(fn)
         print('-- saved:', fn)
     

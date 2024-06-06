@@ -389,17 +389,31 @@ def main(sym,syms,volt,offline):
         print('\n[cash_util: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
         _settings()
 
+        #-- MPT
         print()
         o = optimized_mpt(r1,10_000,5./100,do_plot=False)
-        rp = r1.dot(np.array( list(
+        wts = np.array( list( # optimized weights
             map(lambda c: o['allocation_pct'][c], r1.columns)
-        ))/100 )
+        ))/100
+        rp = r1.dot(wts)
+        print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}')
+        
+        fig,(ax1,ax2)=plt.subplots(1,2,figsize=(24,12))
         for col in r1:
-            r1[col].cumsum().plot(linewidth=1)
-        rp.cumsum().plot(linewidth=3) 
-        fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.pdf'
+            r1[col].cumsum().plot(ax=ax1,linewidth=1)
+        rp.cumsum().plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
+        ax1.set_ylabel('returns',color='blue')
+        
+        rpl = r1.dot(np.array(list(pseudo_df.lev.values)) * wts)
+        rpl.cumsum().plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
+        ax2.set_ylabel('returns (lev.)',color='blue')
+
+        plt.legend(r1.columns)
+        fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.png'
         plt.savefig(fn)
         print('-- saved:', fn)
+        #-- MPT
+
     else:
        rec = _main(sym,volt,offline)
     
