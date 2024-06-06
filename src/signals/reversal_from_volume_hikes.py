@@ -20,9 +20,9 @@ ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
 trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
-cash_utility_factor = 0.2 # Each buy can use up to 50%
+cash_utility_factor = 0.6 # Each buy can use up to 50%
 tp = profit_margin = 20/100. # Useless if trading_horizon>0
-sl = 5/100.
+sl = 15/100.
 
 #data
 def select_data(df): return df[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
