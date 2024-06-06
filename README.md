@@ -54,6 +54,7 @@ Ref: https://www.fidelity.com/learning-center/investment-products/options/option
 
 ## SPOT (MPT)
 ```
-> python signals/reversal_from_volume_hikes.py --syms btc,doge,sol --volt 68
+python signals/reversal_from_volume_hikes.py --syms btc,doge,sol --volt 68
 ```
+Comparison of "Volume hiking strategy" and "Plain buy&hold strategy":
 ![Screenshot 2024-06-06 at 12 00 22](https://github.com/aviatorBeijing/binance_options/assets/5878463/09cf9a0f-d916-448f-9c76-1a60296fdbcb)
