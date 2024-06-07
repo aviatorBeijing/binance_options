@@ -24,15 +24,17 @@ def balances() -> pd.DataFrame:
     bdf.sort_values('ttl', ascending=False, inplace=True)
     bdf = bdf[bdf.ttl>0]
     bdf = bdf[bdf.asset != 'ETHW'] 
-
+    
     bdf['value'] = bdf['asset'].apply(valuation)
     bdf['pce'] = bdf['value']
     bdf['value'] = bdf['value'] * bdf['ttl']
     ttl = bdf['value'].sum()
     bdf.sort_values('value', ascending=False, inplace=True)
 
-    bdf['free%'] = bdf['value']/ttl*100
+    bdf['free%'] = bdf['free']*bdf['pce']/bdf['value'] *100
     bdf['free%'] = bdf['free%'].apply(lambda v: f'{v:.1f}%' )
+    bdf['asset%'] = bdf['value']/ttl*100
+    bdf['asset%'] = bdf['asset%'].apply(lambda v: f'{v:.1f}%' )
     
     fn = os.getenv("USER_HOME","")+'/tmp/bal.csv'
     bdf.to_csv( fn, index=0 )
