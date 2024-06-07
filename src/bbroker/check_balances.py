@@ -28,7 +28,11 @@ def balances() -> pd.DataFrame:
     bdf['value'] = bdf['asset'].apply(valuation)
     bdf['pce'] = bdf['value']
     bdf['value'] = bdf['value'] * bdf['ttl']
+    ttl = bdf['value'].sum()
     bdf.sort_values('value', ascending=False, inplace=True)
+
+    bdf['free%'] = bdf['value']/ttl*100
+    bdf['free%'] = bdf['free%'].apply(lambda v: f'{v:.1f}%' )
     
     fn = os.getenv("USER_HOME","")+'/tmp/bal.csv'
     bdf.to_csv( fn, index=0 )
