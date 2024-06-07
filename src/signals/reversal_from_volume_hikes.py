@@ -74,7 +74,7 @@ def pseudo_trade(sym, df, ax=None):
                 nbuys += 1
                 if cash < cash_min: cash_min = cash # record the cash usage
                 if sz*pce > max_cost: max_cost = sz*pce
-                print('  [buy]', _cl(str(i)), f'${pce}, sz: {sz} {sym}', len(buys))
+                print(f'  [buy] {sym},', _cl(str(i)), f'${pce}, sz: {sz}, cap%: { (row.volrank*100):.1f}%')
             else:
                 print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
         else:
@@ -87,7 +87,7 @@ def pseudo_trade(sym, df, ax=None):
                     ts0, last_buy, last_buy_sz = buys[_ix]
                     if (pce-last_buy)/last_buy > profit_margin: # met the profit traget
                         buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
-                        print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix) #, (pce-last_buy)/last_buy,'>', profit_margin)
+                        print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', ',holding:', (i-ts0).total_seconds()/3600/24, 'days') #, (pce-last_buy)/last_buy,'>', profit_margin)
                         cash += pce*last_buy_sz*(1-ff)
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
