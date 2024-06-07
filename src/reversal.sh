@@ -7,7 +7,6 @@ for s in BTC ETH BNB SOL XRP ADA AVAX LINK DOT TRX;do
 	arr+=( "${s}/USDT" )
 	syms+=( ${s,,} )
 	datafiles+=( ${s,,}-usdt_1d.csv )
-       #$PYTHON spot_trading/market_data.py --ric $s/USDT --span 1d	
 done
 
 function join_by { local IFS="$1"; shift; echo "$*"; }

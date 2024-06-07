@@ -20,12 +20,12 @@ ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
 trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
-cash_utility_factor = 0.6 # Each buy can use up to 50%
-tp = profit_margin = 20/100. # Useless if trading_horizon>0
+cash_utility_factor = 0.99 # Each buy can use up to 50%
+tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
 #data
-def select_data(df): return df[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
+def select_data(df): return df[ -365*4: ] # Recent 3 years (since) are considered a "normal" market.
 
 #flags
 order_by_order = trading_horizon<0 # sell when reaching profit margin
@@ -64,7 +64,8 @@ def pseudo_trade(sym, df, ax=None):
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         if row.sig>0:
             pce = row.sig;ts = i
-            sz = cash * cash_utility_factor / pce
+            #sz = cash * cash_utility_factor / pce # Use the fixed factor
+            sz = cash * row.volrank / pce # Using the volume rank as the factor
             if sz*pce > init_cap/100: # enough cash FIXME
                 buys += [ (ts, pce, sz, )]
                 cash -= sz*pce*(1+ff)
@@ -83,10 +84,8 @@ def pseudo_trade(sym, df, ax=None):
                     # tp
                     _buys = list(map(lambda e: e[1], buys))
                     _ix = np.argmin( _buys )
-                    #ts0, last_buy, last_buy_sz = buys[-1]
                     ts0, last_buy, last_buy_sz = buys[_ix]
                     if (pce-last_buy)/last_buy > profit_margin: # met the profit traget
-                        #_ = buys.pop()
                         buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
                         print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix) #, (pce-last_buy)/last_buy,'>', profit_margin)
                         cash += pce*last_buy_sz*(1-ff)
