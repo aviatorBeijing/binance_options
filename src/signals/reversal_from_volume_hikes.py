@@ -25,7 +25,7 @@ tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
 #data
-def select_data(df): return df[ -365*4: ] # Recent 3 years (since) are considered a "normal" market.
+def select_data(df): return df[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
 
 #flags
 order_by_order = trading_horizon<0 # sell when reaching profit margin
@@ -221,6 +221,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df['closes'] = closes
     df['volrank'] = volrank
     df['rtn'] = df['closes'].pct_change()
+    df['1sigma'] = df.closes.rolling(120).std() # TODO: use ARIMA to predict the std (i.e., vol) of return.
     df.set_index('ts',inplace=True)
     df = df[wd:]
     df = select_data(df)
@@ -278,6 +279,23 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df['dd'].plot(ax=ax1,color='red')
     df['volrank'].plot(ax=ax11,alpha=0.5)
     df['closes'].plot(ax=ax2,linewidth=1.5)
+
+    df['1sigma_up'] = df['closes'].shift(1)+df['1sigma']
+    df['1sigma_dw'] = df['closes'].shift(1)-df['1sigma']
+    df['1sigma_up'].plot(ax=ax2,linewidth=1,color='gray',alpha=0.3)
+    df['1sigma_dw'].plot(ax=ax2,linewidth=1,color='gray',alpha=0.3)
+    #print(((df['closes']-df['1sigma_dw']).rolling(90).rank(pct=True)).min() )
+    
+    df['sigma_level'] = df['1sigma'].rolling(120).rank(pct=True)
+
+    df['1sigma_up_sig_flag'] = ( (df['closes'] > df['1sigma_up']) | ((df['1sigma_up']-df['closes']).rolling(120).rank(pct=True)<0.02) ) & (df['sigma_level']>0.5)
+    df['1sigma_dw_sig_flag'] = ( (df['closes'] < df['1sigma_dw']) | ((df['closes']-df['1sigma_dw']).rolling(120).rank(pct=True)<0.02) ) & (df['sigma_level']>0.5)
+    
+    df.loc[df['1sigma_up_sig_flag']==True, '1sigma_up_sig'] = df.closes
+    df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
+    df['1sigma_up_sig'].plot(ax=ax2,marker="x",linestyle="none",color="red", alpha=0.6)
+    df['1sigma_dw_sig'].plot(ax=ax2,marker="x",linestyle="none",color="black", alpha=0.6)
+    
     df['sig'].plot(ax=ax2,marker="^",linestyle="none",color="red", alpha=0.6)
     df['r1'].plot(ax=ax11,marker="^",linestyle="none",color="red", alpha=0.6)
     
