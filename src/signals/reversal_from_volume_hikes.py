@@ -1,3 +1,4 @@
+from email import header
 import os,click
 import pandas as pd
 import numpy as np
@@ -20,12 +21,12 @@ ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
 trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
-cash_utility_factor = 0.99 # Each buy can use up to 50%
+cash_utility_factor = 0.25 # Each buy can use up to 25%
 tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
 #data
-def select_data(df): return df[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
+def select_data(df): return df[ -365*4: ] # Recent 3 years (since) are considered a "normal" market.
 
 #flags
 order_by_order = trading_horizon<0 # sell when reaching profit margin
@@ -66,6 +67,9 @@ class TradeAction:
             'ts': [ str(self.ts) ],
         })
         return df
+    def is_buy(self):
+        return self.act == ActionT.BUY
+
     def __str__(self) -> str:
         s = f' {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}'
         return s
@@ -90,8 +94,9 @@ def pseudo_trade(sym, df, ax=None):
     trade_actions = []
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
-        is_downturn = row['1sigma_dw_sig_flag']
-        if row.sig>0 and not is_downturn:
+        is_breaking_down = row['1sigma_dw_sig_flag']
+        is_breaking_up   = row['1sigma_up_sig_flag']
+        if row.sig>0 and not is_breaking_down:
             pce = row.sig;ts = i
             #sz = cash * cash_utility_factor / pce # Use the fixed factor
             sz = cash * row.volrank / pce # Using the volume rank as the factor
@@ -129,7 +134,7 @@ def pseudo_trade(sym, df, ax=None):
                         _buys = list(map(lambda e: e[1], buys))
                         _ix = np.argmax( _buys )
                         ts0, last_buy, last_buy_sz = buys[_ix]
-                        if (pce-last_buy)/last_buy < -sl: # sl
+                        if (pce-last_buy)/last_buy < -sl or is_breaking_down: # sl
                             buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
                             print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix ) #, (pce-last_buy)/last_buy,'<', -sl)
                             cash += pce*last_buy_sz*(1-ff)
@@ -470,13 +475,24 @@ def main(sym,syms,volt,offline,do_mpt):
             x = t0-d
             x = x.total_seconds()/3600/24
             return x
+        
+        def _last_actions(tta):
+            if tta:
+                tta = pd.concat(tta).sort_values('ts',ascending=False).reset_index(drop=True)
+                tta['dt'] = tta.ts.apply(_tdiff)
+                print('*'*30, 'Latest trades', '*'*30)
+                print( tabulate(tta,headers="keys") )
+            else:print('*** empty trades')
         last_trade_actions = list(
-            map(lambda trs: trs[-1].to_df(), pseudo_df['trade_actions'] )
-        )
-        last_trade_actions = pd.concat(last_trade_actions).sort_values('ts',ascending=False).reset_index(drop=True)
-        last_trade_actions['dt'] = last_trade_actions.ts.apply(_tdiff)
-        print('#'*30, 'Latest trades', '#'*30)
-        print( last_trade_actions )
+                map(lambda trs: trs[-1].to_df(), pseudo_df['trade_actions'] )
+            )
+        _last_actions(last_trade_actions)
+        last_buy_actions = map(lambda el: list(filter(lambda e: e.is_buy(), el)), pseudo_df['trade_actions'])
+        last_buy_actions = list( last_buy_actions )
+        last_buy_actions = list(
+                map(lambda trs: trs[-1].to_df(), last_buy_actions )
+            )
+        _last_actions(last_buy_actions)
         
         pseudo_df.drop(['r1','rr','trade_actions'],axis=1,inplace=True)
         print()
