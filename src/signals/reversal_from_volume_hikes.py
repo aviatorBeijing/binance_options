@@ -20,13 +20,13 @@ init_cap = 1_000_000
 ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
-trading_horizon = -1 #30*2 # days in case of "sell at fixed days in the future"
+trading_horizon = -1 #7*4 # days in case of "sell at fixed days in the future"
 cash_utility_factor = 0.25 # Each buy can use up to 25%
 tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
 #data
-def select_data(df): return df[ -365*4: ] # Recent 3 years (since) are considered a "normal" market.
+def select_data(df): return df#[ -365*4: ] # Recent 3 years (since) are considered a "normal" market.
 
 #flags
 order_by_order = trading_horizon<0 # sell when reaching profit margin
@@ -121,7 +121,7 @@ def pseudo_trade(sym, df, ax=None):
                     _buys = list(map(lambda e: e[1], buys))
                     _ix = np.argmin( _buys )
                     ts0, last_buy, last_buy_sz = buys[_ix]
-                    if (pce-last_buy)/last_buy > profit_margin: # met the profit traget
+                    if (pce-last_buy)/last_buy > (profit_margin): # met the profit traget
                         buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
                         print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', ',holding:', (i-ts0).total_seconds()/3600/24, 'days') #, (pce-last_buy)/last_buy,'>', profit_margin)
                         cash += pce*last_buy_sz*(1-ff)
@@ -147,9 +147,9 @@ def pseudo_trade(sym, df, ax=None):
             elif hold_fix_days:
                 if row.bought>0:
                     sz = 0; ix = -1
-                    for i,b in enumerate( buys):
+                    for j,b in enumerate( buys):
                         sz = b[2]
-                        ix = i
+                        ix = j
                     if sz>0:
                         cash += pce*sz
                         pos -= sz
@@ -441,11 +441,12 @@ def main(sym,syms,volt,offline,do_mpt):
 
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
-            columns=['crypto', 'days', 'cagr','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','#sl',
+            columns=['crypto', 'days', 'cagr','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','sl/sell',
             'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref',
             'r1','rr',
             'trade_actions'
             ])
+        pseudo_df['sl/sell'] = ( pseudo_df['sl/sell']/pseudo_df['#sells']*100 ).apply(lambda v: f"{v:.0f}%")
         pseudo_df['lev'] = 1/(-pseudo_df['max_dd']);pseudo_df.lev = pseudo_df.lev.apply(lambda v: int(v*10)/10)
         pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
         pseudo_df['tt_rtn/ref (lev.)'] = pseudo_df['tt_rtn/ref'] * pseudo_df['lev']
@@ -470,7 +471,11 @@ def main(sym,syms,volt,offline,do_mpt):
 
         import datetime
         def _tdiff(t):
-            d = pd.Timestamp(t).to_pydatetime()# 2020-03-12T00:00:00.000Z
+            try:
+                d = pd.Timestamp(t).to_pydatetime()# 2020-03-12T00:00:00.000Z
+            except Exception as e:
+                print( f'*** failed to parse: {t}')
+                raise e
             t0 = pd.Timestamp.now(tz='UTC')
             x = t0-d
             x = x.total_seconds()/3600/24
