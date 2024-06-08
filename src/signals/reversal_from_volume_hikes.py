@@ -62,7 +62,8 @@ def pseudo_trade(sym, df, ax=None):
     cash_min = init_cap
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
-        if row.sig>0:
+        is_downturn = row['1sigma_dw_sig_flag']
+        if row.sig>0:# and not is_downturn:
             pce = row.sig;ts = i
             #sz = cash * cash_utility_factor / pce # Use the fixed factor
             sz = cash * row.volrank / pce # Using the volume rank as the factor
@@ -185,6 +186,34 @@ def pseudo_trade(sym, df, ax=None):
         (int(sharpe1/sharpe_ref*100)/100), (int(sortino1/sortino_ref*100)/100), \
         r1, rr
 
+def add_sigma_signals(df):
+    df = df.copy()
+    df['1sigma_up'] = df['closes'].shift(1)+df['1sigma']
+    df['1sigma_dw'] = df['closes'].shift(1)-df['1sigma']
+    
+    #print(((df['closes']-df['1sigma_dw']).rolling(90).rank(pct=True)).min() )
+    
+    df['sigma_level'] = df['1sigma'].rolling(120).rank(pct=True)
+
+    df['1sigma_up_sig_flag'] = ( 
+                                    (df['closes'] > df['1sigma_up']) 
+                                    | ((df['1sigma_up']-df['closes']).rolling(120).rank(pct=True)<0.02) 
+                                ) \
+                                & (
+                                    ((df.closes - df['1sigma_up'])/df['1sigma']).apply(abs)<10./100
+                                )
+    df['1sigma_dw_sig_flag'] = ( 
+                                    (df['closes'] < df['1sigma_dw']) 
+                                    | ((df['closes']-df['1sigma_dw']).rolling(120).rank(pct=True)<0.02) # relative
+                                ) \
+                                & (
+                                    ((df.closes - df['1sigma_dw'])/df['1sigma']).apply(abs)<10./100  # absolute
+                                )
+    
+    df.loc[df['1sigma_up_sig_flag']==True, '1sigma_up_sig'] = df.closes
+    df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
+    return df 
+
 def find_reversals(sym, ts, closes,volume,volt=50):
     months = 9 # volume ranking window
     trade_horizon = 30*2    # how long to wait to sell after buy
@@ -233,6 +262,9 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df.loc[ rank_xing, 'sig'] = df.closes
     df.loc[ rank_xing, 'r1'] = df.volrank
 
+    # Add sigma signals
+    df = add_sigma_signals( df )
+
     # remove high frequency xing
     fwd = 14
     if fwd>0:
@@ -240,7 +272,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
         df.loc[ df.sig_count>1, 'sig'] = np.nan;df.loc[ df.sig_count>1, 'r1'] = np.nan
     #------------------------- Signals ---------------------
 
-    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(24,18))
+    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(18,12))
 
     pseudo_metrics = pseudo_trade(sym, df, ax3) # a different trading strategy!
 
@@ -280,19 +312,9 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df['volrank'].plot(ax=ax11,alpha=0.5)
     df['closes'].plot(ax=ax2,linewidth=1.5)
 
-    df['1sigma_up'] = df['closes'].shift(1)+df['1sigma']
-    df['1sigma_dw'] = df['closes'].shift(1)-df['1sigma']
     df['1sigma_up'].plot(ax=ax2,linewidth=1,color='gray',alpha=0.3)
     df['1sigma_dw'].plot(ax=ax2,linewidth=1,color='gray',alpha=0.3)
-    #print(((df['closes']-df['1sigma_dw']).rolling(90).rank(pct=True)).min() )
-    
-    df['sigma_level'] = df['1sigma'].rolling(120).rank(pct=True)
 
-    df['1sigma_up_sig_flag'] = ( (df['closes'] > df['1sigma_up']) | ((df['1sigma_up']-df['closes']).rolling(120).rank(pct=True)<0.02) ) & (df['sigma_level']>0.5)
-    df['1sigma_dw_sig_flag'] = ( (df['closes'] < df['1sigma_dw']) | ((df['closes']-df['1sigma_dw']).rolling(120).rank(pct=True)<0.02) ) & (df['sigma_level']>0.5)
-    
-    df.loc[df['1sigma_up_sig_flag']==True, '1sigma_up_sig'] = df.closes
-    df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
     df['1sigma_up_sig'].plot(ax=ax2,marker="x",linestyle="none",color="red", alpha=0.6)
     df['1sigma_dw_sig'].plot(ax=ax2,marker="x",linestyle="none",color="black", alpha=0.6)
     
@@ -351,7 +373,8 @@ def _main(sym, volt,offline=False):
 @click.option("--syms", default='')
 @click.option("--volt", default=50, help="percentage of volume considered to be significant")
 @click.option("--offline", is_flag=True, default=False)
-def main(sym,syms,volt,offline):
+@click.option("--do_mpt", is_flag=True,default=False, help='turn on the MPT simulation')
+def main(sym,syms,volt,offline,do_mpt):
     global cash_utility_factor, trading_horizon, init_cap
     def _settings():
         print('-- settings:')
@@ -395,7 +418,6 @@ def main(sym,syms,volt,offline):
         for col in ['max_dd','max_dd_ref','cagr','cagr (lev.)','cash_util']: 
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):.1f}%")
         
-        from signals.mpt import optimized_mpt
         r1 = list(pseudo_df.r1.values)
         r1 = pd.concat(r1,axis=1).dropna()
         r1.columns = pseudo_df.crypto.values
@@ -411,40 +433,42 @@ def main(sym,syms,volt,offline):
         _settings()
 
         #-- MPT
-        fig,((ax1,ax2), (ax3,ax4))=plt.subplots(2,2,figsize=(24,24))
-        def _mpt(r1, ax1, ax2):
-            print()
-            o = optimized_mpt(r1,10_000,5./100,do_plot=False)
-            wts = np.array( list( # optimized weights
-                map(lambda c: o['allocation_pct'][c], r1.columns)
-            ))/100
-            levs = list(
-                map(lambda arr: -1./max_drawdowns(arr), [r1[col] for col in r1 ])
-            )
-            #levs = np.array(list(pseudo_df.lev.values))
-            rp = r1.dot(wts)
-            print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}, Max DD: {max_drawdowns(rp)*100:.1f}%')
-            
-            for col in r1:
-                r1[col].cumsum().plot(ax=ax1,linewidth=1)
-            rp.cumsum().plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
-            ax1.set_ylabel('returns',color='blue')
-            
-            for i, col in enumerate(r1):
-                (r1[col]*levs[i]).cumsum().plot(ax=ax2,linewidth=1)
-            rpl = r1.dot(levs * wts)
-            rpl.cumsum().plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
-            ax2.set_ylabel('returns (lev.)',color='blue')
+        if do_mpt:
+            from signals.mpt import optimized_mpt
+            fig,((ax1,ax2), (ax3,ax4))=plt.subplots(2,2,figsize=(24,24))
+            def _mpt(r1, ax1, ax2):
+                print()
+                o = optimized_mpt(r1,10_000,5./100,do_plot=False)
+                wts = np.array( list( # optimized weights
+                    map(lambda c: o['allocation_pct'][c], r1.columns)
+                ))/100
+                levs = list(
+                    map(lambda arr: -1./max_drawdowns(arr), [r1[col] for col in r1 ])
+                )
+                #levs = np.array(list(pseudo_df.lev.values))
+                rp = r1.dot(wts)
+                print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}, Max DD: {max_drawdowns(rp)*100:.1f}%')
+                
+                for col in r1:
+                    r1[col].cumsum().plot(ax=ax1,linewidth=1)
+                rp.cumsum().plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
+                ax1.set_ylabel('returns',color='blue')
+                
+                for i, col in enumerate(r1):
+                    (r1[col]*levs[i]).cumsum().plot(ax=ax2,linewidth=1)
+                rpl = r1.dot(levs * wts)
+                rpl.cumsum().plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
+                ax2.set_ylabel('returns (lev.)',color='blue')
 
-            ax1.legend(r1.columns)
-            ax2.legend(r1.columns)
-            ax1.set_title('Returns by wts')
-            ax2.set_title('Returns by wts & leverages')
-        _mpt(r1, ax1, ax2)
-        _mpt(rr, ax3, ax4)
-        fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.png'
-        plt.savefig(fn)
-        print('-- saved:', fn)
+                ax1.legend(r1.columns)
+                ax2.legend(r1.columns)
+                ax1.set_title('Returns by wts')
+                ax2.set_title('Returns by wts & leverages')
+            _mpt(r1, ax1, ax2)
+            _mpt(rr, ax3, ax4)
+            fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.png'
+            plt.savefig(fn)
+            print('-- saved:', fn)
         #-- MPT
 
     else:
