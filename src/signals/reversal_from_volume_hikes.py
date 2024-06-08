@@ -43,6 +43,33 @@ def _cagr(rtn,n):
     cagr = (np.exp( cagr ) -1 )*100
     return cagr
 
+import enum 
+class ActionT(enum.Enum):
+    BUY = 'buy'
+    SELL = 'sell'
+    TP  = 'tp'
+    SL  = 'sl'
+class TradeAction:
+    def __init__(self, sym: str,act:ActionT, price:float, sz:float, ts:str) -> None:
+        self.act = act 
+        self.price = price;self.sz=sz
+        self.ts = ts 
+
+        sym = sym.upper()
+        self.ric = f'{sym}/USDT' if not 'USDT' in sym else sym
+    def to_df(self):
+        df = pd.DataFrame.from_dict({
+            'ric': [self.ric],
+            'action': [ self.act.value ],
+            'price': [self.price],
+            'sz': [self.sz],
+            'ts': [ str(self.ts) ],
+        })
+        return df
+    def __str__(self) -> str:
+        s = f' {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}'
+        return s
+    
 def pseudo_trade(sym, df, ax=None):
     df = df.copy()
     print('-- latest data:', df.index[-1], f"${df.iloc[-1].closes}")
@@ -60,10 +87,11 @@ def pseudo_trade(sym, df, ax=None):
     portfolio = [];assets=[]
     cash = init_cap;pos=0;fees=0
     cash_min = init_cap
+    trade_actions = []
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         is_downturn = row['1sigma_dw_sig_flag']
-        if row.sig>0:# and not is_downturn:
+        if row.sig>0 and not is_downturn:
             pce = row.sig;ts = i
             #sz = cash * cash_utility_factor / pce # Use the fixed factor
             sz = cash * row.volrank / pce # Using the volume rank as the factor
@@ -76,6 +104,8 @@ def pseudo_trade(sym, df, ax=None):
                 if cash < cash_min: cash_min = cash # record the cash usage
                 if sz*pce > max_cost: max_cost = sz*pce
                 print(f'  [buy] {sym},', _cl(str(i)), f'${pce}, sz: {sz}, cap%: { (row.volrank*100):.1f}%')
+
+                trade_actions+=[ TradeAction(sym, ActionT.BUY, pce, sz, ts) ]
             else:
                 print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
         else:
@@ -93,6 +123,7 @@ def pseudo_trade(sym, df, ax=None):
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
                         nsells += 1
+                        trade_actions+=[ TradeAction(sym, ActionT.TP, pce, last_buy_sz, str(i)) ]
                 # sl
                 if buys:
                         _buys = list(map(lambda e: e[1], buys))
@@ -106,7 +137,8 @@ def pseudo_trade(sym, df, ax=None):
                             fees += last_buy_sz * pce * ff
                             nsells += 1
                             stoplosses += 1
-                        
+                            trade_actions+=[ TradeAction(sym, ActionT.SL, pce, last_buy_sz, str(i)) ]
+
             elif hold_fix_days:
                 if row.bought>0:
                     sz = 0; ix = -1
@@ -119,6 +151,7 @@ def pseudo_trade(sym, df, ax=None):
                         fees += pce*sz *ff
                         nsells += 1
                         buys = buys[:ix] + (buys[ix+1:] if (ix+1)<len(buys) else [])
+                        trade_actions+=[ TradeAction(sym, ActionT.SELL, pce, sz, str(i)) ]
             else:
                 raise Exception('Strategy is not specified.')
         if cash > max_cash: max_cash = cash
@@ -184,7 +217,8 @@ def pseudo_trade(sym, df, ax=None):
         (int(max_dd_ref/max_dd*100)/100), \
         (int(rinc*100)/100), \
         (int(sharpe1/sharpe_ref*100)/100), (int(sortino1/sortino_ref*100)/100), \
-        r1, rr
+        r1, rr, \
+            trade_actions
 
 def add_sigma_signals(df):
     df = df.copy()
@@ -296,7 +330,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     if not lastsell.empty:
         print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
     """
-    
+    print(f'-- FIXED DATE SELL TEST ({trade_horizon} days)')
     print(f'-- gain: ${(xdf["return"].sum()*cap ):,.2f} (initial capital: ${cap:,.2f}, fixed investment mode)')
     print(f'-- ttl return: {aggrtn:.1f}% ({ds} days, {(ds/365):.1f} yrs, reinvest mode)')
     print(f'  -- buy&hold: {bh:.1f}%, {bh_annual:.1f}%')
@@ -324,14 +358,15 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     ax1.set_title(f'equity drawdown v.s. volume ranking')
     ax2.set_title('price & buying signals')
     ax2.set_ylabel('price ($)')
-    fn = os.getenv("USER_HOME",'')+f'/tmp/reversal_{sym}.pdf'
+    fn = os.getenv("USER_HOME",'')+f'/tmp/reversal_{sym}.pdf' # Trading signals
     plt.savefig(fn)
     print('-- saved:',fn)
 
-    if not latest.empty:
+    """if not latest.empty:
         print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
     if not lastsell.empty:
         print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
+    """
 
     return {
         'crypto': sym.upper(),
@@ -397,13 +432,15 @@ def main(sym,syms,volt,offline,do_mpt):
                 recs += [rec]
         df = pd.DataFrame.from_records( recs )
         df.sort_values('last_buy', ascending=False, inplace=True)
-        print(df)
+        #print(df)
 
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
             columns=['crypto', 'days', 'cagr','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','#sl',
             'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref',
-            'r1','rr'])
+            'r1','rr',
+            'trade_actions'
+            ])
         pseudo_df['lev'] = 1/(-pseudo_df['max_dd']);pseudo_df.lev = pseudo_df.lev.apply(lambda v: int(v*10)/10)
         pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
         pseudo_df['tt_rtn/ref (lev.)'] = pseudo_df['tt_rtn/ref'] * pseudo_df['lev']
@@ -425,9 +462,25 @@ def main(sym,syms,volt,offline,do_mpt):
         rr = list(pseudo_df.rr.values)
         rr = pd.concat(rr,axis=1).dropna()
         rr.columns = pseudo_df.crypto.values
+
+        import datetime
+        def _tdiff(t):
+            d = pd.Timestamp(t).to_pydatetime()# 2020-03-12T00:00:00.000Z
+            t0 = pd.Timestamp.now(tz='UTC')
+            x = t0-d
+            x = x.total_seconds()/3600/24
+            return x
+        last_trade_actions = list(
+            map(lambda trs: trs[-1].to_df(), pseudo_df['trade_actions'] )
+        )
+        last_trade_actions = pd.concat(last_trade_actions).sort_values('ts',ascending=False).reset_index(drop=True)
+        last_trade_actions['dt'] = last_trade_actions.ts.apply(_tdiff)
+        print('#'*30, 'Latest trades', '#'*30)
+        print( last_trade_actions )
         
-        pseudo_df.drop(['r1','rr'],axis=1,inplace=True)
+        pseudo_df.drop(['r1','rr','trade_actions'],axis=1,inplace=True)
         print()
+        print('#'*30, 'Metrics', '#'*30)
         print( tabulate(pseudo_df,headers='keys') )
         print('\n[cash_util: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
         _settings()
