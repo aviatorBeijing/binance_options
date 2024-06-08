@@ -3,7 +3,7 @@
 arr=()
 syms=()
 datafiles=()
-for s in BTC ETH BNB SOL XRP ADA AVAX LINK DOT TRX LTC FTM;do
+for s in BTC ETH BNB SOL XRP ADA AVAX LINK DOT TRX LTC FTM BCH;do
 	arr+=( "${s}/USDT" )
 	syms+=( ${s,,} )
 	datafiles+=( ${s,,}-usdt_1d.csv )
