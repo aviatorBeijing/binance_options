@@ -284,13 +284,34 @@ def portfolio_check(ric,days=3):
     with open(fn,'w') as fp:
         fp.writelines([f'ric:{ric}\n', f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}\n',f'price:${pce}\n',f'holding:{holding_size}\n',f'orders:{res}'])
 
+def check_hedging():
+    fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
+    if os.path.exists( fn ):
+        df = pd.read_csv( fn )
+        df['ref'] = df['value'] / df['ttl']
+        #df = df[df.asset != 'BTC']
+        print(df)
+
+        stb = df[(df.asset=='USDT')|(df.asset=='USDC')|(df.asset=='DAI')]
+        cpt = df[(df.asset!='USDT')&(df.asset!='USDC')&(df.asset!='DAI')]
+        cryptos = cpt['value'].sum() # Other than USDT
+        stables = df['value'].sum() - cryptos
+        stables_free = stb['free'].sum()
+
+        print('\n-- hedging:')
+        print(f'  -- ttl:          ${(cryptos+stables):,.0f}')
+        print(f'  -- cryptos:      ${cryptos:,.0f} ({(cryptos/(cryptos+stables)*100):.1f}%)')
+        print(f'  -- stable coins: ${stables:,.0f}, free: ${stables_free:.0f} ({(stables_free/stables*100):.1f}%)')
+    else:
+        print(f'-- {fn} NOT found.')
+
 def assets():
     fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
     if os.path.exists( fn ):
         df = pd.read_csv( fn )
         df['ref'] = df['value'] / df['ttl']
         #df = df[df.asset != 'BTC']
-
+        
         fig, (ax2,ax1) = plt.subplots(1,2,figsize=(18,8))
         dim = df.shape[0]
         w = 0.75
@@ -328,11 +349,14 @@ def assets():
 #@click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--check_cached', is_flag=True, default=False)
 @click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
-def main(ric,days,check_cached,spot): 
+@click.option('--hedging', is_flag=True, default=False)
+def main(ric,days,check_cached,spot,hedging): 
     if check_cached:
         _ = analyze_trades_cached(ric)
         _ = BianceSpot.analyze_open_orders_cached(spot,ric)
         _ = assets()
+    elif hedging:
+        _ = check_hedging()
     else:   
         portfolio_check(ric,days=days)
 

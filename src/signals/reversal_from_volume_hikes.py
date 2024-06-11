@@ -26,7 +26,7 @@ tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
 #data
-def select_data(df): return df#[ -365*4: ] # Recent 3 years (since) are considered a "normal" market.
+def select_data(df): return df#[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
 
 #flags
 order_by_order = trading_horizon<0 # sell when reaching profit margin
@@ -92,6 +92,7 @@ def pseudo_trade(sym, df, ax=None):
     cash = init_cap;pos=0;fees=0
     cash_min = init_cap
     trade_actions = []
+    wins = 0; losses = 0
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         is_breaking_down = row['1sigma_dw_sig_flag']
@@ -100,6 +101,7 @@ def pseudo_trade(sym, df, ax=None):
             pce = row.sig;ts = i
             #sz = cash * cash_utility_factor / pce # Use the fixed factor
             sz = cash * row.volrank / pce # Using the volume rank as the factor
+
             if sz*pce > init_cap/100: # enough cash FIXME
                 buys += [ (ts, pce, sz, )]
                 cash -= sz*pce*(1+ff)
@@ -129,6 +131,7 @@ def pseudo_trade(sym, df, ax=None):
                         fees += last_buy_sz * pce * ff
                         nsells += 1
                         trade_actions+=[ TradeAction(sym, ActionT.TP, pce, last_buy_sz, str(i)) ]
+                        wins += 1
                 # sl
                 if buys:
                         _buys = list(map(lambda e: e[1], buys))
@@ -143,6 +146,9 @@ def pseudo_trade(sym, df, ax=None):
                             nsells += 1
                             stoplosses += 1
                             trade_actions+=[ TradeAction(sym, ActionT.SL, pce, last_buy_sz, str(i)) ]
+
+                            if (pce-last_buy)<0: losses += 1
+                            else: wins += 1
 
             elif hold_fix_days:
                 if row.bought>0:
@@ -521,7 +527,10 @@ def main(sym,syms,volt,offline,do_mpt):
                 )
                 #levs = np.array(list(pseudo_df.lev.values))
                 rp = r1.dot(wts)
-                print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}, Max DD: {max_drawdowns(rp)*100:.1f}%')
+                try:
+                    print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}, Max DD: {max_drawdowns(rp)*100:.1f}%')
+                except Exception as e:
+                    pass
                 
                 for col in r1:
                     r1[col].cumsum().plot(ax=ax1,linewidth=1)
