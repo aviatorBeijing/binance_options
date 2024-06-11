@@ -1,3 +1,4 @@
+import pandas as pd
 import ccxt
 
 def top_rics(n):
@@ -19,7 +20,7 @@ def top_rics(n):
     top_10_pairs = sorted_volume_data[:n]
 
     df = pd.DataFrame.from_records( top_10_pairs, columns=['ric','volume'] )
-    retrun df
+    return df
 
 def main():
     df = top_rics( n=10 )
