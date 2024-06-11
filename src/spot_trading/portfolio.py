@@ -178,6 +178,7 @@ def analyze_trades(ric, tds, days, save=True):
             tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
         else:
             tds = old_tds
+    if tds.empty: return
     tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
         ric = ric.lower().replace('/','-')
@@ -290,7 +291,7 @@ def check_hedging():
         df = pd.read_csv( fn )
         df['ref'] = df['value'] / df['ttl']
         #df = df[df.asset != 'BTC']
-        print(df)
+        #print(df)
 
         stb = df[(df.asset=='USDT')|(df.asset=='USDC')|(df.asset=='DAI')]
         cpt = df[(df.asset!='USDT')&(df.asset!='USDC')&(df.asset!='DAI')]
