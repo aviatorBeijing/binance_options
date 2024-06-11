@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import ccxt
 
@@ -13,17 +14,22 @@ def top_rics(n):
         symbol = pair['symbol']
         if symbol in tickers:
             volume = tickers[symbol]['quoteVolume']
-            volume_data.append((symbol, volume))
+            close = tickers[symbol]['close']
+            volume_data.append((symbol, volume, close))
 
     sorted_volume_data = sorted(volume_data, key=lambda x: x[1], reverse=True)
 
     top_10_pairs = sorted_volume_data[:n]
 
-    df = pd.DataFrame.from_records( top_10_pairs, columns=['ric','volume'] )
+    df = pd.DataFrame.from_records( top_10_pairs, columns=['ric','volume','close'] )
     return df
 
 def main():
     df = top_rics( n=10 )
+    fn = os.getenv('USER_HOME','')  + '/tmp/top_active_rics.csv'
+    df.to_csv(fn, index=0)
+    print(df)
+    print('-- save:', fn)
 
 if __name__  == '__main__':
     main()
