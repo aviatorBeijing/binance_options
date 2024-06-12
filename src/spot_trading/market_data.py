@@ -5,7 +5,7 @@ from butil.butils import binance_kline
 
 def _main(ric,span):
     fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
-    df = binance_kline(ric, span=span, grps=5)
+    df = binance_kline(ric, span=span, grps=5 if span=='1d'  else 50)
 
     print(tabulate(df.tail(5),headers="keys"))
     rk_last = df.volume.rolling(100).rank(pct=True).iloc[-5:].values

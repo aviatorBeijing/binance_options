@@ -3,7 +3,7 @@
 arr=()
 syms=()
 datafiles=()
-for s in BTC ETH BNB SOL XRP ADA AVAX LINK DOT TRX LTC FTM BCH MATIC ARB FIL OP ATOM PEPE NOT PEOPLE WIF;do
+for s in BTC ETH BNB SOL XRP ADA AVAX LINK DOT TRX LTC FTM BCH MATIC ARB FIL OP ATOM PEPE;do
 	arr+=( "${s}/USDT" )
 	syms+=( ${s,,} )
 	datafiles+=( ${s,,}-usdt_1d.csv )
