@@ -196,6 +196,7 @@ def pseudo_trade(sym, df, ax=None):
     pdf['assets'].plot(ax=ax11,color='gray',alpha=0.5)
     ax1.set_ylabel('Return%',color='blue')
     ax11.set_ylabel('Position (#)',color='gray')
+    ax11.grid(False)
     
     if not ax:
         fn = os.getenv("USER_HOME","")+f"/tmp/port_{sym}.png"
@@ -391,6 +392,7 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     ax2.set_title('price & buying signals')
     ax2.set_ylabel('price ($)')
     ax22.set_ylabel('return (%)')
+    ax22.grid(False)
     fn = os.getenv("USER_HOME",'')+f'/tmp/reversal_{sym}.pdf' # Trading signals
     plt.savefig(fn)
     print('-- saved:',fn)
