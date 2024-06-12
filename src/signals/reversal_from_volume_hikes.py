@@ -21,7 +21,7 @@ ff = 8/10000 # fee rate
 
 #strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
 trading_horizon = -1 #7*4 # days in case of "sell at fixed days in the future"
-cash_utility_factor = 0.25 # Each buy can use up to 25%
+cash_utility_factor = -1 #0.3 # Each buy can use up to 25%
 tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
@@ -100,8 +100,10 @@ def pseudo_trade(sym, df, ax=None):
         is_breaking_up   = row['1sigma_up_sig_flag']
         if row.sig>0 and not is_breaking_down:
             pce = row.sig;ts = i
-            #sz = cash * cash_utility_factor / pce # Use the fixed factor
-            sz = cash * row.volrank / pce # Using the volume rank as the factor
+            if cash_utility_factor>0:
+                sz = cash * cash_utility_factor / pce # Use the fixed factor
+            else:
+                sz = cash * row.volrank / pce # Using the volume rank as the factor
 
             if sz*pce > init_cap/100: # enough cash FIXME
                 buys += [ (ts, pce, sz, )]
@@ -177,7 +179,9 @@ def pseudo_trade(sym, df, ax=None):
     
     r1 = pdf['v'].pct_change()
     rr = df['closes'].pct_change()
-    rinc = r1.sum()/rr.sum()
+    rinc = (pdf['v'].iloc[-1] - pdf['v'].iloc[0])/pdf['v'].iloc[0] /(
+        (df['closes'].iloc[-1] - df['closes'].iloc[0])/df['closes'].iloc[0]
+    )
     
     max_dd = max_drawdowns( r1 )
     max_lev = 1./(-max_dd)
@@ -188,9 +192,8 @@ def pseudo_trade(sym, df, ax=None):
     else:
         ax1 = ax
     ax11 = ax1.twinx()
-    ((r1*100).cumsum()).plot(ax=ax1)
+    (((1+r1).cumprod()-1)*100).plot( ax=ax1 )
     pdf['assets'].plot(ax=ax11,color='gray',alpha=0.5)
-    #df['closes'].pct_change().cumsum().plot(ax=ax11,color='gray',alpha=0.5)
     ax1.set_ylabel('Return%',color='blue')
     ax11.set_ylabel('Position (#)',color='gray')
     
@@ -480,6 +483,12 @@ def main(sym,syms,volt,offline,do_mpt):
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{v:.1f}")
         pseudo_df['max_dd'] *= 100
         pseudo_df['cash_util'] *= 100
+        med_cagr = pseudo_df.cagr.median()
+        avg_cagr = pseudo_df.cagr.mean()
+
+        print(f'    -- CAGR median: {(med_cagr):,.1f}%')
+        print(f'    -- CAGR mean:   {(avg_cagr):,.1f}%')
+
         for col in ['max_dd','cagr','tt_rtn','cagr (lev.)','cash_util']: 
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):,.1f}%")
 
@@ -552,14 +561,15 @@ def main(sym,syms,volt,offline,do_mpt):
                     pass
                 
                 for col in r1:
-                    r1[col].cumsum().plot(ax=ax1,linewidth=1)
-                rp.cumsum().plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
+                    ((1+r1[col]).cumprod()-1).plot(ax=ax1,linewidth=1)
+                ((1+rp).cumprod()).plot(ax=ax1,linewidth=5,color='blue',alpha=0.6) 
                 ax1.set_ylabel('returns',color='blue')
                 
                 for i, col in enumerate(r1):
-                    (r1[col]*levs[i]).cumsum().plot(ax=ax2,linewidth=1)
+                    y  = r1[col]*levs[i]
+                    ((1+y).cumprod()-1).plot(ax=ax2,linewidth=1)
                 rpl = r1.dot(levs * wts)
-                rpl.cumsum().plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
+                ((1+rpl).cumprod()-1).plot(ax=ax2,linewidth=5,color='blue',alpha=0.6) 
                 ax2.set_ylabel('returns (lev.)',color='blue')
 
                 ax1.legend(r1.columns)
