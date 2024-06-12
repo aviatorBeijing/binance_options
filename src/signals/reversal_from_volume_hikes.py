@@ -75,6 +75,7 @@ class TradeAction:
         return s
     
 def pseudo_trade(sym, df, ax=None):
+    print('-- pseudo trading (strategy specific!):')
     df = df.copy()
     print('-- latest data:', df.index[-1], f"${df.iloc[-1].closes}")
 
@@ -201,6 +202,7 @@ def pseudo_trade(sym, df, ax=None):
 
     val = cash+pos*float(df.iloc[-1].closes)-fees
     rtn = (val/init_cap-1)*100 #total return
+    
     profits = val - init_cap
     cagr = _cagr( rtn/100, df.shape[0])
 
@@ -210,8 +212,7 @@ def pseudo_trade(sym, df, ax=None):
     sharpe1 = sharpe(r1)
     sharpe_ref = sharpe(rr)
 
-    print('-- pseudo trading (strategy specific!):')
-    print(f'  -- max drawdown: {(max_dd*100):.1f}%, {(max_dd_ref*100):.1f}%, sortino: {sortino1:.2f}, {sortino_ref:.2f}, sharpe: {sharpe1:.2f}, {sharpe_ref:.2f}')
+    print(f'\n  -- max drawdown: {(max_dd*100):.1f}%, {(max_dd_ref*100):.1f}%, sortino: {sortino1:.2f}, {sortino_ref:.2f}, sharpe: {sharpe1:.2f}, {sharpe_ref:.2f}')
     print(f'  -- nbuys: {nbuys}, nsells: {nsells}, max cost: ${max_cost:,.2f}, max cash: ${max_cash:,.2f}')
     print(f'  -- liquidation value: ${(val):,.2f}, rtn: {rtn:,.1f}%, cagr: {cagr:,.1f}%')
     print(f'    -- cash: ${cash:,.2f}')
@@ -259,7 +260,7 @@ def add_sigma_signals(df):
     df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
     return df 
 
-def find_reversals(sym, ts, closes,volume,volt=50):
+def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     months = 9 # volume ranking window
     trade_horizon = 30*2    # how long to wait to sell after buy
 
@@ -280,6 +281,8 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     volume = volume[1:]
     volrank = volrank[1:]
     closes = closes[1:]
+    if not rsi.empty:
+        rsi = rsi[1:]
     
     # find min
     i_mm = np.argmin(dd)
@@ -294,14 +297,21 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     df['dd'] = dd
     df['closes'] = closes
     df['volrank'] = volrank
+    if not rsi.empty: df['rsi'] = rsi
     df['rtn'] = df['closes'].pct_change()
     df['1sigma'] = df.closes.rolling(120).std() # TODO: use ARIMA to predict the std (i.e., vol) of return.
+    df = df.drop_duplicates(subset=['ts'])
     df.set_index('ts',inplace=True)
     df = df[wd:]
     df = select_data(df)
 
     #------------------------- Signals ---------------------
-    buy_signals = rank_xing = (df.rtn <= .25) & (df.volrank.shift(2) <= volt/100) & (df.volrank.shift(1) <= volt/100) & (df.volrank>=volt/100)
+    buy_signals = rank_xing = (df.rsi<20 if 'rsi' in df else False ) | \
+                              (   (df.rtn <= .25) \
+                                & (df.volrank.shift(2) <= volt/100) \
+                                & (df.volrank.shift(1) <= volt/100) \
+                                & (df.volrank>=volt/100)
+                              )
     # (df.dd<-0.5) & 
 
     df.loc[ rank_xing, 'sig'] = df.closes
@@ -340,7 +350,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
         print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
     if not lastsell.empty:
         print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
-    """
+    
     print(f'-- FIXED DATE SELL TEST ({trade_horizon} days)')
     print(f'-- gain: ${(xdf["return"].sum()*cap ):,.2f} (initial capital: ${cap:,.2f}, fixed investment mode)')
     print(f'-- ttl return: {aggrtn:.1f}% ({ds} days, {(ds/365):.1f} yrs, reinvest mode)')
@@ -349,7 +359,7 @@ def find_reversals(sym, ts, closes,volume,volt=50):
     print(f'  -- single max gain: {(xdf["return"].max()*100):.1f}%' )
     print(f'  -- single max loss: {(xdf["return"].min()*100):.1f}%' )
     print(f'  -- {xdf.shape[0]}, wins: {xdf[xdf["price_delta"]>0].shape[0]}, losses: {xdf[xdf["price_delta"]<0].shape[0]}')
-
+    """
     
     ax11 = ax1.twinx()
 
@@ -409,9 +419,12 @@ def _main(sym, volt,offline=False):
     else:
         df = pd.read_csv( fn,index_col=0 )
     ts = df.timestamp
+    df['rsi'] = talib.RSI(df['close'],timeperiod=14)
+    df = df.dropna()
+    rsi = df.rsi
     closes = df.close
     volume = df.volume 
-    rec = find_reversals(sym, ts, closes, volume,volt )
+    rec = find_reversals(sym, ts, closes, volume,volt,rsi )
     return rec
 
 @click.command()
