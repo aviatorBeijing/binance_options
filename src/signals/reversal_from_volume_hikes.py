@@ -368,10 +368,13 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     """
     
     ax11 = ax1.twinx()
+    ax22 = ax2.twinx()
 
+    rx = df['closes'].pct_change()
     (df['dd']*100).plot(ax=ax1,color='red')
     df['volrank'].plot(ax=ax11,alpha=0.5)
     df['closes'].plot(ax=ax2,linewidth=1.5)
+    (((1+rx).cumprod()-1)*100).plot(ax=ax22,linewidth=1.5,linestyle='none')
     ax1.set_ylabel('drawdown%', color='red')
     ax11.set_ylabel('volrank', color='blue')
 
@@ -387,6 +390,7 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     ax1.set_title(f'equity drawdown v.s. volume ranking')
     ax2.set_title('price & buying signals')
     ax2.set_ylabel('price ($)')
+    ax22.set_ylabel('return (%)')
     fn = os.getenv("USER_HOME",'')+f'/tmp/reversal_{sym}.pdf' # Trading signals
     plt.savefig(fn)
     print('-- saved:',fn)
