@@ -193,7 +193,6 @@ def pseudo_trade(sym, df, ax=None):
     #df['closes'].pct_change().cumsum().plot(ax=ax11,color='gray',alpha=0.5)
     ax1.set_ylabel('Return%',color='blue')
     ax11.set_ylabel('Position (#)',color='gray')
-    ax1.set_title( f'{sym}\nsell in {trading_horizon} days after each buy, max lev: {max_lev:.1f}, r1/rr: {(rinc):.1f} (w/ lev:{(rinc*max_lev):.1f})' )
     
     if not ax:
         fn = os.getenv("USER_HOME","")+f"/tmp/port_{sym}.png"
@@ -206,6 +205,8 @@ def pseudo_trade(sym, df, ax=None):
     profits = val - init_cap
     cagr = _cagr( rtn/100, df.shape[0])
 
+    ax1.set_title( f'{sym.upper()}, cagr={cagr:,.1f}%, sell in {trading_horizon} days after each buy, max lev: {max_lev:.1f}, r1/rr: {(rinc):.1f} (w/ lev:{(rinc*max_lev):.1f})' )
+    
     max_dd_ref = max_drawdowns( rr )
     sortino1 = sortino(r1)
     sortino_ref = sortino(rr)
@@ -481,7 +482,7 @@ def main(sym,syms,volt,offline,do_mpt):
         for col in ['max_dd','cagr','tt_rtn','cagr (lev.)','cash_util']: 
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):,.1f}%")
 
-        pseudo_df['tt_rtn'] = pseudo_df['tt_rtn'] + pseudo_df['tt_rtn/ref (lev.)'].apply(lambda v: f" ({v:.1f})")
+        pseudo_df['tt_rtn'] = pseudo_df['tt_rtn'] + pseudo_df['tt_rtn/ref (lev.)'].apply(lambda v: f" (lev./ref: {abs(v):.1f})")
         pseudo_df.drop(['max_dd_ref','sharpe/ref','tt_rtn/ref (lev.)'],axis=1,inplace=True)
 
         r1 = list(pseudo_df.r1.values)
