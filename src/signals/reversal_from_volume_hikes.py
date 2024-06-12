@@ -222,7 +222,8 @@ def pseudo_trade(sym, df, ax=None):
     print(f'    -- fees: ${fees:,.2f}, {(fees/profits*100):,.2f}%')
     print()
     
-    return sym, df.shape[0], \
+    years = int(df.shape[0]/365.*100)/100
+    return sym, years, \
         int(cagr*10)/10, \
         rtn, \
         sortino1, cash_min, \
@@ -462,7 +463,7 @@ def main(sym,syms,volt,offline,do_mpt):
 
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
-            columns=['crypto', 'days', 'cagr','tt_rtn','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','sl/sell',
+            columns=['crypto', 'years', 'cagr','tt_rtn','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','sl/sell',
             'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref',
             'r1','rr',
             'trade_actions'
