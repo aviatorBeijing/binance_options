@@ -369,9 +369,11 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     
     ax11 = ax1.twinx()
 
-    df['dd'].plot(ax=ax1,color='red')
+    (df['dd']*100).plot(ax=ax1,color='red')
     df['volrank'].plot(ax=ax11,alpha=0.5)
     df['closes'].plot(ax=ax2,linewidth=1.5)
+    ax1.set_ylabel('drawdown%', color='red')
+    ax11.set_ylabel('volrank', color='blue')
 
     df['1sigma_up'].plot(ax=ax2,linewidth=1,color='gray',alpha=0.3)
     df['1sigma_dw'].plot(ax=ax2,linewidth=1,color='gray',alpha=0.3)
