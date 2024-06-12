@@ -479,11 +479,11 @@ def main(sym,syms,volt,offline,do_mpt):
         pseudo_df['max_dd'] *= 100
         pseudo_df['cash_util'] *= 100
         for col in ['max_dd','cagr','tt_rtn','cagr (lev.)','cash_util']: 
-            pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):.1f}%")
+            pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):,.1f}%")
 
         pseudo_df['tt_rtn'] = pseudo_df['tt_rtn'] + pseudo_df['tt_rtn/ref (lev.)'].apply(lambda v: f" ({v:.1f})")
         pseudo_df.drop(['max_dd_ref','sharpe/ref','tt_rtn/ref (lev.)'],axis=1,inplace=True)
-        
+
         r1 = list(pseudo_df.r1.values)
         r1 = pd.concat(r1,axis=1).dropna()
         r1.columns = pseudo_df.crypto.values
