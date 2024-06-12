@@ -223,6 +223,7 @@ def pseudo_trade(sym, df, ax=None):
     
     return sym, df.shape[0], \
         int(cagr*10)/10, \
+        rtn, \
         sortino1, cash_min, \
         int(max_dd*100)/100, int(max_dd_ref*100)/100, \
         nbuys,nsells,stoplosses, \
@@ -460,7 +461,7 @@ def main(sym,syms,volt,offline,do_mpt):
 
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
-            columns=['crypto', 'days', 'cagr','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','sl/sell',
+            columns=['crypto', 'days', 'cagr','tt_rtn','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','sl/sell',
             'dd/ref','tt_rtn/ref','sharpe/ref','sortino/ref',
             'r1','rr',
             'trade_actions'
@@ -469,16 +470,19 @@ def main(sym,syms,volt,offline,do_mpt):
         pseudo_df['lev'] = 1/(-pseudo_df['max_dd']);pseudo_df.lev = pseudo_df.lev.apply(lambda v: int(v*10)/10)
         pseudo_df['cagr (lev.)'] = pseudo_df['cagr'] * pseudo_df['lev']
         pseudo_df['tt_rtn/ref (lev.)'] = pseudo_df['tt_rtn/ref'] * pseudo_df['lev']
-        pseudo_df = pseudo_df.sort_values(['max_dd'], ascending=False)
+        pseudo_df = pseudo_df.sort_values(['cagr'], ascending=False)
+        pseudo_df.reset_index(drop=True,inplace=True)
         
         pseudo_df['cash_util']=1 - pseudo_df['cash_util']/init_cap # FIXME TODO
         for col in ['sortino']:
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{v:.1f}")
         pseudo_df['max_dd'] *= 100
-        pseudo_df['max_dd_ref'] *= 100
         pseudo_df['cash_util'] *= 100
-        for col in ['max_dd','max_dd_ref','cagr','cagr (lev.)','cash_util']: 
+        for col in ['max_dd','cagr','tt_rtn','cagr (lev.)','cash_util']: 
             pseudo_df[col] = pseudo_df[col].apply(lambda v: f"{(v):.1f}%")
+
+        pseudo_df['tt_rtn'] = pseudo_df['tt_rtn'] + pseudo_df['tt_rtn/ref (lev.)'].apply(lambda v: f" ({v:.1f})")
+        pseudo_df.drop(['max_dd_ref','sharpe/ref','tt_rtn/ref (lev.)'],axis=1,inplace=True)
         
         r1 = list(pseudo_df.r1.values)
         r1 = pd.concat(r1,axis=1).dropna()
