@@ -326,7 +326,6 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
                               (   is_not_volatile \
                                 & is_jump
                               )
-    # (df.dd<-0.5) & 
 
     df.loc[ rank_xing, 'sig'] = df.closes
     df.loc[ rank_xing, 'r1'] = df.volrank
@@ -440,9 +439,13 @@ def _main(sym, volt,offline=False):
     else:
         df = pd.read_csv( fn,index_col=0 )
     ts = df.timestamp
+
+    #rsi
     df['rsi'] = talib.RSI(df['close'],timeperiod=14)
+    
     df = df.dropna()
     rsi = df.rsi
+    
     closes = df.close
     volume = df.volume 
     rec = find_reversals(sym, ts, closes, volume,volt,rsi )
