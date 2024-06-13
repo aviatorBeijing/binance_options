@@ -98,7 +98,9 @@ def pseudo_trade(sym, df, ax=None):
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         is_breaking_down = row['1sigma_dw_sig_flag']
         is_breaking_up   = row['1sigma_up_sig_flag']
-        if row.sig>0 and not is_breaking_down:
+
+        ####### Buys #######
+        if (row.sig>0 and not is_breaking_down):
             pce = row.sig;ts = i
             if cash_utility_factor>0:
                 sz = cash * cash_utility_factor / pce # Use the fixed factor
@@ -120,6 +122,8 @@ def pseudo_trade(sym, df, ax=None):
                 print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
         else:
             pce = row.closes;ts=i 
+
+            ######## Sells ########
             if order_by_order:
                 if buys:
                     # tp
@@ -312,12 +316,15 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     df = df[wd:]
     df = select_data(df)
 
+    is_not_volatile = df.rtn <= .25
+    is_jump = (df.volrank.shift(2) <= volt/100) \
+                & (df.volrank.shift(1) <= volt/100) \
+                & (df.volrank>=volt/100) 
+
     #------------------------- Signals ---------------------
     buy_signals = rank_xing = (df.rsi<20 if 'rsi' in df else False ) | \
-                              (   (df.rtn <= .25) \
-                                & (df.volrank.shift(2) <= volt/100) \
-                                & (df.volrank.shift(1) <= volt/100) \
-                                & (df.volrank>=volt/100)
+                              (   is_not_volatile \
+                                & is_jump
                               )
     # (df.dd<-0.5) & 
 
