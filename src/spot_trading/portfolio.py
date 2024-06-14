@@ -55,7 +55,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     import talib
     ohlcv['atr'] = talib.ATR(ohlcv.high, ohlcv.low, ohlcv.close, timeperiod=14)
     ohlcv['volume_rank'] = ohlcv.volume.rolling(14*2).rank(pct=True)*100
-
+    
     ric = ric.lower().replace('/','-')
     fn = fd + f'/tmp/binance_trades_{ric}.csv'
     df = pd.read_csv(fn)
@@ -89,14 +89,22 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     df['cash'] = df['$agg']
     df['asset'] = df.qty.cumsum()
     fee_cumsum = df['fee'].astype(float).cumsum()
-    df['portfolio'] = df['cash'] + df['asset']*df.price -fee_cumsum
-    port = df[['price','portfolio','asset']].resample('1d').agg('last')# * 2/3
-    port.index = list(map(lambda d: str(d)[:10], port.index))
-    port = pd.concat([port, ohlcv[['close']]],axis=1, ignore_index=False).dropna()
+    df['portfolio'] = df['cash'] -fee_cumsum # + df['asset']*df.price # see below port.portfolio
+    port = df[['price','portfolio','asset','cash']].resample('1d').agg('last')
+    
+    # fillup the no-trading day with prev day asset, and current daily close price
+    kline_close = read_cached_kline(ric).close
+    print('-- current:', kline_close.iloc[-1],kline_close.index[-1])
+    kline_close = kline_close[kline_close.index>=port.index[0]]
+    port_last = port.index[-1]
+    assert port_last<=kline_close.index[-1], f'{ric} daily kline is out-of-dated.'
+    port = pd.concat([port,kline_close],axis=1,ignore_index=False).ffill()
+    port.portfolio += port.asset * port.close
 
-    today_close = ohlcv.iloc[-1]['close']
-    pv = port.iloc[-1].asset * ( today_close - port.iloc[-1].price ) 
-    pv += port.iloc[-1].portfolio
+    port.index = list(map(lambda d: str(d)[:10], port.index))
+    #port = pd.concat([port, ohlcv[['close']]],axis=1, ignore_index=False).dropna()
+
+    pv = port.iloc[-1].portfolio
     
     ax1.set_ylabel('profit %', color = 'blue') 
     ax2.set_ylabel('equity $', color = 'orange') 
@@ -166,6 +174,15 @@ def read_cached_trades(ric):
         df['index'] = df['id'];df.set_index('index',inplace=True)
         return df 
     return pd.DataFrame()
+
+def read_cached_kline(ric):
+    ric = ric.lower().replace('/','-')
+    fn = os.getenv("USER_HOME","") + f'/tmp/{ric}_1d.csv'
+    df = pd.read_csv( fn,index_col=0 ) #2024-04-26 10:51:20.983000
+    df.timestamp = df.timestamp.apply(lambda s: s[:10]).apply(pd.Timestamp)
+    df.set_index('timestamp',inplace=True)
+    df = df.resample('1d').agg({'open':'first','close':'last','high':'max','low':'min','volume':'sum'})
+    return df
 
 def analyze_trades(ric, tds, days, save=True):
     old_tds = read_cached_trades(ric)
