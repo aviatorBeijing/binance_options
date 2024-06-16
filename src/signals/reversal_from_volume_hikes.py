@@ -51,10 +51,13 @@ class ActionT(enum.Enum):
     TP  = 'tp'
     SL  = 'sl'
 class TradeAction:
-    def __init__(self, sym: str,act:ActionT, price:float, sz:float, ts:str) -> None:
+    def __init__(self, sym: str,act:ActionT, price:float, sz:float, sz_f: float, ts:str) -> None:
+        assert sz_f<=1., 'assume no leverage'
         self.act = act 
-        self.price = price;self.sz=sz
+        self.price = price
+        self.sz=sz
         self.ts = ts 
+        self.sz_f = sz_f
 
         sym = sym.upper()
         self.ric = f'{sym}/USDT' if not 'USDT' in sym else sym
@@ -64,6 +67,7 @@ class TradeAction:
             'action': [ self.act.value ],
             'price': [self.price],
             'sz': [self.sz],
+            'sz_f': [self.sz_f],
             'ts': [ str(self.ts) ],
         })
         return df
@@ -71,7 +75,7 @@ class TradeAction:
         return self.act == ActionT.BUY
 
     def __str__(self) -> str:
-        s = f' {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}'
+        s = f' {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}, {self.sz_f:.3f}'
         return s
     
 def pseudo_trade(sym, df, ax=None):
@@ -102,10 +106,12 @@ def pseudo_trade(sym, df, ax=None):
         ####### Buys #######
         if (row.sig>0 and not is_breaking_down):
             pce = row.sig;ts = i
+            sz_f = 0
             if cash_utility_factor>0:
-                sz = cash * cash_utility_factor / pce # Use the fixed factor
+                sz_f = cash_utility_factor # Use the fixed factor
             else:
-                sz = cash * row.volrank / pce # Using the volume rank as the factor
+                sz_f = row.volrank # Using the volume rank as the factor
+            sz = cash * sz_f / pce 
 
             if sz*pce > init_cap/100: # enough cash FIXME
                 buys += [ (ts, pce, sz, )]
@@ -117,7 +123,7 @@ def pseudo_trade(sym, df, ax=None):
                 if sz*pce > max_cost: max_cost = sz*pce
                 print(f'  [buy] {sym},', _cl(str(i)), f'${pce}, sz: {sz}, cap%: { (row.volrank*100):.1f}%')
 
-                trade_actions+=[ TradeAction(sym, ActionT.BUY, pce, sz, ts) ]
+                trade_actions+=[ TradeAction(sym, ActionT.BUY, pce, sz, sz_f, ts) ]
             else:
                 print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
         else:
@@ -137,7 +143,7 @@ def pseudo_trade(sym, df, ax=None):
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
                         nsells += 1
-                        trade_actions+=[ TradeAction(sym, ActionT.TP, pce, last_buy_sz, str(i)) ]
+                        trade_actions+=[ TradeAction(sym, ActionT.TP, pce, last_buy_sz,1., str(i)) ]
                         wins += 1
                 # sl
                 if buys:
@@ -152,7 +158,7 @@ def pseudo_trade(sym, df, ax=None):
                             fees += last_buy_sz * pce * ff
                             nsells += 1
                             stoplosses += 1
-                            trade_actions+=[ TradeAction(sym, ActionT.SL, pce, last_buy_sz, str(i)) ]
+                            trade_actions+=[ TradeAction(sym, ActionT.SL, pce, last_buy_sz,1., str(i)) ]
 
                             if (pce-last_buy)<0: losses += 1
                             else: wins += 1
@@ -169,7 +175,7 @@ def pseudo_trade(sym, df, ax=None):
                         fees += pce*sz *ff
                         nsells += 1
                         buys = buys[:ix] + (buys[ix+1:] if (ix+1)<len(buys) else [])
-                        trade_actions+=[ TradeAction(sym, ActionT.SELL, pce, sz, str(i)) ]
+                        trade_actions+=[ TradeAction(sym, ActionT.SELL, pce, sz,1., str(i)) ]
             else:
                 raise Exception('Strategy is not specified.')
         if cash > max_cash: max_cash = cash
