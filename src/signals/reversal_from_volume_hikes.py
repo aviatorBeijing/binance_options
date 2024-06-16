@@ -539,6 +539,8 @@ def main(sym,syms,volt,offline,do_mpt):
             x = x.total_seconds()/3600/24
             return x
         
+        trade_actions = pseudo_df['trade_actions']
+
         def _last_actions(tta):
             if tta:
                 tta = pd.concat(tta).sort_values('ts',ascending=False).reset_index(drop=True)
@@ -546,11 +548,14 @@ def main(sym,syms,volt,offline,do_mpt):
                 print('*'*30, 'Latest trades', '*'*30)
                 print( tabulate(tta,headers="keys") )
             else:print('*** empty trades')
+        # Buys & Sells
         last_trade_actions = list(
-                map(lambda trs: trs[-1].to_df(), pseudo_df['trade_actions'] )
+                map(lambda trs: trs[-1].to_df(), trade_actions )
             )
         _last_actions(last_trade_actions)
-        last_buy_actions = map(lambda el: list(filter(lambda e: e.is_buy(), el)), pseudo_df['trade_actions'])
+
+        # Buys Only
+        last_buy_actions = map(lambda el: list(filter(lambda e: e.is_buy(), el)), trade_actions)
         last_buy_actions = list( last_buy_actions )
         last_buy_actions = list(
                 map(lambda trs: trs[-1].to_df(), last_buy_actions )
