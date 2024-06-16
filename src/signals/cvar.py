@@ -79,10 +79,10 @@ if __name__ == '__main__':
     btc.set_index('timestamp',inplace=True)
     sol.set_index('timestamp',inplace=True)
 
-    df = pd.concat([ doge.close,btc.close,sol.close],axis=1,ignore_index=False)
-    df = df.dropna().pct_change().dropna()
+    rtns = pd.concat([ doge.close,btc.close,sol.close],axis=1,ignore_index=False)
+    rtns = rtns.dropna().pct_change().dropna()
     
-    returns, meanReturns, covMatrix = getData( df )
+    returns, meanReturns, covMatrix = getData( rtns )
 
     weights = [0.3,0.3,0.4] #np.random.random(len(returns.columns))
     print('weights:',weights)

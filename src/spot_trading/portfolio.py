@@ -147,7 +147,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     ax5.step( _x.index, _x.qty.values,color = 'blue' )
     df.zeros.plot(ax=ax5,color='grey',linestyle='--')
     ax5.set_ylabel(f'{ric.upper().split("-")[0]} #', color = 'blue') 
-    ax5.set_title(f'Agg. positions ({ric.upper().split("-")[0]})')
+    ax5.set_title(f'Agg. positions ({_x.qty.iloc[-1]:.3f} {ric.upper().split("-")[0]})')
     ax5.grid()
 
     daily_vol = df[['qty']].apply(abs).resample('1d').agg('sum')
@@ -302,6 +302,70 @@ def portfolio_check(ric,days=3):
     with open(fn,'w') as fp:
         fp.writelines([f'ric:{ric}\n', f'fee:${fee:4f}\n',f'gain:${port_value:,.4f}\n',f'price:${pce}\n',f'holding:{holding_size}\n',f'orders:{res}'])
 
+def check_cvar(cryptos=''):
+    fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
+    if os.path.exists( fn ):
+        df = pd.read_csv( fn )
+    df = df.sort_values('asset', ascending=True )
+
+    if cryptos:
+        cryptos = list(map(lambda s:s.upper(),cryptos.split(',')))
+        df = df[df.asset.isin(cryptos)]
+    
+    initCap = df['value'].sum()
+    rtns = [] 
+    wts = []
+    for col in df.asset:
+        if col !='USDT':
+            fn = os.getenv('USER_HOME','') + f"/tmp/{col.lower()}-usdt_1d.csv"
+            c = pd.read_csv( fn )
+        else:
+            fn = os.getenv('USER_HOME','') + f"/tmp/btc-usdt_1d.csv" # Need the timestamp
+            c = pd.read_csv( fn )
+            c['close'] = 1
+        c.timestamp = c.timestamp.apply(pd.Timestamp)
+        c.set_index('timestamp',inplace=True,drop=True)
+        #print('***', col, c.index[0])
+        rtns += [ c.close.pct_change() ]
+        wts += [df[df.asset==col].iloc[0].value]
+    rtns =  pd.concat(rtns, ignore_index=False, axis=1).dropna()
+    rtns.columns = list(df.asset.values)
+    t0 = rtns.index[0];t1=rtns.index[-1]
+    print(f'-- {t0}~{t1}')
+
+    def _cvar(rtns,wts):
+        from signals.cvar import historicalVaR, historicalCVaR, var_parametric, cvar_parametric, portfolioPerformance,getData
+        pt=99
+        tm=30 # days
+        rp = rtns.dot( wts )
+        hvar = -historicalVaR(rp, alpha=100-pt)*np.sqrt(tm)
+        hcvar = -historicalCVaR(rp, alpha=100-pt)*np.sqrt(tm)
+        
+        pRet, pStd = portfolioPerformance(wts, rtns.mean(), rtns.cov(), tm)
+        mdl_var = var_parametric(  pRet, pStd, distribution='t-distribution', alpha=100-pt)
+        mdl_cvar = cvar_parametric(pRet, pStd, distribution='t-distribution', alpha=100-pt)
+        print(f'-- VaR, CVaR (CI {(pt):.0f}%, in future {tm} days, ${initCap:,.2f} initial cash.)')
+        print(f'   historical            :   $ {(hvar*initCap):,.2f}, $ {(hcvar*initCap):,.2f}')
+        print(f'   model (Student-t)     :   $ {(mdl_var*initCap):,.2f}, $ {(mdl_cvar*initCap):,.2f}')
+    
+    print(' '*30, "*** Current Portfolio ***")
+    wts =  np.array(wts)/initCap
+    xdf = pd.DataFrame.from_dict({'allocation': wts })
+    xdf.allocation = xdf.allocation*100
+    xdf = xdf.transpose()
+    xdf.columns = list(df.asset.values)
+    print( xdf )
+    _cvar(rtns,wts) # Plain portfolio
+
+    from signals.mpt import optimized_mpt
+    print(' '*30, "*** MPT Opt. Portfolio ***")
+    o = optimized_mpt(rtns,10_000,5./100,do_plot=False)
+    wts = np.array( list( # optimized weights
+                    map(lambda c: o['allocation_pct'][c], rtns.columns)
+                ))/100
+    _cvar(rtns,wts) # MPT optimized portfolio
+    
+
 def check_hedging():
     fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
     if os.path.exists( fn ):
@@ -368,13 +432,15 @@ def assets():
 @click.option('--check_cached', is_flag=True, default=False)
 @click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
 @click.option('--hedging', is_flag=True, default=False)
-def main(ric,days,check_cached,spot,hedging): 
+@click.option('--var_cryptos', default='',help='comma-separated crypto symbol, ex. BTC,DOGE')
+def main(ric,days,check_cached,spot,hedging,var_cryptos): 
     if check_cached:
         _ = analyze_trades_cached(ric)
         _ = BianceSpot.analyze_open_orders_cached(spot,ric)
         _ = assets()
     elif hedging:
         _ = check_hedging()
+        _ = check_cvar(var_cryptos)
     else:   
         portfolio_check(ric,days=days)
 

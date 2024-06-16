@@ -1,4 +1,5 @@
 from email import header
+from mimetypes import init
 import os,click
 import pandas as pd
 import numpy as np
@@ -582,8 +583,25 @@ def main(sym,syms,volt,offline,do_mpt):
                 levs = list(
                     map(lambda arr: -1./max_drawdowns(arr), [r1[col] for col in r1 ])
                 )
+
                 #levs = np.array(list(pseudo_df.lev.values))
                 rp = r1.dot(wts)
+
+                from signals.cvar import historicalVaR, historicalCVaR, var_parametric, cvar_parametric, portfolioPerformance,getData
+                pt=99
+                tm=30 # days
+                initCap = 10_000
+                
+                hvar = -historicalVaR(rp, alpha=100-pt)*np.sqrt(tm)
+                hcvar = -historicalCVaR(rp, alpha=100-pt)*np.sqrt(tm)
+
+                pRet, pStd = portfolioPerformance(wts, r1.mean(), r1.cov(), tm)
+                mdl_var = var_parametric(  pRet, pStd, distribution='t-distribution', alpha=100-pt)
+                mdl_cvar = cvar_parametric(pRet, pStd, distribution='t-distribution', alpha=100-pt)
+                print(f'-- VaR, CVaR (CI {(pt):.0f}%, in future {tm} days, ${initCap:,.2f} initial cash.)')
+                print(f'   historical            :   $ {(hvar*initCap):,.2f}, $ {(hcvar*initCap):,.2f}')
+                print(f'   model (Student-t)     :   $ {(mdl_var*initCap):,.2f}, $ {(mdl_cvar*initCap):,.2f}')
+
                 try:
                     print(f'-- Optimized portfolio Sharpe: {sharpe(rp):.2f}, Sortino: {sortino(rp):.2f}, Max DD: {max_drawdowns(rp)*100:.1f}%')
                 except Exception as e:
@@ -605,7 +623,9 @@ def main(sym,syms,volt,offline,do_mpt):
                 ax2.legend(r1.columns)
                 ax1.set_title('Returns by wts')
                 ax2.set_title('Returns by wts & leverages')
+            print('\n[strategy]')
             _mpt(r1, ax1, ax2)
+            print('\n[buy&hold]')
             _mpt(rr, ax3, ax4)
             fn = os.getenv("USER_HOME","")+'/tmp/reversal_hickes_mpt_returns.png'
             plt.savefig(fn)
