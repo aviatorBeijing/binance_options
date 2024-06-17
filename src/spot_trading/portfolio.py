@@ -348,9 +348,10 @@ def check_cvar(cryptos=''):
         print(f'   historical            :   $ {(hvar*initCap):,.2f}, $ {(hcvar*initCap):,.2f}')
         print(f'   model (Student-t)     :   $ {(mdl_var*initCap):,.2f}, $ {(mdl_cvar*initCap):,.2f}')
     
-    print(' '*30, "*** Current Portfolio ***")
+    print('\n',' '*30, "*** Current Portfolio ***")
     wts =  np.array(wts)/initCap
     xdf = pd.DataFrame.from_dict({'allocation': wts })
+    xdf.allocation = xdf.allocation.apply(lambda v: round(v,4) )
     xdf.allocation = xdf.allocation*100
     xdf = xdf.transpose()
     xdf.columns = list(df.asset.values)
@@ -358,7 +359,7 @@ def check_cvar(cryptos=''):
     _cvar(rtns,wts) # Plain portfolio
 
     from signals.mpt import optimized_mpt
-    print(' '*30, "*** MPT Opt. Portfolio ***")
+    print('\n',' '*30, "*** MPT Opt. Portfolio ***")
     o = optimized_mpt(rtns,10_000,5./100,do_plot=False)
     wts = np.array( list( # optimized weights
                     map(lambda c: o['allocation_pct'][c], rtns.columns)

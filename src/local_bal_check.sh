@@ -4,4 +4,4 @@
 
 python spot_trading/portfolio.py --check_cached --ric sol-usdt
 
-python spot_trading/portfolio.py --hedging
+python spot_trading/portfolio.py --hedging --var_cryptos btc,eth,sol,doge,usdt,matic
