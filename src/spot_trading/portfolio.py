@@ -195,7 +195,8 @@ def analyze_trades(ric, tds, days, save=True):
             tds = pd.concat([old_tds,tds], axis=0, ignore_index=False)
         else:
             tds = old_tds
-    if tds.empty: return
+    if tds.empty: return tds
+
     tds = tds.sort_values('id').drop_duplicates(subset=['id'],keep="first",ignore_index=False)    
     if save:
         ric = ric.lower().replace('/','-')
@@ -262,6 +263,10 @@ def portfolio_check(ric,days=3):
     tds = mkt.check_trades(hours=days*24)
     tds = analyze_trades( ric, tds, days)
     
+    if tds.empty:
+        print('*** no trades')
+        return 
+
     if 'commAssetPrice' not in tds:
         pceMap = {}
         syms = list(set(tds.commissionAsset.values))

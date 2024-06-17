@@ -17,6 +17,7 @@ class BianceSpot:
         elif ric.startswith('SEI') or ric.startswith('TRX'): self.ndigits = 4
         elif ric.startswith('ACE'): self.ndigits = 3
         elif ric.startswith('PEPE'): self.ndigits= 9
+        elif ric.startswith('MATIC'): self.ndigits=4
         else:
             raise Exception(f'Unsupported ric: {ric}')
 
