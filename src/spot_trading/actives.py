@@ -1,6 +1,7 @@
 import os,click,talib
 import pandas as pd
 from tabulate import tabulate
+import numpy as np
 
 from butil.butils import binance_kline
 
@@ -9,6 +10,7 @@ def _rank(df,sym,wd,dt,prev):
     df.volume = talib.EMA(volume, timeperiod=5)
     df['volrank'] = volume.dropna().rolling(wd).rank(pct=True)
     df['rtn'] = df.close.pct_change()
+    df['rtn_md'] = df.rtn.dropna().rolling(wd).apply(lambda arr:np.median( np.array(arr)) )
     df['rtnrank'] = df.rtn.rolling(wd).rank(pct=True)
     df['dir'] = df.close > df.open
 
@@ -24,6 +26,7 @@ def _rank(df,sym,wd,dt,prev):
             'ts':  df.iloc[x].timestamp,
             'volrank': df.iloc[x].volrank,
             'direction': df.iloc[x]['dir'],
+            'med. rtn': f'{(df.rtn_md.iloc[x]*10000):.1f}bps',
             'daily rtn': f'{(df.iloc[x].rtn*100):.1f}%',
             'rtnrank': df.iloc[x].rtnrank,
             'wd': wd,
