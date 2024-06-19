@@ -342,9 +342,9 @@ def check_cvar(cryptos=''):
         from signals.cvar import historicalVaR, historicalCVaR, var_parametric, cvar_parametric, portfolioPerformance,getData
         pt=99
         tm=30 # days
-        rp = rtns.dot( wts )
-        hvar = -historicalVaR(rp, alpha=100-pt)*np.sqrt(tm)
-        hcvar = -historicalCVaR(rp, alpha=100-pt)*np.sqrt(tm)
+        port_rtns = rtns.dot( wts )
+        hvar = -historicalVaR(port_rtns, alpha=100-pt)*np.sqrt(tm)
+        hcvar = -historicalCVaR(port_rtns, alpha=100-pt)*np.sqrt(tm)
         
         pRet, pStd = portfolioPerformance(wts, rtns.mean(), rtns.cov(), tm)
         mdl_var = var_parametric(  pRet, pStd, distribution='t-distribution', alpha=100-pt)
