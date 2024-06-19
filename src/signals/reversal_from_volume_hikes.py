@@ -1,5 +1,3 @@
-from email import header
-from mimetypes import init
 import os,click
 import pandas as pd
 import numpy as np
@@ -278,7 +276,7 @@ def add_sigma_signals(df):
     df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
     return df 
 
-def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
+def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str=''):
     months = 9 # volume ranking window
     trade_horizon = 30*2    # how long to wait to sell after buy
 
@@ -401,7 +399,7 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
     df['sig'].plot(ax=ax2,marker="^",linestyle="none",color="red", alpha=0.6)
     df['r1'].plot(ax=ax11,marker="^",linestyle="none",color="red", alpha=0.6)
     
-    ax1.set_title(f'equity drawdown v.s. volume ranking')
+    ax1.set_title(f'equity drawdown v.s. volume ranking (data: {file_ts})')
     ax2.set_title('price & buying signals')
     ax2.set_ylabel('price ($)')
     ax22.set_ylabel('return (%)')
@@ -432,6 +430,13 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame()):
         'pseudo_trade': pseudo_metrics,
     }
 
+def _file_ts(fn):
+    import datetime
+    s = os.stat(fn)
+    t = int( s.st_mtime )
+    d = datetime.datetime.fromtimestamp(int(s.st_mtime) )
+    return str(d)
+
 def _main(sym, volt,offline=False):
     print('-'*14)
     print(f'|    {sym.upper()}    |')
@@ -439,6 +444,7 @@ def _main(sym, volt,offline=False):
 
     sym = sym.lower()
     fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+    file_ts = _file_ts( fn )
     if not offline or not os.path.exists(fn):
         from butil.butils import binance_kline
         df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=5)
@@ -455,7 +461,7 @@ def _main(sym, volt,offline=False):
     
     closes = df.close
     volume = df.volume 
-    rec = find_reversals(sym, ts, closes, volume,volt,rsi )
+    rec = find_reversals(sym, ts, closes, volume,volt,rsi, file_ts if offline else 'realtime' )
     return rec
 
 @click.command()

@@ -65,28 +65,42 @@ def cvar_parametric(portofolioReturns, portfolioStd, distribution='normal', alph
         raise TypeError("Expected distribution type 'normal'/'t-distribution'")
     return CVaR
 
-
-if __name__ == '__main__':
+import click
+@click.command()
+@click.option('--cryptos')
+@click.option('--weights', default='')
+def main(cryptos, weights):
     fn =  os.getenv('USER_HOME','')+'/tmp/'
-    doge = fn + 'doge-usdt_1d.csv'
-    btc = fn + 'btc-usdt_1d.csv'
-    sol = fn + 'sol-usdt_1d.csv'
     
-    doge  =  pd.read_csv( doge )
-    btc  = pd.read_csv(btc)
-    sol = pd.read_csv(sol)
-    doge.set_index('timestamp',inplace=True)
-    btc.set_index('timestamp',inplace=True)
-    sol.set_index('timestamp',inplace=True)
+    dfs = []
+    cols = cryptos.split(',') # ['btc','doge','sol','gld']
+    for s in cols:
+        cn = fn + f'{s}-usdt_1d.csv'
+        df  =  pd.read_csv( cn )
+        df.timestamp = df.timestamp.apply(pd.Timestamp)
+        df.set_index('timestamp',inplace=True,drop=True)
+        c = df[['close']]
+        c = c.resample('1d').agg('last')
+        dfs += [c.close]
 
-    rtns = pd.concat([ doge.close,btc.close,sol.close],axis=1,ignore_index=False)
+    rtns = pd.concat(dfs,axis=1,ignore_index=False)
     rtns = rtns.dropna().pct_change().dropna()
+    rtns.columns = cols
     
     returns, meanReturns, covMatrix = getData( rtns )
+    print(returns )
+    if weights:
+        weights = weights.split(',')
+        weights = list(map(lambda s: float(s), weights ) )
+        assert len(weights)==len(cols), f'cryptos and weights doesn\'t match on size. {len(cols)}, {len(weights)}'
+        weights = np.array(weights)
+        weights /= np.sum(weights)
+    else:
+        weights = [0.3,0.3,0.4] #np.random.random(len(returns.columns))
+        weights = np.ones( rtns.shape[1]) * (1/rtns.shape[1] )
+        weights /= np.sum(weights)
 
-    weights = [0.3,0.3,0.4] #np.random.random(len(returns.columns))
     print('weights:',weights)
-    weights /= np.sum(weights)
     returns['portfolio'] = returns.dot(weights)
 
     pt =  99
@@ -99,7 +113,7 @@ if __name__ == '__main__':
     
     print()
     print(f'Time horizon                :      {Time} days')
-    print( 'Investment                  :      $', InitialInvestment)
+    print( 'Investment                  :      $', f'{InitialInvestment:,.2f}')
     print( 'Expected Portfolio Return   :      $', round(InitialInvestment*pRet,2))
     
     print()
@@ -117,3 +131,6 @@ if __name__ == '__main__':
     print('-- t-dist model (fat-tail):')
     print(f"  t-dist VaR {pt}th CI       :      $", round(InitialInvestment*tVaR,2))
     print(f"  t-dist CVaR {pt}th CI      :      $", round(InitialInvestment*tCVaR,2))
+
+if __name__ == '__main__':
+    main()
