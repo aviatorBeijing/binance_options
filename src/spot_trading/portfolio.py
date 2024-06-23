@@ -45,7 +45,12 @@ def _find_max_capital(tds:pd.DataFrame)->float:
 
 def analyze_trades_cached(ric) -> pd.DataFrame:
     user_home = os.getenv('USER_HOME','')
-    fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_1h.csv'
+    fn =user_home+f'/tmp/{ric.lower().replace("/","-")}_1d.csv'
+
+    file_ts = os.stat(fn);file_ts = int(file_ts.st_mtime)
+    file_ts = datetime.datetime.fromtimestamp( file_ts )
+    file_ts = str( file_ts )
+
     ohlcv = pd.read_csv( fn )
     ohlcv.timestamp = ohlcv.timestamp.apply(pd.Timestamp)
     ohlcv.set_index('timestamp', inplace=True)
@@ -121,7 +126,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     (daily_vol.portfolio/capital_usage*100).plot(ax=ax7,color='blue',linewidth=3)
     daily_vol.atr.plot(ax=ax77,color='red')
     ax7.set_ylabel(f'profit %',color='blue') 
-    ax7.set_title('Return v.s. ATR')
+    ax7.set_title(f'Return v.s. ATR ({file_ts})')
     ax77.set_ylabel(f'ATR',color='red') 
 
     ax011 = ax01.twinx()
@@ -372,7 +377,7 @@ def check_cvar(cryptos=''):
     _cvar(rtns,wts) # MPT optimized portfolio
     
 
-def check_hedging():
+def check_bal():
     fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
     if os.path.exists( fn ):
         df = pd.read_csv( fn )
@@ -394,6 +399,8 @@ def check_hedging():
         print(f'-- {fn} NOT found.')
 
 def assets():
+    check_bal()
+
     fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
     if os.path.exists( fn ):
         df = pd.read_csv( fn )
@@ -439,13 +446,14 @@ def assets():
 @click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
 @click.option('--hedging', is_flag=True, default=False)
 @click.option('--var_cryptos', default='',help='comma-separated crypto symbol, ex. BTC,DOGE')
-def main(ric,days,check_cached,spot,hedging,var_cryptos): 
-    if check_cached:
+@click.option('--check_assets', is_flag=True, default=False)
+def main(ric,days,check_cached,spot,hedging,var_cryptos, check_assets): 
+    if check_assets:
+        _ = assets()
+    elif check_cached:
         _ = analyze_trades_cached(ric)
         _ = BianceSpot.analyze_open_orders_cached(spot,ric)
-        _ = assets()
     elif hedging:
-        _ = check_hedging()
         _ = check_cvar(var_cryptos)
     else:   
         portfolio_check(ric,days=days)
