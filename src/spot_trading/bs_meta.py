@@ -19,7 +19,8 @@ class BianceSpot:
         elif ric.startswith('PEPE'): self.ndigits= 9
         elif ric.startswith('MATIC'): self.ndigits=4
         else:
-            raise Exception(f'Unsupported ric: {ric}')
+            self.ndigits=6
+            #raise Exception(f'Unsupported ric: {ric}')
 
     def check_open_orders(self) -> pd.DataFrame:
         ods = self.ex.fetchOpenOrders(self.ric)
