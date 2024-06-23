@@ -1,5 +1,0 @@
-#!/bin/bash
-
-for s in sol-usdt pendle-usdt ace-usdt sei-usdt doge-usdt;do
-    python spot_trading/portfolio.py --check_cached --ric $s
-done
