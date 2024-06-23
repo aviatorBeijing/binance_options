@@ -7,18 +7,20 @@ scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/bal.csv ./ && mv b
 
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_5m.csv ./ && mv doge-usdt_5m.csv ~/tmp
 
-for s in doge sei ace pendle sol avax trx btc matic;do
-  scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1d.csv ./ && mv $s-usdt_1d.csv ~/tmp
-  scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1h.csv ./ && mv $s-usdt_1h.csv ~/tmp
-done
+#for s in doge sei ace pendle sol avax trx btc matic;do
+#  scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1d.csv ./ && mv $s-usdt_1d.csv ~/tmp
+#  #scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1h.csv ./ && mv $s-usdt_1h.csv ~/tmp
+#done
 
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/perp_dogeusdt_5m.csv ./ && mv perp_dogeusdt_5m.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/perp_dogeusdt_1h.csv ./ && mv perp_dogeusdt_1h.csv ~/tmp
 
-scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_*.csv ./
+CPWD=`pwd`
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_kline.tar.gz ./;mv binance_kline.tar.gz ~/tmp;cd ~/tmp;tar xvfz binance_kline.tar.gz;cd $CPWD
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_ot.tar.gz ./;mv binance_ot.tar.gz ~/tmp;cd ~/tmp;tar xvfz binance_ot.tar.gz;cd $CPWD
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_fee_gain.dat ./
-mv binance_*.csv ~/tmp
 
+cd $BINANCE_OPTIONS_DIR
 python spot_trading/portfolio.py  --check_assets
 ./win_losses.sh
 
