@@ -21,7 +21,7 @@ scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_ot.tar.gz 
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_fee_gain.dat ./
 
 cd $BINANCE_OPTIONS_DIR
-python spot_trading/portfolio.py  --check_assets
+$PYTHON spot_trading/portfolio.py  --check_assets
 ./win_losses.sh
 
 #python spot_trading/grid.py --ric doge/usdt --test --ref_spot=0.13908 --start_ts 2024-04-13T22:30:00.000Z
