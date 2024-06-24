@@ -7,10 +7,14 @@ from perp_trading.marketdata import adhoc_ticker as get_perp_ticker
 
 @click.command()
 @click.option('--ric', default='BTC/USDT')
-def main(ric):
-    ric = ric.upper()
+@click.option('--sym', default='')
+def main(ric,sym):
+    if sym:
+        ric = sym.upper() + '/USDT'
+    else:
+        ric = ric.upper()
     apr, r, ts = get_binance_next_funding_rate(ric)
-    print( 'funding:',apr, r, ts)
+    print( 'funding:', f'{(apr*100):.1f}% (annual)', f'{(r*10000):.2f} bps (next)', ts)
 
     pbid,pask = get_perp_ticker(ric)
     print( 'perp:', pbid, pask )
@@ -20,8 +24,12 @@ def main(ric):
 
     x = (-sask+pbid)/(pbid+sask)*2*10_000 
     y = (-pask+sbid)/(sbid+pask)*2*10_000 
-    print(f"buy spot/sell perp: {x:.1f} bps")
-    print(f"buy perp/sell spot: {y:.1f} bps")
+    
+    tradable = lambda v: "(yes)" if v>0 else "(ng)"
+
+    print("\n   -- Profit margin --")
+    print(f"buy spot/sell perp: {x:.1f} bps {tradable(x)}")
+    print(f"buy perp/sell spot: {y:.1f} bps {tradable(y)}")
 
 if __name__ == '__main__':
     main()
