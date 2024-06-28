@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SYMS=$1
+SYMS=$1  #example: doge,btc
 
 INC=2
 $PYTHON signals/climb_and_fall.py --syms $SYMS --offline 

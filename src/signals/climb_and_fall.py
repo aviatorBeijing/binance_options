@@ -19,15 +19,10 @@ plt.style.use('fivethirtyeight')
 init_cap = 1_000_000
 ff = 8/10000 # fee rate
 
-tp = profit_margin = 25/100. # Useless if trading_horizon>0
-sl = 15/100.
-
-
 from signals.meta import ActionT,TradeAction,SignalEmitter
 
 def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),file_ts:str=''):
     months = 9 # volume ranking window
-    trade_horizon = 30*2    # how long to wait to sell after buy
 
     up_inc /= 100
     down_inc /= 100
@@ -40,9 +35,6 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     volrank = volume.rolling(wd).rank(pct=True)
     dd = (cumrtn - cum_max)/cum_max
 
-    #dd = dd.rolling(wd).rank(pct=True)
-    #dd = dd-1
-    
     # remove nan
     dd = dd[1:]
     ts = ts[1:]
@@ -67,7 +59,6 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     df['volrank'] = volrank
     if not rsi.empty: df['rsi'] = rsi
     df['rtn'] = df['closes'].pct_change()
-    df['1sigma'] = df.closes.rolling(120).std() # TODO: use ARIMA to predict the std (i.e., vol) of return.
     df = df.drop_duplicates(subset=['ts'])
     df.set_index('ts',inplace=True)
     df = df[wd:]
@@ -77,8 +68,8 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     df['rolling_rtn_pct'] = df.rtn.rolling(150).apply(lambda arr: np.percentile(arr, 68)).fillna(up_inc)
 
     #------------------------- Signals ---------------------
-    buy_signals = up_xing = (df.rtn> df.rolling_rtn_pct) & is_not_volatile & df.volrank>0.95
-    sell_signals = down_xing = (df.rtn < -df.rolling_rtn_pct) & is_not_volatile & df.volrank>0.95
+    buy_signals = up_xing = (df.rtn> df.rolling_rtn_pct) & is_not_volatile & df.volrank>0.68
+    sell_signals = down_xing = (df.rtn < -df.rolling_rtn_pct) & is_not_volatile & df.volrank>0.68
     #------------------------- Signals ---------------------
 
     fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(18,12))
@@ -125,14 +116,10 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
 
     df['portfolio'] = df.agg_cash + df.agg_pos*df.closes - df.agg_fee
     df['port_rtn'] = df.portfolio.pct_change().fillna(0)
-    #print( pd.concat( [d.to_df() for d in actions] ).reset_index(drop=True) )
-    xdf = df.copy()
-    aggrtn =  (((xdf['port_rtn']+1).prod() -1 )*100)
     
     annual = calc_cagr(df.port_rtn)*100
     ds = df.shape[0]
 
-    bh = (df.closes.iloc[-1] - df.closes.iloc[0])/df.closes.iloc[0]*100
     bh_annual = calc_cagr(df.rtn)*100
 
     print(f'-- {sym.upper():6s} | ttl% = {(gain/init_capital*100):8,.1f}% | cagr = {annual:8,.1f}% (v.s. {bh_annual:8,.1f}%) {"good" if annual>bh_annual else "    "} | gain = ${gain:20,.2f}, cash = ${cash:,.2f}, asset = {asset:,.1f}, asset value = ${(asset*df.closes.iloc[-1]):,.2f}')
@@ -173,8 +160,8 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
         'symbol': sym.upper(),
         'end': df.index[-1],
         'yrs': round(ds/365,1),
-        'single_max_gain_pct': xdf["port_rtn"].max()*100,
-        'single_max_loss_pct': xdf["port_rtn"].min()*100,
+        'single_max_gain_pct': df["port_rtn"].max()*100,
+        'single_max_loss_pct': df["port_rtn"].min()*100,
         'cagr%': annual,
         'bh_cagr%': bh_annual,
         'sortino': sot,
