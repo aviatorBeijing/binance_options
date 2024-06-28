@@ -376,6 +376,11 @@ def check_cvar(cryptos=''):
                 ))/100
     _cvar(rtns,wts) # MPT optimized portfolio
     
+    df = xdf.transpose()
+    df['optimal'] = df.index
+    df.optimal = df.optimal.apply(lambda x: o['allocation_pct'][x])
+    df['diff'] = df.optimal - df.allocation
+    print('\n',df  )
 
 def check_bal():
     fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"

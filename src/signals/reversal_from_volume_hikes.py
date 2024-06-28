@@ -120,11 +120,12 @@ def pseudo_trade(sym, df, ax=None):
                 nbuys += 1
                 if cash < cash_min: cash_min = cash # record the cash usage
                 if sz*pce > max_cost: max_cost = sz*pce
-                print(f'  [buy] {sym},', _cl(str(i)), f'${pce}, sz: {sz}, cap%: { (row.volrank*100):.1f}%')
+                #print(f'  [buy] {sym},', _cl(str(i)), f'${pce}, sz: {sz}, cap%: { (row.volrank*100):.1f}%')
 
                 trade_actions+=[ TradeAction(sym, ActionT.BUY, pce, sz, sz_f, ts) ]
             else:
-                print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
+                #print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
+                pass
         else:
             pce = row.closes;ts=i 
 
@@ -137,7 +138,7 @@ def pseudo_trade(sym, df, ax=None):
                     ts0, last_buy, last_buy_sz = buys[_ix]
                     if (pce-last_buy)/last_buy > (profit_margin): # met the profit traget
                         buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
-                        print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', ',holding:', (i-ts0).total_seconds()/3600/24, 'days') #, (pce-last_buy)/last_buy,'>', profit_margin)
+                        #print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', ',holding:', (i-ts0).total_seconds()/3600/24, 'days') #, (pce-last_buy)/last_buy,'>', profit_margin)
                         cash += pce*last_buy_sz*(1-ff)
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
@@ -151,7 +152,7 @@ def pseudo_trade(sym, df, ax=None):
                         ts0, last_buy, last_buy_sz = buys[_ix]
                         if (pce-last_buy)/last_buy < -sl or is_breaking_down: # sl
                             buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
-                            print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix ) #, (pce-last_buy)/last_buy,'<', -sl)
+                            #print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix ) #, (pce-last_buy)/last_buy,'<', -sl)
                             cash += pce*last_buy_sz*(1-ff)
                             pos -= last_buy_sz
                             fees += last_buy_sz * pce * ff
@@ -554,12 +555,15 @@ def main(sym,syms,volt,offline,do_mpt):
                 tta['dt'] = tta.ts.apply(_tdiff)
                 print('*'*30, 'Latest trades', '*'*30)
                 print( tabulate(tta,headers="keys") )
-            else:print('*** empty trades')
+                return tta 
+            else:
+                print('*** empty trades')
+                return pd.DataFrame()
         # Buys & Sells
         last_trade_actions = list(
                 map(lambda trs: trs[-1].to_df(), trade_actions )
             )
-        _last_actions(last_trade_actions)
+        last_trades_all =  _last_actions(last_trade_actions)
 
         # Buys Only
         last_buy_actions = map(lambda el: list(filter(lambda e: e.is_buy(), el)), trade_actions)
@@ -567,7 +571,7 @@ def main(sym,syms,volt,offline,do_mpt):
         last_buy_actions = list(
                 map(lambda trs: trs[-1].to_df(), last_buy_actions )
             )
-        _last_actions(last_buy_actions)
+        last_trades_buyonly = _last_actions(last_buy_actions)
         
         pseudo_df.drop(['r1','rr','trade_actions'],axis=1,inplace=True)
         print()
