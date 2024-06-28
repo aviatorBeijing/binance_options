@@ -210,6 +210,8 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
             bh_annual,
             sot,
             bh_sot,
+            max_dd,
+            max_dd_ref,
             trade_actions,
             df.iloc[-1].closes
         )

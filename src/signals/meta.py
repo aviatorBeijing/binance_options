@@ -58,6 +58,8 @@ def construct_lastest_signal(symbol:str,
         bh_cagr_pct:float,
         sot:float,
         bh_sot:float,
+        maxdd: float,
+        bh_maxdd: float,
         actions:list, #': f'{last_action.act.value},{last_action.ts},{last_action.price}' if len(actions)>0 else "",
         price_now:float):
     return {
@@ -71,6 +73,8 @@ def construct_lastest_signal(symbol:str,
             'bh_cagr_pct': bh_cagr_pct,
             'sortino': sot,
             'bn_sortino': bh_sot,
+            'maxdd': maxdd,
+            'bh_maxdd': bh_maxdd,
             'last_action': struct_last_trade_action(actions),
             'price_now': price_now,
         }

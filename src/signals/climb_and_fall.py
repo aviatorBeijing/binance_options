@@ -142,6 +142,9 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
 
     sot = sortino(df.port_rtn)
     bh_sot = sortino(df.rtn)
+    maxdd = max_drawdowns(df.port_rtn)
+    bh_maxdd = max_drawdowns(df.rtn)
+    
     ax1.set_ylabel('return%', color='red')
     ax11.set_ylabel('asset return%', color='blue')
     ax1.set_title(f'Portfolio return v.s. asset price (data: {file_ts})\n Sortino: {sot:.2f} v.s. {bh_sot:.2f}')
@@ -167,10 +170,12 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
         bh_annual,
         sot,
         bh_sot,
+        maxdd,
+        bh_maxdd,
         actions,
         df.iloc[-1].closes
     )
-    
+
 def _file_ts(fn):
     import datetime
     s = os.stat(fn)
