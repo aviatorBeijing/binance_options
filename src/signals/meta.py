@@ -39,4 +39,38 @@ class TradeAction:
     def __str__(self) -> str:
         s = f' {self.emitter.value:12s} {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}, {self.sz_f:.3f}'
         return s
-    
+
+def struct_last_trade_action(actions:list ):
+    """
+    Notice: the protocol of constructing the string matters.
+    """
+    if len(actions)>0:
+        act = actions[-1]
+        return f'{act.act.value},{act.ts},{act.price}' if len(actions)>0 else ""
+    return ""
+
+def construct_lastest_signal(symbol:str,
+        end:str,
+        yrs:float,
+        single_max_gain_pct:float,
+        single_max_loss_pct:float,
+        cagr_pct:float,
+        bh_cagr_pct:float,
+        sot:float,
+        bh_sot:float,
+        actions:list, #': f'{last_action.act.value},{last_action.ts},{last_action.price}' if len(actions)>0 else "",
+        price_now:float):
+    return {
+            'symbol': symbol,
+            'emitter': actions[0].emitter.value,
+            'end': end,
+            'yrs': yrs,
+            'single_max_gain_pct': single_max_gain_pct,
+            'single_max_loss_pct': single_max_loss_pct,
+            'cagr_pct': cagr_pct,
+            'bh_cagr_pct': bh_cagr_pct,
+            'sortino': sot,
+            'bn_sortino': bh_sot,
+            'last_action': struct_last_trade_action(actions),
+            'price_now': price_now,
+        }

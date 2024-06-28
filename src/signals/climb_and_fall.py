@@ -6,6 +6,7 @@ import talib
 from tabulate import tabulate
 
 from butil.portfolio_stats import max_drawdowns,sharpe,sortino,calc_cagr
+from signals.meta import construct_lastest_signal
 
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
@@ -156,20 +157,20 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     print('-- saved:',fn)
 
     last_action = actions[-1]
-    return {
-        'symbol': sym.upper(),
-        'end': df.index[-1],
-        'yrs': round(ds/365,1),
-        'single_max_gain_pct': df["port_rtn"].max()*100,
-        'single_max_loss_pct': df["port_rtn"].min()*100,
-        'cagr_pct': annual,
-        'bh_cagr_pct': bh_annual,
-        'sortino': sot,
-        'bn_sortino': bh_sot,
-        'last_action': f'{last_action.act.value},{last_action.ts},{last_action.price}' if len(actions)>0 else "",
-        'price_now': df.iloc[-1].closes,
-    }
-
+    return construct_lastest_signal(
+        sym.upper(),
+        df.index[-1],
+        round(ds/365,1),   
+        df["port_rtn"].max()*100,
+        df["port_rtn"].min()*100,
+        annual,
+        bh_annual,
+        sot,
+        bh_sot,
+        actions,
+        df.iloc[-1].closes
+    )
+    
 def _file_ts(fn):
     import datetime
     s = os.stat(fn)

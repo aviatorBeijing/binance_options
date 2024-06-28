@@ -4,7 +4,7 @@ import numpy as np
 import talib
 from tabulate import tabulate
 
-from butil.portfolio_stats import max_drawdowns,sharpe,sortino
+from butil.portfolio_stats import calc_cagr, max_drawdowns,sharpe,sortino
 from signals.meta import ActionT,TradeAction,SignalEmitter
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
@@ -36,14 +36,7 @@ if order_by_order: print('-- [order_by_order]')
 elif hold_fix_days: print('-- [hold_fix_days]')
 else: print('*** unknown')
 
-# utils
-def _cl(s): return str(s).replace('00:00:00+00:00','')
-def _cagr(rtn,n):
-    cagr = np.log(1+rtn) / (n/365)
-    cagr = (np.exp( cagr ) -1 )*100
-    return cagr
-
-def pseudo_trade(sym, df, ax=None):
+def pseudo_trade(sym, df, new_stuct=False, ax=None):
     print('-- pseudo trading (strategy specific!):')
     df = df.copy()
     print('-- latest data:', df.index[-1], f"${df.iloc[-1].closes}")
@@ -183,13 +176,14 @@ def pseudo_trade(sym, df, ax=None):
     rtn = (val/init_cap-1)*100 #total return
     
     profits = val - init_cap
-    cagr = _cagr( rtn/100, df.shape[0])
-
+    annual = cagr = calc_cagr( r1 )*100
+    bh_annual = calc_cagr(df.rtn)*100
+    
     ax1.set_title( f'{sym.upper()}, cagr={cagr:,.1f}%, sell in {trading_horizon} days after each buy, max lev: {max_lev:.1f}, r1/rr: {(rinc):.1f} (w/ lev:{(rinc*max_lev):.1f})' )
     
     max_dd_ref = max_drawdowns( rr )
-    sortino1 = sortino(r1)
-    sortino_ref = sortino(rr)
+    sot = sortino1 = sortino(r1)
+    bh_sot = sortino_ref = sortino(rr)
     sharpe1 = sharpe(r1)
     sharpe_ref = sharpe(rr)
 
@@ -201,9 +195,27 @@ def pseudo_trade(sym, df, ax=None):
     print(f'    -- net profits: ${profits:,.2f}')
     print(f'    -- fees: ${fees:,.2f}, {(fees/profits*100):,.2f}%')
     print()
+
+    yrs = round(df.shape[0]/365., 1)
     
-    years = int(df.shape[0]/365.*100)/100
-    return sym, years, \
+    if new_stuct: # New datastucture
+        from signals.meta import construct_lastest_signal
+        rec = construct_lastest_signal(
+            sym.upper(),
+            df.index[-1],
+            yrs,   
+            r1.max()*100,
+            r1.min()*100,
+            annual,
+            bh_annual,
+            sot,
+            bh_sot,
+            trade_actions,
+            df.iloc[-1].closes
+        )
+        return rec 
+    
+    return sym, yrs, \
         int(cagr*10)/10, \
         rtn, \
         sortino1, cash_min, \
@@ -243,7 +255,7 @@ def add_sigma_signals(df):
     df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
     return df 
 
-def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str=''):
+def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str='', new_struct=False):
     months = 9 # volume ranking window
     trade_horizon = 30*2    # how long to wait to sell after buy
 
@@ -314,7 +326,9 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
 
     fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(18,12))
 
-    pseudo_metrics = pseudo_trade(sym, df, ax3) # a different trading strategy!
+    pseudo_metrics = rec = pseudo_trade(sym, df, new_stuct=new_struct, ax=ax3) # a different trading strategy!
+    if new_struct:
+        return rec 
 
     df['bought'] = df.sig.shift(trade_horizon) # after one month (trading strategy)
     xdf = df[df.bought>0][['bought','closes']].copy()
@@ -322,14 +336,14 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
     xdf['return'] = xdf.price_delta/xdf.bought
     aggrtn =  (((xdf['return']+1).prod() -1 )*100)
     
-    annual = _cagr( aggrtn/100, df.shape[0])
+    annual = calc_cagr( xdf['return'])*100
     ds = df.shape[0]
 
     latest = df[df.sig>0].tail(1)
     lastsell = xdf.tail(1)
 
     bh = (df.closes.iloc[-1] - df.closes.iloc[0])/df.closes.iloc[0]*100
-    bh_annual = _cagr( bh/100, df.shape[0])
+    bh_annual = calc_cagr( df.rtn)*100
     cap = init_capital = 10_000
     """if not latest.empty:
         print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
@@ -381,12 +395,26 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
         print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
     """
 
+    '''from signals.meta import construct_lastest_signal
+    return construct_lastest_signal(
+        sym.upper(),
+        df.index[-1],
+        round(ds/365,1),   
+        xdf["return"].max()*100,
+        xdf["return"].min()*100,
+        annual,
+        bh_annual,
+        sot,
+        bh_sot,
+        actions,
+        df.iloc[-1].closes
+    )'''
     return {
         'crypto': sym.upper(),
         'start': df.index[0],
         'end': df.index[-1],
-        'wins': xdf[xdf["price_delta"]>0].shape[0],
-        'losses': xdf[xdf["price_delta"]<0].shape[0],
+        #'wins': xdf[xdf["price_delta"]>0].shape[0],
+        #'losses': xdf[xdf["price_delta"]<0].shape[0],
         'single_max_gain_pct': xdf["return"].max()*100,
         'single_max_loss_pct': xdf["return"].min()*100,
         'cagr_pct': annual,
@@ -404,7 +432,7 @@ def _file_ts(fn):
     d = datetime.datetime.fromtimestamp(int(s.st_mtime) )
     return str(d)
 
-def _main(sym, volt,offline=False):
+def _main(sym, volt,offline=False, new_struct=False):
     print('-'*14)
     print(f'|    {sym.upper()}    |')
     print('-'*14)
@@ -428,7 +456,9 @@ def _main(sym, volt,offline=False):
     
     closes = df.close
     volume = df.volume 
-    rec = find_reversals(sym, ts, closes, volume,volt,rsi, file_ts if offline else 'realtime' )
+    rec = find_reversals(sym, ts, closes, volume, 
+                volt=volt,rsi=rsi, file_ts=file_ts if offline else 'realtime',
+                new_struct=new_struct )
     return rec
 
 @click.command()
@@ -437,7 +467,8 @@ def _main(sym, volt,offline=False):
 @click.option("--volt", default=50, help="percentage of volume considered to be significant")
 @click.option("--offline", is_flag=True, default=False)
 @click.option("--do_mpt", is_flag=True,default=False, help='turn on the MPT simulation')
-def main(sym,syms,volt,offline,do_mpt):
+@click.option("--new_struct", is_flag=True, default=False, help='using new data structure as in the climb_and_fall algo.')
+def main(sym,syms,volt,offline,do_mpt, new_struct):
     global cash_utility_factor, trading_horizon, init_cap
     def _settings():
         print('-- settings:')
@@ -452,13 +483,18 @@ def main(sym,syms,volt,offline,do_mpt):
         if len(syms.split(","))>1:
             import multiprocessing,functools
             with multiprocessing.Pool(5) as pool:
-                recs = pool.map( functools.partial(_main, volt=volt,offline=offline), syms.split(","))
+                recs = pool.map( functools.partial(_main, volt=volt,offline=offline,new_struct=new_struct), syms.split(","))
                 pool.close();pool.join()
         else:
             for sym in syms.split(','):
-                rec = _main(sym, volt, offline )
+                rec = _main(sym, volt=volt, offline=offline, new_struct=new_struct )
                 recs += [rec]
         df = pd.DataFrame.from_records( recs )
+        if new_struct:
+            df.sort_values('last_action', ascending=False, inplace=True)
+            print(df)
+            return 
+
         df.sort_values('last_buy', ascending=False, inplace=True)
         #print(df)
 
