@@ -1,10 +1,11 @@
+from argparse import Action
 import os,click
 import pandas as pd
 import numpy as np
 import talib
 from tabulate import tabulate
 
-from butil.portfolio_stats import max_drawdowns,sharpe,sortino
+from butil.portfolio_stats import max_drawdowns,sharpe,sortino,calc_cagr
 
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
@@ -18,64 +19,11 @@ plt.style.use('fivethirtyeight')
 init_cap = 1_000_000
 ff = 8/10000 # fee rate
 
-#strategies: 1) Sell at fixed days in the future; or 2) obey TP/SL rules.
-trading_horizon = -1 #7*4 # days in case of "sell at fixed days in the future"
-cash_utility_factor = -1 #0.3 # Each buy can use up to 25%
 tp = profit_margin = 25/100. # Useless if trading_horizon>0
 sl = 15/100.
 
-#data
-def select_data(df): return df#[ -365*3: ] # Recent 3 years (since) are considered a "normal" market.
 
-#flags
-order_by_order = trading_horizon<0 # sell when reaching profit margin
-hold_fix_days = not order_by_order   # sell on a fixed trading_horizon
-#------------------------------------
-
-if order_by_order: print('-- [order_by_order]')
-elif hold_fix_days: print('-- [hold_fix_days]')
-else: print('*** unknown')
-
-# utils
-def _cl(s): return str(s).replace('00:00:00+00:00','')
-def _cagr(rtn,n):
-    cagr = np.log(1+rtn) / (n/365)
-    cagr = (np.exp( cagr ) -1 )*100
-    return cagr
-
-import enum 
-class ActionT(enum.Enum):
-    BUY = 'buy'
-    SELL = 'sell'
-    TP  = 'tp'
-    SL  = 'sl'
-class TradeAction:
-    def __init__(self, sym: str,act:ActionT, price:float, sz:float, sz_f: float, ts:str) -> None:
-        assert sz_f<=1., 'assume no leverage'
-        self.act = act 
-        self.price = price
-        self.sz=sz
-        self.ts = ts 
-        self.sz_f = sz_f
-
-        sym = sym.upper()
-        self.ric = f'{sym}/USDT' if not 'USDT' in sym else sym
-    def to_df(self):
-        df = pd.DataFrame.from_dict({
-            'ric': [self.ric],
-            'action': [ self.act.value ],
-            'price': [self.price],
-            'sz': [self.sz],
-            'sz_f': [self.sz_f],
-            'ts': [ str(self.ts) ],
-        })
-        return df
-    def is_buy(self):
-        return self.act == ActionT.BUY
-
-    def __str__(self) -> str:
-        s = f' {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}, {self.sz_f:.3f}'
-        return s
+from signals.meta import ActionT,TradeAction,SignalEmitter
 
 def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),file_ts:str=''):
     months = 9 # volume ranking window
@@ -123,80 +71,116 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     df = df.drop_duplicates(subset=['ts'])
     df.set_index('ts',inplace=True)
     df = df[wd:]
-    df = select_data(df)
 
-    is_not_volatile = df.rtn <= .25
+    is_not_volatile = (df.rtn <= .25) & (df.rtn >= -.25)
+
+    df['rolling_rtn_pct'] = df.rtn.rolling(150).apply(lambda arr: np.percentile(arr, 68)).fillna(up_inc)
 
     #------------------------- Signals ---------------------
-    buy_signals = up_xing = (df.rsi<20 if 'rsi' in df else False ) | \
-                              (   is_not_volatile \
-                                & df.rtn> up_inc
-                              )
-    sell_signals = down_xing = (df.rsi>80 if 'rsi' in df else False ) | \
-                              (   is_not_volatile \
-                                & df.rtn < -down_inc
-                              )
-
-    df.loc[ up_xing, 'sig'] = df.closes
-
+    buy_signals = up_xing = (df.rtn> df.rolling_rtn_pct) & is_not_volatile & df.volrank>0.95
+    sell_signals = down_xing = (df.rtn < -df.rolling_rtn_pct) & is_not_volatile & df.volrank>0.95
     #------------------------- Signals ---------------------
 
     fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(18,12))
-
-    df['bought'] = df.sig.shift(trade_horizon) # after one month (trading strategy)
-    xdf = df[df.bought>0][['bought','closes']].copy()
-    xdf['price_delta'] = df.closes-df.bought
-    xdf['return'] = xdf.price_delta/xdf.bought
-    aggrtn =  (((xdf['return']+1).prod() -1 )*100)
     
-    annual = _cagr( aggrtn/100, df.shape[0])
+    df.loc[buy_signals, 'bought'] = df.closes
+    df.loc[sell_signals, 'sold'] = df.closes
+    df.loc[buy_signals, 'bought_n'] = 1
+    df.loc[sell_signals, 'sold_n'] = 1
+
+    fee_f = ff
+    actions = []
+    init_capital = 1_000_000
+    cash = init_capital; agg_cash = []
+    asset = 0; agg_asset = []
+    fee = 0; agg_fee = []
+    sz_f = 0.1
+    for i, row in df.iterrows():
+        is_buy = row.bought >0
+        is_sell = row.sold >0
+        pce = row.closes
+        sz = cash * sz_f / pce
+        if is_buy and (cash - sz*pce)>0:
+            f = fee_f * sz * pce
+            fee += f
+            cash -= (sz*pce + f)
+            asset += sz
+            actions += [ TradeAction(SignalEmitter.CLIMB_AND_FALL, sym, ActionT.BUY, pce, sz, sz_f, i)]
+        elif is_sell and asset>0:
+            sz = asset * sz_f 
+            f = fee_f * sz * pce
+            cash += (sz * pce - f)
+            fee += f
+            asset -= sz
+            actions += [ TradeAction(SignalEmitter.CLIMB_AND_FALL, sym, ActionT.SELL, pce, sz, sz_f, i)]
+            
+        agg_asset += [ asset ]
+        agg_cash += [cash]
+        agg_fee  += [fee]
+    df['agg_pos'] = agg_asset
+    df['agg_cash'] = agg_cash
+    df['agg_fee']  = agg_fee
+    gain = cash + asset*df.closes.iloc[-1] - init_capital
+    df = df.fillna(0)
+
+    df['portfolio'] = df.agg_cash + df.agg_pos*df.closes - df.agg_fee
+    df['port_rtn'] = df.portfolio.pct_change().fillna(0)
+    #print( pd.concat( [d.to_df() for d in actions] ).reset_index(drop=True) )
+    xdf = df.copy()
+    aggrtn =  (((xdf['port_rtn']+1).prod() -1 )*100)
+    
+    annual = calc_cagr(df.port_rtn)*100
     ds = df.shape[0]
 
-    latest = df[df.sig>0].tail(1)
-    lastsell = xdf.tail(1)
-
     bh = (df.closes.iloc[-1] - df.closes.iloc[0])/df.closes.iloc[0]*100
-    bh_annual = _cagr( bh/100, df.shape[0])
-    cap = init_capital = 10_000
-   
+    bh_annual = calc_cagr(df.rtn)*100
+
+    print(f'-- {sym.upper():6s} | ttl% = {(gain/init_capital*100):8,.1f}% | cagr = {annual:8,.1f}% (v.s. {bh_annual:8,.1f}%) {"good" if annual>bh_annual else "    "} | gain = ${gain:20,.2f}, cash = ${cash:,.2f}, asset = {asset:,.1f}, asset value = ${(asset*df.closes.iloc[-1]):,.2f}')
+
     ax11 = ax1.twinx()
     ax22 = ax2.twinx()
+    ax33 = ax3.twinx()
 
     rx = df['closes'].pct_change()
-    (df['dd']*100).plot(ax=ax1,color='red')
-    df['closes'].plot(ax=ax2,linewidth=1.5)
+    #(df['dd']*100).plot(ax=ax11,color='blue')
+    (((df.rtn+1).cumprod()-1)*100).plot(ax=ax11,color='blue')
+    (((df.port_rtn+1).cumprod()-1)*100).plot(ax=ax1,color='red')
+    df['agg_pos'].plot(ax=ax2,color='red')
+    df['agg_cash'].plot(ax=ax22,color='blue')
     (((1+rx).cumprod()-1)*100).plot(ax=ax22,linewidth=1.5,linestyle='none')
-    ax1.set_ylabel('drawdown%', color='red')
-
-    df['sig'].plot(ax=ax2,marker="^",linestyle="none",color="red", alpha=0.6)
+    (df['rolling_rtn_pct']*100).plot(ax=ax3,color='red')
+    (df['closes']).plot(ax=ax33,color='blue')
     
-    ax1.set_title(f'equity drawdown v.s. volume ranking (data: {file_ts})')
-    ax2.set_title('price & buying signals')
-    ax2.set_ylabel('price ($)')
-    ax22.set_ylabel('return (%)')
+
+    sot = sortino(df.port_rtn)
+    bh_sot = sortino(df.rtn)
+    ax1.set_ylabel('return%', color='red')
+    ax11.set_ylabel('asset return%', color='blue')
+    ax1.set_title(f'Portfolio return v.s. asset price (data: {file_ts})\n Sortino: {sot:.2f} v.s. {bh_sot:.2f}')
+    ax2.set_title('Asset & Cash')
+    ax2.set_ylabel('#Asset',color='red')
+    ax22.set_ylabel('$Cash',color='blue')
     ax22.grid(False)
+    ax3.set_title('rolling_rtn_pct & price')
+    ax3.set_ylabel('%',color='red')
+    ax33.set_ylabel('$price',color='blue')
     fn = os.getenv("USER_HOME",'')+f'/tmp/climb_fall_{sym}.pdf' # Trading signals
     plt.savefig(fn)
     print('-- saved:',fn)
 
-    """if not latest.empty:
-        print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
-    if not lastsell.empty:
-        print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
-    """
-
+    last_action = actions[-1]
     return {
-        'crypto': sym.upper(),
-        'start': df.index[0],
+        'symbol': sym.upper(),
         'end': df.index[-1],
-        'wins': xdf[xdf["price_delta"]>0].shape[0],
-        'losses': xdf[xdf["price_delta"]<0].shape[0],
-        'single_max_gain_pct': xdf["return"].max()*100,
-        'single_max_loss_pct': xdf["return"].min()*100,
-        'cagr_pct': annual,
-        'days': ds,
-        'last_buy': f'{latest.index[0]},{latest.closes.iloc[0]}' if not latest.empty else "",
-        'price': df.iloc[-1].closes,
+        'yrs': round(ds/365,1),
+        'single_max_gain_pct': xdf["port_rtn"].max()*100,
+        'single_max_loss_pct': xdf["port_rtn"].min()*100,
+        'cagr%': annual,
+        'bh_cagr%': bh_annual,
+        'sortino': sot,
+        'bn_sortino': bh_sot,
+        'last_action': f'{last_action.act.value},{last_action.ts},{last_action.price}' if len(actions)>0 else "",
+        'price_now': df.iloc[-1].closes,
     }
 
 def _file_ts(fn):
@@ -235,8 +219,8 @@ def _main(sym, up_inc, down_inc, offline=False):
 
 @click.command()
 @click.option("--syms", default='')
-@click.option("--up_inc", default=1, help="percent of price move")
-@click.option("--down_inc", default=1, help="percent of price move")
+@click.option("--up_inc", default=1., help="percent of price move")
+@click.option("--down_inc", default=1., help="percent of price move")
 @click.option("--offline", is_flag=True,default=False )
 def main(syms,up_inc,down_inc,offline):
     global cash_utility_factor, trading_horizon, init_cap
@@ -253,7 +237,7 @@ def main(syms,up_inc,down_inc,offline):
                 rec = _main(sym, up_inc,down_inc, offline )
                 recs += [rec]
         df = pd.DataFrame.from_records( recs )
-        df.sort_values('last_buy', ascending=False, inplace=True)
+        df.sort_values('last_action', ascending=False, inplace=True)
         print(df)
 
        

@@ -379,7 +379,10 @@ def check_cvar(cryptos=''):
     df = xdf.transpose()
     df['optimal'] = df.index
     df.optimal = df.optimal.apply(lambda x: o['allocation_pct'][x])
-    df['diff'] = df.optimal - df.allocation
+    df['sugg.'] = df.optimal - df.allocation
+    df['sugg.'] = df['sugg.']/df.allocation 
+
+    df['sugg.'] = df['sugg.'].apply(lambda v: f'{(v*100):.0f} %')
     print('\n',df  )
 
 def check_bal():

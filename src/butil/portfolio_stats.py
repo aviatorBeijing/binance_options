@@ -5,7 +5,7 @@ import datetime
 APPROX_DAILY_TRADING_HOURS = 24
 
 APPROX_BDAYS_PER_MONTH = 21
-APPROX_BDAYS_PER_YEAR = 252
+APPROX_BDAYS_PER_YEAR = 365
 APPROX_MINUTES_PER_YEAR = APPROX_BDAYS_PER_YEAR * APPROX_DAILY_TRADING_HOURS * 12
 
 MONTHS_PER_YEAR = 12
@@ -68,8 +68,7 @@ def _perf(returns: pd.Series, metric, rule='24/360'):
             res = returns.mean() / divisor
         except Exception as e:
             res = 0
-    # Use 252 for daily only works if the "returns" are daily return!
-    return res * np.sqrt(252)  # Convert to annual
+    return res * np.sqrt(APPROX_BDAYS_PER_YEAR)  # Convert to annual
 
 
 def sharpe(returns: pd.Series, rule='24/360') -> float:
