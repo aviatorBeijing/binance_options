@@ -3,10 +3,12 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-uname = os.getenv('PG_USERNAME', 'junma')
-psw = os.getenv('PG_PASSWORD', 'nethorse')
+uname = os.getenv('PG_USERNAME', '')
+psw = os.getenv('PG_PASSWORD', '')
 engine = bn_mkt_engine = create_engine(f"postgresql://{uname}:{psw}@localhost:5432/bn_options_mkt")
 bidask_greeks_tbl = "bn_bidask_greeks"
+
+emmiter_engine = create_engine(f"postgresql://{uname}:{psw}@localhost:5432/emmited_signals")
 
 def table_exists( tbname, _engine=None ):
     stmt = f'''

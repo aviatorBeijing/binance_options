@@ -1,7 +1,14 @@
 
-from pyexpat import EXPAT_VERSION
+from ast import Num
+import os
 import pandas as pd 
 import enum 
+from sqlalchemy import text
+
+from butil.bsql import emmiter_engine,table_exists
+tbname = 'signals'
+
+
 class ActionT(enum.Enum):
     BUY = 'buy'
     SELL = 'sell'
@@ -136,11 +143,31 @@ def construct_lastest_signal(symbol:str,
             'bh_cagr_pct': bh_cagr_pct,
             'bn_sortino': bh_sot,
             'bh_maxdd': bh_maxdd,
-            'end': end,
+            'end': str(end),
             'yrs': yrs,
             'desc': last_act.emitter.desc(),
             'emitter': last_act.emitter.name(),
         }
+    if not table_exists(tbname, emmiter_engine):
+        with emmiter_engine.connect() as conn:
+            pd.DataFrame.from_records( [ rec ] ).to_sql(tbname,conn,index=0)
+            conn.commit()
+            conn.execute( text(f'''
+            ALTER TABLE {tbname} ADD PRIMARY KEY (symbol,last_action,emitter);
+            '''))
+            conn.commit()
+    else:
+        with emmiter_engine.connect() as conn:
+            cols = ','.join( [f'"{s}"' for s in rec.keys()] )
+            _f = lambda v: v if not isinstance(v,str) else f"'{v}'"
+            fdvals = [ f'"{k}"={_f(v)}' for k,v in rec.items() ];fdvals = ','.join(fdvals)
+            stmt = f'''
+            INSERT INTO {tbname} ({cols}) VALUES ({','.join([ f"'{s}'" if isinstance(s, str) else f"{s}" for s in rec.values()] )}) 
+            ON CONFLICT  (symbol,last_action,emitter) DO UPDATE SET {fdvals};
+            '''
+            conn.execute( text(stmt))
+            conn.commit()
+        
     return rec
 
 
