@@ -6,7 +6,7 @@ import talib
 from tabulate import tabulate
 
 from butil.portfolio_stats import max_drawdowns,sharpe,sortino,calc_cagr
-from signals.meta import construct_lastest_signal
+from signals.meta import construct_lastest_signal, trade_recs2df
 
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
@@ -20,7 +20,7 @@ plt.style.use('fivethirtyeight')
 init_cap = 1_000_000
 ff = 8/10000 # fee rate
 
-from signals.meta import ActionT,TradeAction,SignalEmitter
+from signals.meta import ActionT,TradeAction,ClimbNFallEmitter
 
 def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),file_ts:str=''):
     months = 9 # volume ranking window
@@ -87,6 +87,7 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     asset = 0; agg_asset = []
     fee = 0; agg_fee = []
     sz_f = 0.1
+    emitter = ClimbNFallEmitter(up_inc,down_inc)
     for i, row in df.iterrows():
         is_buy = row.bought >0
         is_sell = row.sold >0
@@ -97,14 +98,14 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
             fee += f
             cash -= (sz*pce + f)
             asset += sz
-            actions += [ TradeAction(SignalEmitter.CLIMB_AND_FALL, sym, ActionT.BUY, pce, sz, sz_f, i)]
+            actions += [ TradeAction(emitter, sym, ActionT.BUY, pce, sz, sz_f, i)]
         elif is_sell and asset>0:
             sz = asset * sz_f 
             f = fee_f * sz * pce
             cash += (sz * pce - f)
             fee += f
             asset -= sz
-            actions += [ TradeAction(SignalEmitter.CLIMB_AND_FALL, sym, ActionT.SELL, pce, sz, sz_f, i)]
+            actions += [ TradeAction(emitter, sym, ActionT.SELL, pce, sz, sz_f, i)]
             
         agg_asset += [ asset ]
         agg_cash += [cash]
@@ -172,7 +173,7 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
         bh_sot,
         maxdd,
         bh_maxdd,
-        actions,
+        last_action,
         df.iloc[-1].closes
     )
 
@@ -229,8 +230,7 @@ def main(syms,up_inc,down_inc,offline):
             for sym in syms.split(','):
                 rec = _main(sym, up_inc,down_inc, offline )
                 recs += [rec]
-        df = pd.DataFrame.from_records( recs )
-        df.sort_values('last_action', ascending=False, inplace=True)
+        df = trade_recs2df(recs)
         print(df)
 
        

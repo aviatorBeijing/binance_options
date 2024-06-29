@@ -5,7 +5,7 @@ import talib
 from tabulate import tabulate
 
 from butil.portfolio_stats import calc_cagr, max_drawdowns,sharpe,sortino
-from signals.meta import ActionT,TradeAction,SignalEmitter
+from signals.meta import ActionT,TradeAction,VolumeHikesEmitter
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
@@ -36,7 +36,7 @@ if order_by_order: print('-- [order_by_order]')
 elif hold_fix_days: print('-- [hold_fix_days]')
 else: print('*** unknown')
 
-def pseudo_trade(sym, df, new_stuct=False, ax=None):
+def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
     print('-- pseudo trading (strategy specific!):')
     df = df.copy()
     print('-- latest data:', df.index[-1], f"${df.iloc[-1].closes}")
@@ -56,6 +56,7 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
     cash_min = init_cap
     trade_actions = []
     wins = 0; losses = 0
+    emitter = VolumeHikesEmitter(volt)
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         is_breaking_down = row['1sigma_dw_sig_flag']
@@ -81,7 +82,7 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
                 if sz*pce > max_cost: max_cost = sz*pce
                 #print(f'  [buy] {sym},', _cl(str(i)), f'${pce}, sz: {sz}, cap%: { (row.volrank*100):.1f}%')
 
-                trade_actions+=[ TradeAction(SignalEmitter.VOLUME_HIKES, sym, ActionT.BUY, pce, sz, sz_f, ts) ]
+                trade_actions+=[ TradeAction(emitter, sym, ActionT.BUY, pce, sz, sz_f, ts) ]
             else:
                 #print(f'* insufficient fund: {sz*pce} < {init_cap/100}, {sz}, {pce}')
                 pass
@@ -102,7 +103,7 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
                         pos -= last_buy_sz
                         fees += last_buy_sz * pce * ff
                         nsells += 1
-                        trade_actions+=[ TradeAction(SignalEmitter.VOLUME_HIKES, sym, ActionT.TP, pce, last_buy_sz,1., str(i)) ]
+                        trade_actions+=[ TradeAction(emitter, sym, ActionT.TP, pce, last_buy_sz,1., str(i)) ]
                         wins += 1
                 # sl
                 if buys:
@@ -117,7 +118,7 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
                             fees += last_buy_sz * pce * ff
                             nsells += 1
                             stoplosses += 1
-                            trade_actions+=[ TradeAction(SignalEmitter.VOLUME_HIKES, sym, ActionT.SL, pce, last_buy_sz,1., str(i)) ]
+                            trade_actions+=[ TradeAction(emitter, sym, ActionT.SL, pce, last_buy_sz,1., str(i)) ]
 
                             if (pce-last_buy)<0: losses += 1
                             else: wins += 1
@@ -134,7 +135,7 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
                         fees += pce*sz *ff
                         nsells += 1
                         buys = buys[:ix] + (buys[ix+1:] if (ix+1)<len(buys) else [])
-                        trade_actions+=[ TradeAction(SignalEmitter.VOLUME_HIKES, sym, ActionT.SELL, pce, sz,1., str(i)) ]
+                        trade_actions+=[ TradeAction(emitter, sym, ActionT.SELL, pce, sz,1., str(i)) ]
             else:
                 raise Exception('Strategy is not specified.')
         if cash > max_cash: max_cash = cash
@@ -212,7 +213,7 @@ def pseudo_trade(sym, df, new_stuct=False, ax=None):
             bh_sot,
             max_dd,
             max_dd_ref,
-            trade_actions,
+            trade_actions[0],
             df.iloc[-1].closes
         )
         return rec 
@@ -328,7 +329,7 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
 
     fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(18,12))
 
-    pseudo_metrics = rec = pseudo_trade(sym, df, new_stuct=new_struct, ax=ax3) # a different trading strategy!
+    pseudo_metrics = rec = pseudo_trade(sym, df, volt=volt, new_stuct=new_struct, ax=ax3) # a different trading strategy!
     if new_struct:
         return rec 
 
@@ -493,7 +494,9 @@ def main(sym,syms,volt,offline,do_mpt, new_struct):
                 recs += [rec]
         df = pd.DataFrame.from_records( recs )
         if new_struct:
-            df.sort_values('last_action', ascending=False, inplace=True)
+            df['x'] = df.last_action.apply(lambda s: s.split(',')[1])
+            df.sort_values('x', ascending=False, inplace=True)
+            df.drop('x', inplace=True, axis=1)
             print(df)
             return 
 

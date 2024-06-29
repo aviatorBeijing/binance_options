@@ -5,8 +5,9 @@
 
 SYMS=$1
 
+VOLT=68
 if [[ $SERVER_LOCATION == 'local' ]];then
-$PYTHON signals/reversal_from_volume_hikes.py --volt 68 --offline --new_struct --syms $SYMS
+$PYTHON signals/reversal_from_volume_hikes.py --volt $VOLT --offline --new_struct --syms $SYMS
 else
-$PYTHON signals/reversal_from_volume_hikes.py --volt 68 --new_struct --syms $SYMS
+$PYTHON signals/reversal_from_volume_hikes.py --volt $VOLT --new_struct --syms $SYMS
 fi

@@ -1,4 +1,5 @@
 
+from pyexpat import EXPAT_VERSION
 import pandas as pd 
 import enum 
 class ActionT(enum.Enum):
@@ -6,9 +7,72 @@ class ActionT(enum.Enum):
     SELL = 'sell'
     TP  = 'tp'
     SL  = 'sl'
+
 class SignalEmitter(enum.Enum):
     CLIMB_AND_FALL  = 'climb_n_fall'
     VOLUME_HIKES    = 'volume_hikes'
+    EXT_MIXED       = 'ext_mixed'
+    EXT_RSI         = 'ext_rsi'
+    EXT_SENTIMENT   = 'ext_sentiment'
+
+class Emitter: # Signal emmiter, i.e., different trading strategy
+    def __init__(self) -> None:
+        pass
+    def desc(self):
+        raise Exception('To be overwritten.')
+
+# Three externals
+class ExtMixedEmitter(Emitter):
+    T = SignalEmitter.EXT_MIXED
+    @staticmethod
+    def name(): return ExtMixedEmitter.T.value 
+    def __init__(self,bot,span ) -> None:
+        super().__init__()
+        self.bot = bot # bot contains algo config parameters
+        self.span = span
+    def desc(self):
+        return f"span={self.span},bot={self.bot}"
+class ExtRsiEmitter(Emitter):
+    T = SignalEmitter.EXT_RSI
+    @staticmethod
+    def name(): return ExtRsiEmitter.T.value 
+    def __init__(self,bot,span ) -> None:
+        super().__init__()
+        self.bot = bot # bot contains algo config parameters
+        self.span = span
+    def desc(self):
+        return f"span={self.span},bot={self.bot}"
+class ExtSentimentEmitter(Emitter):
+    T = SignalEmitter.EXT_SENTIMENT
+    @staticmethod
+    def name(): return ExtSentimentEmitter.T.value 
+    def __init__(self,bot,span ) -> None:
+        super().__init__()
+        self.bot = bot # bot contains algo config parameters
+        self.span = span
+    def desc(self):
+        return f"span={self.span},bot={self.bot}"
+
+class ClimbNFallEmitter(Emitter):
+    T = SignalEmitter.CLIMB_AND_FALL
+    @staticmethod
+    def name(): return ClimbNFallEmitter.T.value 
+    def __init__(self, up_inc,down_inc ) -> None:
+        super().__init__()
+        self.up_inc = up_inc # climb up percentage threshold
+        self.down_inc = down_inc
+    def desc(self):
+        return f"up={self.up_inc},down={self.down_inc}"
+
+class VolumeHikesEmitter(Emitter):
+    T = SignalEmitter.VOLUME_HIKES 
+    @staticmethod
+    def name(): return VolumeHikesEmitter.T.value 
+    def __init__(self, volt ) -> None:
+        super().__init__()
+        self.volt = volt # threshold of volume hiking ranking
+    def desc(self):
+        return f"volt={self.volt}"
 
 class TradeAction:
     def __init__(self, emitter: SignalEmitter, sym: str,act:ActionT, price:float, sz:float, sz_f: float, ts:str) -> None:
@@ -40,14 +104,12 @@ class TradeAction:
         s = f' {self.emitter.value:12s} {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}, {self.sz_f:.3f}'
         return s
 
-def struct_last_trade_action(actions:list ):
+def struct_last_trade_action(action:TradeAction ):
     """
     Notice: the protocol of constructing the string matters.
     """
-    if len(actions)>0:
-        act = actions[-1]
-        return f'{act.act.value},{act.ts},{act.price}' if len(actions)>0 else ""
-    return ""
+    act = action
+    return f'{act.act.value},{act.ts},{act.price}'
 
 def construct_lastest_signal(symbol:str,
         end:str,
@@ -60,21 +122,32 @@ def construct_lastest_signal(symbol:str,
         bh_sot:float,
         maxdd: float,
         bh_maxdd: float,
-        actions:list, #': f'{last_action.act.value},{last_action.ts},{last_action.price}' if len(actions)>0 else "",
+        last_act:TradeAction, #': f'{last_action.act.value},{last_action.ts},{last_action.price}' if len(actions)>0 else "",
         price_now:float):
-    return {
-            'symbol': symbol,
-            'emitter': actions[0].emitter.value,
-            'end': end,
-            'yrs': yrs,
+    rec = {
+            'symbol': symbol.upper(),
+            'last_action': struct_last_trade_action(last_act),
+            'price_now': price_now,
+            'cagr_pct': cagr_pct,
+            'sortino': sot,
+            'maxdd': maxdd,
             'single_max_gain_pct': single_max_gain_pct,
             'single_max_loss_pct': single_max_loss_pct,
-            'cagr_pct': cagr_pct,
             'bh_cagr_pct': bh_cagr_pct,
-            'sortino': sot,
             'bn_sortino': bh_sot,
-            'maxdd': maxdd,
             'bh_maxdd': bh_maxdd,
-            'last_action': struct_last_trade_action(actions),
-            'price_now': price_now,
+            'end': end,
+            'yrs': yrs,
+            'desc': last_act.emitter.desc(),
+            'emitter': last_act.emitter.name(),
         }
+    return rec
+
+
+def trade_recs2df(recs):
+    df = pd.DataFrame.from_records( recs )
+    df.sort_values('last_action', ascending=False, inplace=True)
+    df['x'] = df.last_action.apply(lambda s: s.split(',')[1])
+    df.sort_values('x', ascending=False, inplace=True)
+    df.drop('x', inplace=True, axis=1)
+    return df
