@@ -213,7 +213,7 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
             bh_sot,
             max_dd,
             max_dd_ref,
-            trade_actions[0],
+            trade_actions[-1],
             df.iloc[-1].closes
         )
         return rec 

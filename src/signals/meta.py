@@ -95,7 +95,7 @@ class TradeAction:
         self.ric = f'{sym}/USDT' if not 'USDT' in sym else sym
     def to_df(self):
         df = pd.DataFrame.from_dict({
-            'emitter': [self.emitter.value],
+            'emitter': [self.emitter.name()],
             'ric': [self.ric],
             'action': [ self.act.value ],
             'price': [self.price],
@@ -108,7 +108,7 @@ class TradeAction:
         return self.act == ActionT.BUY
 
     def __str__(self) -> str:
-        s = f' {self.emitter.value:12s} {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}, {self.sz_f:.3f}'
+        s = f' {self.emitter.name():12s} {self.ts}: {self.ric} {self.act}, ${self.price}, {self.sz}, {self.sz_f:.3f}'
         return s
 
 def struct_last_trade_action(action:TradeAction ):
@@ -116,7 +116,7 @@ def struct_last_trade_action(action:TradeAction ):
     Notice: the protocol of constructing the string matters.
     """
     act = action
-    return f'{act.act.value},{act.ts},{act.price}'
+    return f'{act.act.value},{act.price}'
 
 def construct_lastest_signal(symbol:str,
         end:str,
@@ -133,6 +133,7 @@ def construct_lastest_signal(symbol:str,
         price_now:float):
     rec = {
             'symbol': symbol.upper(),
+            'signal_ts': str(last_act.ts).replace('+00:00',''),
             'last_action': struct_last_trade_action(last_act),
             'price_now': price_now,
             'cagr_pct': cagr_pct,
@@ -141,7 +142,7 @@ def construct_lastest_signal(symbol:str,
             'single_max_gain_pct': single_max_gain_pct,
             'single_max_loss_pct': single_max_loss_pct,
             'bh_cagr_pct': bh_cagr_pct,
-            'bn_sortino': bh_sot,
+            'bh_sortino': bh_sot,
             'bh_maxdd': bh_maxdd,
             'end': str(end),
             'yrs': yrs,
@@ -153,7 +154,7 @@ def construct_lastest_signal(symbol:str,
             pd.DataFrame.from_records( [ rec ] ).to_sql(tbname,conn,index=0)
             conn.commit()
             conn.execute( text(f'''
-            ALTER TABLE {tbname} ADD PRIMARY KEY (symbol,last_action,emitter);
+            ALTER TABLE {tbname} ADD PRIMARY KEY (symbol,signal_ts,last_action,emitter);
             '''))
             conn.commit()
     else:
@@ -163,7 +164,7 @@ def construct_lastest_signal(symbol:str,
             fdvals = [ f'"{k}"={_f(v)}' for k,v in rec.items() ];fdvals = ','.join(fdvals)
             stmt = f'''
             INSERT INTO {tbname} ({cols}) VALUES ({','.join([ f"'{s}'" if isinstance(s, str) else f"{s}" for s in rec.values()] )}) 
-            ON CONFLICT  (symbol,last_action,emitter) DO UPDATE SET {fdvals};
+            ON CONFLICT  (symbol,signal_ts,last_action,emitter) DO UPDATE SET {fdvals};
             '''
             conn.execute( text(stmt))
             conn.commit()
