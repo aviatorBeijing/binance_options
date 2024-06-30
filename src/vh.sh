@@ -2,6 +2,8 @@
 
 # The "new_struct" option triggers the adoption of newly designed "unified" signal generator data structure.
 # Without the option, the results fall back to old stucture, which is incompatible with the "unified" struct.
+# Use "./volume_trend_reversal.sh sol,btc" to generate PDF plots, --new_struct will disable the plot for speed.
+#
 
 SYMS=$1
 
