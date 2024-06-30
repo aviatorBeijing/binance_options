@@ -13,11 +13,11 @@ def main():
         recs = []
         for td in tds:
             if 'mixed' in td['BOT']:
-                emitter = ExtMixedEmitter(td['BOT'].replace('mixed-',''), td['span'])
+                emitter = ExtMixedEmitter(td["Capital"], td['BOT'].replace('mixed-',''), td['span'])
             elif 'rsi' in td['BOT']:
-                emitter = ExtRsiEmitter('-'.join(td['BOT'].split('-')[-2:]), td['span'])
+                emitter = ExtRsiEmitter(td["Capital"], '-'.join(td['BOT'].split('-')[-2:]), td['span'])
             elif 'sentiment' in td['BOT']:
-                emitter = ExtSentimentEmitter(td['BOT'].replace('sentiment-',''), td['span'])
+                emitter = ExtSentimentEmitter(td["Capital"], td['BOT'].replace('sentiment-',''), td['span'])
             
             rec = construct_lastest_signal(
                     td['ric'].upper(),

@@ -56,7 +56,7 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
     cash_min = init_cap
     trade_actions = []
     wins = 0; losses = 0
-    emitter = VolumeHikesEmitter(volt)
+    emitter = VolumeHikesEmitter(init_cap, volt)
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         is_breaking_down = row['1sigma_dw_sig_flag']
@@ -202,7 +202,7 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
     if new_stuct: # New datastucture
         from signals.meta import construct_lastest_signal
         rec = construct_lastest_signal(
-            sym.upper(),
+            sym.upper() + '/USDT',
             df.index[-1],
             yrs,   
             r1.max()*100,

@@ -87,7 +87,7 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
     asset = 0; agg_asset = []
     fee = 0; agg_fee = []
     sz_f = 0.1
-    emitter = ClimbNFallEmitter(up_inc,down_inc)
+    emitter = ClimbNFallEmitter(init_capital,up_inc,down_inc)
     for i, row in df.iterrows():
         is_buy = row.bought >0
         is_sell = row.sold >0
@@ -162,7 +162,7 @@ def climb_fall(sym, ts, closes,volume,up_inc=1,down_inc=1, rsi=pd.DataFrame(),fi
 
     last_action = actions[-1]
     return construct_lastest_signal(
-        sym.upper(),
+        sym.upper() + '/USDT',
         df.index[-1],
         round(ds/365,1),   
         df["port_rtn"].max()*100,
