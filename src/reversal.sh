@@ -1,4 +1,7 @@
 #!/bin/bash
+# Volume Hikes Strategy
+# Same as the "vh.sh", but with extra cached data files handling, and more cryptos.
+
 
 arr=()
 syms=()
