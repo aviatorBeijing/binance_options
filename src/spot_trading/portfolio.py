@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
 from spot_trading.bs_meta import BianceSpot
-from butil.butils import get_binance_spot
+from butil.butils import get_binance_spot,binance_kline
 
 fd = os.getenv('USER_HOME',"/Users/junma")
 
@@ -299,10 +299,21 @@ def portfolio_check(ric,days=3):
     pce,_ = get_binance_spot( ric.replace('-','/') ) # price now
     port_value = tds.iloc[-1]['agg'] * pce  + tds.iloc[-1]['$agg'] - fee # position value + cash changes - fee
     holding_cost, holding_size = calc_avg_holding_price( _aug_trades(tds,ric) )
+    
+    kf = binance_kline(symbol=ric.replace('-','/'), span='1d')
+    high24 = kf.high.iloc[-2:].max()
+    low24 = kf.low.iloc[-2:].min()
+    high1wk = kf.high.iloc[-7:].max()
+    low1wk = kf.low.iloc[-7:].min()
+    high1mo = kf.high.iloc[-30:].max()
+    low1mo =  kf.high.iloc[-30:].min()
 
     print(f'-- fee: ${fee:4f} {((fee/(fee+port_value))*100):.1f}%')
     print(f'-- holding: {holding_size} shares, average cost: $ {holding_cost:.4f}')
     print(f'-- gain (after liquidating and fee deduction @ ${pce}): $ {port_value:,.4f}')
+    print(f'-- current price level: 24hr_high = {high24}, 24hr_low = {low24}')
+    print(f'--                       1wk_high = {high1wk},  1wk_low = {low1wk}')
+    print(f'--                       1mo_high = {high1mo},  1mo_low = {low1mo}')
     
     # orders
     openDf = mkt.check_open_orders()
