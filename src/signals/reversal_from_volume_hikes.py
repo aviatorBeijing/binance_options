@@ -197,12 +197,32 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
     print(f'    -- fees: ${fees:,.2f}, {(fees/profits*100):,.2f}%')
     print()
 
+    fn = os.getenv("USER_HOME","")+"/data/strategies/volume_hikes"
+    if not os.path.exists(fn): os.makedirs( fn )
+    sym = sym.lower()
+    if sym.lower() in ['btc','sol','doge','eth','xrp','pendle']:
+        xsym = f'{sym.lower()}usdt' if not 'usdt' in sym else sym
+        fn += f'/portfolio_rtn_matrics_{xsym}.csv'
+    else:
+        fn += f'/portfolio_rtn_matrics_{sym}.csv'
+    print(df.closes.shape, len(portfolio), len(assets))
+    rtns_df = pd.DataFrame.from_dict({
+        'Date': pdf.index,
+        'rtn': ((1+r1).cumprod()-1)*100,
+        'rtn_dollar': portfolio,
+        'position': assets,
+        'ref_rtn':(((1+rr).cumprod()-1)*100).values,
+        'close': list(df.closes)
+    }).fillna(0).reset_index(drop=True)
+    rtns_df.to_csv(fn, index=0)
+    print('-- saved:', fn)
+
     yrs = round(df.shape[0]/365., 1)
     
     if new_stuct: # New datastucture
         from signals.meta import construct_lastest_signal
         rec = construct_lastest_signal(
-            sym.upper() + '/USDT',
+            sym.upper(),
             df.index[-1],
             yrs,   
             r1.max()*100,
