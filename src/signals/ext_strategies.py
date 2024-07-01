@@ -18,7 +18,15 @@ def main():
                 emitter = ExtRsiEmitter(td["Capital"], '-'.join(td['BOT'].split('-')[-2:]), td['span'])
             elif 'sentiment' in td['BOT']:
                 emitter = ExtSentimentEmitter(td["Capital"], td['BOT'].replace('sentiment-',''), td['span'])
-            
+            #import pprint;pprint.pprint( td ) 
+            act = None
+            if 'buy' in td['action'].lower():
+                act = ActionT.BUY
+            elif 'sell' in td['action'].lower():
+                act = ActionT.SELL
+            else:
+                raise Exception(f"*** {td['action']} is not valid.")
+
             rec = construct_lastest_signal(
                     td['ric'].upper(),
                     td['last_ts'],
@@ -31,7 +39,7 @@ def main():
                     td['bh_sortino'],
                     td['回撤'].split('|')[0],
                     td['BH回撤'],
-                    TradeAction(emitter,td['ric'],ActionT.BUY,td['成交价'],td['sizing'], 1., td['ts']),
+                    TradeAction(emitter,td['ric'],act,td['成交价'],td['sizing'], 1., td['ts']),
                     td['last_close'],
             )
             recs += [rec]
