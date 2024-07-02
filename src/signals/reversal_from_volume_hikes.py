@@ -426,7 +426,7 @@ def _main(sym, volt,offline=False, new_struct=False):
     file_ts = _file_ts( fn )
     if not offline or not os.path.exists(fn):
         from butil.butils import binance_kline
-        df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=5)
+        df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=10)
         print(df.tail(3))
     else:
         df = pd.read_csv( fn,index_col=0 )
