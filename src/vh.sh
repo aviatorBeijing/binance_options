@@ -11,5 +11,6 @@ VOLT=68
 if [[ $SERVER_LOCATION == 'local' ]];then
 $PYTHON signals/reversal_from_volume_hikes.py --volt $VOLT --offline --new_struct --syms $SYMS
 else
+#$PYTHON spot_trading/market_data.py --rics "${SYMS^^}/USDT" --span 1d
 $PYTHON signals/reversal_from_volume_hikes.py --volt $VOLT --new_struct --syms $SYMS
 fi
