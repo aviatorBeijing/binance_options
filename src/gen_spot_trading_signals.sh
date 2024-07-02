@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SYMS=btc,doge,sol,xrp,eth
+SYMS=btc,doge,sol,xrp,eth,ada,link,bnb,atom
 
 # Signals will be stored in db="emmited_signals", table="signals".
 
