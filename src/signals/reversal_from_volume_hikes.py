@@ -106,7 +106,7 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
                         trade_actions+=[ TradeAction(emitter, sym, ActionT.TP, pce, last_buy_sz,1., str(i)) ]
                         wins += 1
                 # sl
-                if buys:
+                if buys: # Stop-loss: Only SL the buy trade that potentially lost the MOST.
                         _buys = list(map(lambda e: e[1], buys))
                         _ix = np.argmax( _buys )
                         ts0, last_buy, last_buy_sz = buys[_ix]
