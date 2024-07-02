@@ -161,10 +161,11 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
         fig, ax1 = plt.subplots(1,1,figsize=(24,8))
     else:
         ax1 = ax
+    
     ax11 = ax1.twinx()
     (((1+r1).cumprod()-1)*100).plot( ax=ax1 )
     pdf['assets'].plot(ax=ax11,color='gray',alpha=0.5)
-    ax1.set_ylabel('Return%',color='blue')
+    ax1.set_ylabel('(Pseudo Trade) Return%',color='blue')
     ax11.set_ylabel('Position (#)',color='gray')
     ax11.grid(False)
     
@@ -357,31 +358,11 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
     xdf = df[df.bought>0][['bought','closes']].copy()
     xdf['price_delta'] = df.closes-df.bought
     xdf['return'] = xdf.price_delta/xdf.bought
-    aggrtn =  (((xdf['return']+1).prod() -1 )*100)
     
     annual = calc_cagr( xdf['return'])*100
     ds = df.shape[0]
 
     latest = df[df.sig>0].tail(1)
-    lastsell = xdf.tail(1)
-
-    bh = (df.closes.iloc[-1] - df.closes.iloc[0])/df.closes.iloc[0]*100
-    bh_annual = calc_cagr( df.rtn)*100
-    cap = init_capital = 10_000
-    """if not latest.empty:
-        print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
-    if not lastsell.empty:
-        print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
-    
-    print(f'-- FIXED DATE SELL TEST ({trade_horizon} days)')
-    print(f'-- gain: ${(xdf["return"].sum()*cap ):,.2f} (initial capital: ${cap:,.2f}, fixed investment mode)')
-    print(f'-- ttl return: {aggrtn:.1f}% ({ds} days, {(ds/365):.1f} yrs, reinvest mode)')
-    print(f'  -- buy&hold: {bh:.1f}%, {bh_annual:.1f}%')
-    print(f'  -- cagr: {annual:.1f}%')
-    print(f'  -- single max gain: {(xdf["return"].max()*100):.1f}%' )
-    print(f'  -- single max loss: {(xdf["return"].min()*100):.1f}%' )
-    print(f'  -- {xdf.shape[0]}, wins: {xdf[xdf["price_delta"]>0].shape[0]}, losses: {xdf[xdf["price_delta"]<0].shape[0]}')
-    """
     
     ax11 = ax1.twinx()
     ax22 = ax2.twinx()
@@ -412,26 +393,6 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
     plt.savefig(fn)
     print('-- saved:',fn)
 
-    """if not latest.empty:
-        print(f'-- trades:\n  -- {latest.index[0]}, buy at ${latest.closes.iloc[0]}, sell after {trade_horizon} days')
-    if not lastsell.empty:
-        print(f'  -- {lastsell.index[0]}, sell at ${lastsell.closes.iloc[0]}, gain {(lastsell["return"].iloc[0]*100):.2f}% (cost ${lastsell.bought.iloc[0]:.2f})', '\n')
-    """
-
-    '''from signals.meta import construct_lastest_signal
-    return construct_lastest_signal(
-        sym.upper(),
-        df.index[-1],
-        round(ds/365,1),   
-        xdf["return"].max()*100,
-        xdf["return"].min()*100,
-        annual,
-        bh_annual,
-        sot,
-        bh_sot,
-        actions,
-        df.iloc[-1].closes
-    )'''
     return {
         'crypto': sym.upper(),
         'start': df.index[0],
@@ -520,9 +481,6 @@ def main(sym,syms,volt,offline,do_mpt, new_struct):
             print(df)
             return 
 
-        df.sort_values('last_buy', ascending=False, inplace=True)
-        #print(df)
-
         pseudo_df = pd.DataFrame.from_records(
             list(df.pseudo_trade),
             columns=['crypto', 'years', 'cagr','tt_rtn','sortino','cash_util','max_dd','max_dd_ref','#buys','#sells','sl/sell',
@@ -602,7 +560,7 @@ def main(sym,syms,volt,offline,do_mpt, new_struct):
         
         pseudo_df.drop(['r1','rr','trade_actions'],axis=1,inplace=True)
         print()
-        print('#'*30, 'Metrics', '#'*30)
+        print(' '*60,'#'*30, 'Metrics', '#'*30)
         print( tabulate(pseudo_df,headers='keys') )
         print('\n[cash_util: effectiveness of cash usage, larger is goal; 0 indicates not used at all.]\n')
         _settings()
