@@ -1,4 +1,4 @@
-import os,click
+import os,click,datetime
 import pandas as pd
 import numpy as np
 import talib
@@ -6,6 +6,9 @@ from tabulate import tabulate
 
 from butil.portfolio_stats import calc_cagr, max_drawdowns,sharpe,sortino
 from signals.meta import ActionT,TradeAction,VolumeHikesEmitter
+from butil.butils import binance_kline
+from butil.yahoo_api import get_asset_class,get_data
+
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
@@ -144,7 +147,6 @@ def pseudo_trade(sym, df, span='1d', volt=68, new_stuct=False, ax=None):
     pdf = pd.DataFrame.from_dict({'v': portfolio, 'assets': assets})
     pdf.index = list( map(lambda e: pd.Timestamp(e), df.index ))
     pdf  = pdf.resample('1d').agg('sum')
-    
     pdf = pdf[pdf.v>0]
     
     r1 = pdf['v'].pct_change()
@@ -410,7 +412,6 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
     }
 
 def _file_ts(fn):
-    import datetime
     s = os.stat(fn)
     t = int( s.st_mtime )
     d = datetime.datetime.fromtimestamp(int(s.st_mtime) )
@@ -423,18 +424,22 @@ def _main(sym, volt,offline=False, new_struct=False):
 
     sym = sym.lower()
     fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
-    file_ts = _file_ts( fn )
+    if os.path.exists(fn):
+        file_ts = _file_ts( fn )
     if not offline or not os.path.exists(fn):
-        from butil.butils import binance_kline
-        df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=10)
-        print(df.tail(3))
+        if get_asset_class(sym) == 'crypto':
+            df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
+        else:
+            df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
+            df.columns = [s.lower() for s in df.columns ]
+            file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
+            df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
     else:
         df = pd.read_csv( fn,index_col=0 )
     ts = df.timestamp
 
     #rsi
     df['rsi'] = talib.RSI(df['close'],timeperiod=14)
-    
     df = df.dropna()
     rsi = df.rsi
     
@@ -527,8 +532,12 @@ def main(sym,syms,volt,offline,do_mpt, new_struct):
             except Exception as e:
                 print( f'*** failed to parse: {t}')
                 raise e
-            t0 = pd.Timestamp.now(tz='UTC')
-            x = t0-d
+            try:
+                t0 = pd.Timestamp.now()
+                x = t0-d
+            except TypeError as e:
+                t0 = pd.Timestamp.now(tz='UTC')
+                x = t0-d
             x = x.total_seconds()/3600/24
             return x
         

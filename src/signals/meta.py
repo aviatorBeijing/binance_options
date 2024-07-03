@@ -6,6 +6,7 @@ import enum
 from sqlalchemy import text
 
 from butil.bsql import emmiter_engine,table_exists
+from butil.yahoo_api import get_asset_class
 tbname = 'signals'
 
 
@@ -114,6 +115,9 @@ def struct_last_trade_action(action:TradeAction ):
     Notice: the protocol of constructing the string matters.
     """
     act = action
+    sym = act.ric.replace('/USDT','').replace('-USD','')
+    if get_asset_class(sym) != 'crypto':
+        act.price = round(float(act.price),2)
     return f'{act.act.value},{act.price}'
 
 def construct_lastest_signal(symbol:str,
