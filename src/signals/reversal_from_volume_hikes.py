@@ -36,7 +36,7 @@ if order_by_order: print('-- [order_by_order]')
 elif hold_fix_days: print('-- [hold_fix_days]')
 else: print('*** unknown')
 
-def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
+def pseudo_trade(sym, df, span='1d', volt=68, new_stuct=False, ax=None):
     print('-- pseudo trading (strategy specific!):')
     df = df.copy()
     print('-- latest data:', df.index[-1], f"${df.iloc[-1].closes}")
@@ -56,7 +56,7 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
     cash_min = init_cap
     trade_actions = []
     wins = 0; losses = 0
-    emitter = VolumeHikesEmitter(init_cap, volt)
+    emitter = VolumeHikesEmitter(init_cap, span, volt)
     for i, row in df.iterrows():
         #print(i, row.dd, row.closes, row.volrank, row.sig )
         is_breaking_down = row['1sigma_dw_sig_flag']
@@ -91,13 +91,13 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
 
             ######## Sells ########
             if order_by_order:
-                if buys:
+                if buys: 
                     # tp
                     _buys = list(map(lambda e: e[1], buys))
                     _ix = np.argmin( _buys )
                     ts0, last_buy, last_buy_sz = buys[_ix]
                     if (pce-last_buy)/last_buy > (profit_margin): # met the profit traget
-                        buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
+                        buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else []) # remove
                         #print( '    [tp]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', ',holding:', (i-ts0).total_seconds()/3600/24, 'days') #, (pce-last_buy)/last_buy,'>', profit_margin)
                         cash += pce*last_buy_sz*(1-ff)
                         pos -= last_buy_sz
@@ -111,7 +111,7 @@ def pseudo_trade(sym, df, volt=68, new_stuct=False, ax=None):
                         _ix = np.argmax( _buys )
                         ts0, last_buy, last_buy_sz = buys[_ix]
                         if (pce-last_buy)/last_buy < -sl or is_breaking_down: # sl
-                            buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else [])
+                            buys = buys[:_ix] + (buys[_ix+1:] if (_ix+1)<len(buys) else []) # remove
                             #print( '      [sl]:', _cl(str(i)), f'${pce}', ', the buy:', _cl(ts0), f'${last_buy}', len(buys), _ix ) #, (pce-last_buy)/last_buy,'<', -sl)
                             cash += pce*last_buy_sz*(1-ff)
                             pos -= last_buy_sz

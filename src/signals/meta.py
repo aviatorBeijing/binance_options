@@ -23,8 +23,9 @@ class SignalEmitter(enum.Enum):
     EXT_SENTIMENT   = 'ext_sentiment'
 
 class Emitter: # Signal emmiter, i.e., different trading strategy
-    def __init__(self,cap) -> None:
+    def __init__(self,cap,span) -> None:
         self.cap = cap
+        self.span = span
     def desc(self):
         raise Exception('To be overwritten.')
 
@@ -34,9 +35,8 @@ class ExtMixedEmitter(Emitter):
     @staticmethod
     def name(): return ExtMixedEmitter.T.value 
     def __init__(self,cap,bot,span ) -> None:
-        super().__init__(cap)
+        super().__init__(cap,span)
         self.bot = bot # bot contains algo config parameters
-        self.span = span
     def desc(self):
         return f"span={self.span},bot={self.bot},cap={self.cap}"
 class ExtRsiEmitter(Emitter):
@@ -44,9 +44,8 @@ class ExtRsiEmitter(Emitter):
     @staticmethod
     def name(): return ExtRsiEmitter.T.value 
     def __init__(self,cap,bot,span ) -> None:
-        super().__init__(cap)
+        super().__init__(cap,span)
         self.bot = bot # bot contains algo config parameters
-        self.span = span
     def desc(self):
         return f"span={self.span},bot={self.bot},cap={self.cap}"
 class ExtSentimentEmitter(Emitter):
@@ -54,9 +53,8 @@ class ExtSentimentEmitter(Emitter):
     @staticmethod
     def name(): return ExtSentimentEmitter.T.value 
     def __init__(self,cap,bot,span ) -> None:
-        super().__init__(cap)
+        super().__init__(cap,span)
         self.bot = bot # bot contains algo config parameters
-        self.span = span
     def desc(self):
         return f"span={self.span},bot={self.bot},cap={self.cap}"
 
@@ -64,22 +62,22 @@ class ClimbNFallEmitter(Emitter):
     T = SignalEmitter.CLIMB_AND_FALL
     @staticmethod
     def name(): return ClimbNFallEmitter.T.value 
-    def __init__(self, cap, up_inc,down_inc ) -> None:
-        super().__init__(cap)
+    def __init__(self, cap, span, up_inc,down_inc ) -> None:
+        super().__init__(cap,span)
         self.up_inc = up_inc # climb up percentage threshold
         self.down_inc = down_inc
     def desc(self):
-        return f"up={self.up_inc},down={self.down_inc},cap={self.cap}"
+        return f"span={self.span},up={self.up_inc},down={self.down_inc},cap={self.cap}"
 
 class VolumeHikesEmitter(Emitter):
     T = SignalEmitter.VOLUME_HIKES 
     @staticmethod
     def name(): return VolumeHikesEmitter.T.value 
-    def __init__(self, cap, volt ) -> None:
-        super().__init__(cap)
+    def __init__(self, cap, span, volt ) -> None:
+        super().__init__(cap,span)
         self.volt = volt # threshold of volume hiking ranking
     def desc(self):
-        return f"volt={self.volt},cap={self.cap}"
+        return f"span={self.span},volt={self.volt},cap={self.cap}"
 
 class TradeAction:
     def __init__(self, emitter: SignalEmitter, sym: str,act:ActionT, price:float, sz:float, sz_f: float, ts:str) -> None:
