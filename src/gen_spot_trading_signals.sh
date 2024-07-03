@@ -9,8 +9,9 @@ ASHARE=000729.SZ,000001.SZ,601186.SS,200550.SZ,600502.SS
 #./cf.sh $SYMS	# Simulate Climb-Fall   algo
 
 ./vh.sh $SYMS	# Simulate Volume-Hikes algo
-./vh.sh $ASHARE
-./vh.sh `cat $USER_HOME/tmp/_rics_open_in_portfolio.csv`
+./vh.sh msft,goog,nvda,cdns,amzn,nvo,cere,lbrdk,armk,j,bkng
+#./vh.sh $ASHARE
+#./vh.sh `cat $USER_HOME/tmp/_rics_open_in_portfolio.csv`
 ./vh.sh $MERC
 
 ./ext.sh	# Collect mixed/rsi/sentiment signals (no simulation is done, ran separately to simulate.)
