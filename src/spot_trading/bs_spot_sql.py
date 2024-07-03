@@ -6,8 +6,8 @@ from sqlalchemy import create_engine, text
 
 from butil.bsql import table_exists
 
-uname = os.getenv('PG_USERNAME', 'junma')
-psw = os.getenv('PG_PASSWORD', 'nethorse')
+uname = os.getenv('PG_USERNAME', '')
+psw = os.getenv('PG_PASSWORD', '')
 engine = bn_spot_engnine = create_engine(f"postgresql://{uname}:{psw}@localhost:5432/bn_spot")
 ticker_snippet_tbl = "ticker_snippet"
 
