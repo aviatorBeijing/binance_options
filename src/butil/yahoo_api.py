@@ -10,24 +10,43 @@ psw = os.getenv('PG_PASSWORD', '')
 
 kline_engine = engine = create_engine(f"postgresql://{uname}:{psw}@localhost:5432/klines_yahoo")
 
+class AssetClass(enum.Enum):
+    MERCH   = 'merch' # gld, crude, etc.
+    FOREX   = 'forex'
+    CRYPTO  = 'crypto'
+    HK_STOCK = 'hk_stock'
+    CN_STOCK = 'cn_other_stock'
+    CN_ETF = 'bond_etf'
+    CN_ASHARE = 'a_share'
+    US_STOCK = 'us_stock'
+    INDICES = 'indices'
+
+    _UNKNOWN = 'unregistered'
+
 def get_asset_class(ric):
     ric = ric.upper()
     if ric.endswith('.SS') or ric.endswith('.SZ'):
         if ric.startswith('51') or ric.startswith('15'):
-            return "bond_etf" 
+            return AssetClass.CN_ETF
         elif ric.startswith('0') or ric.startswith('3') or ric.startswith('6'):
-            return "a_share"
+            return AssetClass.CN_ASHARE
         else:
-            return "china_stock"
+            return AssetClass.CN_STOCK
     elif ric.endswith('.HK'):
-        return "hk_stock" 
+        return AssetClass.HK_STOCK
     elif ric.endswith('-USD') or ric.endswith('/USDT') \
         or ric.lower() in 'BTC DOGE ETH BNB SOL XRP ADA AVAX LINK DOT TRX LTC FTM BCH MATIC ARB FIL OP ATOM PEPE LTC SHIB UNI FIL'.lower().split(' '):
-        return "crypto"
+        return AssetClass.CRYPTO
     elif ric.endswith('=X'):
-        return "forex"
+        return AssetClass.FOREX
+    elif ric.lower() in ['gld']:
+        return AssetClass.MERCH
+    elif ric.lower() in ['msft','aapl','amzn','goog','nvda','lbrdk','cere','bkng','armk','cdns','nvo','j']:
+        return AssetClass.US_STOCK
+    elif ric.startswith('^'):
+        return AssetClass.INDICES
     
-    return "n/a"
+    return AssetClass._UNKNOWN
 
 tds = datetime.datetime.utcnow()+datetime.timedelta(hours=8)
 tds = datetime.datetime.strftime(tds, '%Y_%m_%d')

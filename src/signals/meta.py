@@ -150,6 +150,7 @@ def construct_lastest_signal(symbol:str,
             'yrs': yrs,
             'desc': last_act.emitter.desc(),
             'emitter': last_act.emitter.name(),
+            'asset_class': get_asset_class(symbol).value,
         }
     if not table_exists(tbname, emmiter_engine):
         with emmiter_engine.connect() as conn:
