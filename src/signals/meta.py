@@ -179,6 +179,6 @@ def trade_recs2df(recs):
     df = pd.DataFrame.from_records( recs )
     df.sort_values('last_action', ascending=False, inplace=True)
     df['x'] = df.last_action.apply(lambda s: s.split(',')[1])
-    df.sort_values('x', ascending=False, inplace=True)
+    df.sort_values('x', ascending=False, inplace=True);df = df.reset_index(drop=True)
     df.drop('x', inplace=True, axis=1)
     return df

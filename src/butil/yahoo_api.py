@@ -41,7 +41,7 @@ def get_asset_class(ric):
         return AssetClass.FOREX
     elif ric.lower() in ['gld']:
         return AssetClass.MERCH
-    elif ric.lower() in ['msft','aapl','amzn','goog','nvda','lbrdk','cere','bkng','armk','cdns','nvo','j']:
+    elif ric.lower() in ['msft','aapl','amzn','goog','nvda','lbrdk','cere','bkng','armk','cdns','nvo','j','tsla']:
         return AssetClass.US_STOCK
     elif ric.startswith('^'):
         return AssetClass.INDICES
