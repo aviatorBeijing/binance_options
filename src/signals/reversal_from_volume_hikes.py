@@ -422,21 +422,35 @@ def _main(sym, volt,offline=False, new_struct=False):
     print(f'|    {sym.upper()}    |')
     print('-'*14)
 
-    sym = sym.lower()
-    fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
-    if os.path.exists(fn):
-        file_ts = _file_ts( fn )
-    if not offline or not os.path.exists(fn):
-        if get_asset_class(sym) == AssetClass.CRYPTO:
-            df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
+    def _data(sym):
+        sym = sym.lower()
+        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+        if os.path.exists(fn):
+            file_ts = _file_ts( fn )
+        if not offline or not os.path.exists(fn):
+            if get_asset_class(sym) == AssetClass.CRYPTO:
+                df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
+            else:
+                df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
+                df.columns = [s.lower() for s in df.columns ]
+                file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
+                df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
         else:
-            df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
-            print( '*'*100,df.shape )
-            df.columns = [s.lower() for s in df.columns ]
-            file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
-            df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
-    else:
-        df = pd.read_csv( fn,index_col=0 )
+            df = pd.read_csv( fn,index_col=0 )
+        return df, file_ts
+    df, file_ts = _data(sym)
+    """fvx = _data('^fvx')
+    a =  df.set_index('timestamp')['close'].resample('1d').agg('last').ffill()
+    b = fvx.set_index('timestamp')['close'].resample('1d').agg('last').ffill()
+    #a = a.rolling(150).rank(pct=True)
+    #b = b.rolling(150).rank(pct=True)
+    fig, ax = plt.subplots(1,1, figsize=(8,6));ax1=ax.twinx()
+    x = pd.concat([ a,b ], ignore_index=False, axis=1);x.columns=['tsla','^fvx']
+    print( x )
+    x['tsla'].plot(ax=ax)
+    x['^fvx'].plot(ax=ax1,color='red');plt.show()
+    import sys;sys.exit()"""
+    
     ts = df.timestamp
 
     #rsi
