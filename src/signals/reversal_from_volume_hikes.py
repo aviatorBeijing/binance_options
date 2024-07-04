@@ -431,7 +431,7 @@ def _main(sym, volt,offline=False, new_struct=False):
             if get_asset_class(sym) == AssetClass.CRYPTO:
                 df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
                 ds = df.iloc[-1].timestamp
-                file_ts = datetime.strptime(ds, "%Y-%m-%dT%H:%M:%S.%fZ")
+                file_ts = datetime.datetime.strptime(ds, "%Y-%m-%dT%H:%M:%S.%fZ")
             else:
                 df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
                 df.columns = [s.lower() for s in df.columns ]
