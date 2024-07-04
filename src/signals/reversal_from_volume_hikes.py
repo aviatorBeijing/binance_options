@@ -431,6 +431,7 @@ def _main(sym, volt,offline=False, new_struct=False):
             df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
         else:
             df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
+            print( '*'*100,df.shape )
             df.columns = [s.lower() for s in df.columns ]
             file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
             df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
