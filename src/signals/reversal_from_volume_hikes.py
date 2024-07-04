@@ -428,13 +428,13 @@ def _main(sym, volt,offline=False, new_struct=False):
         if os.path.exists(fn):
             file_ts = _file_ts( fn )
         if not offline or not os.path.exists(fn):
-            file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
             if get_asset_class(sym) == AssetClass.CRYPTO:
                 df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
             else:
                 df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
                 df.columns = [s.lower() for s in df.columns ]
                 df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
+            file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
         else:
             df = pd.read_csv( fn,index_col=0 )
         return df, file_ts
