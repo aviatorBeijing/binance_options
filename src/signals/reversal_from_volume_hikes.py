@@ -436,7 +436,12 @@ def _main(sym, volt,offline=False, new_struct=False):
                 df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
                 df.columns = [s.lower() for s in df.columns ]
                 df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
-                file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
+                try:
+                    file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
+                except Exception as e:
+                    file_ts = df.iloc[-1].timestamp
+                    if not isinstance( file_ts, datetime.datetime): raise e
+                    #datetime.datetime.strptime(ds, "%Y-%m-%d %H:%M:%S")
         else:
             df = pd.read_csv( fn,index_col=0 )
         return df, file_ts
