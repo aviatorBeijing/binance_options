@@ -9,7 +9,6 @@ from butil.bsql import emmiter_engine,table_exists
 from butil.yahoo_api import get_asset_class
 tbname = 'signals'
 
-
 class ActionT(enum.Enum):
     BUY = 'buy'
     SELL = 'sell'

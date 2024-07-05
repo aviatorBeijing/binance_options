@@ -43,8 +43,10 @@ def main():
                     td['last_close'],
             )
             recs += [rec]
-    df = trade_recs2df(recs)
-    print( df )
+        df = trade_recs2df(recs)
+        print( df )
+    else:
+        print( resp['msg'] )
 
 if __name__ == '__main__':
     main()

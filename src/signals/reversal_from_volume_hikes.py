@@ -208,7 +208,6 @@ def pseudo_trade(sym, df, span='1d', volt=68, new_stuct=False, ax=None):
         fn += f'/portfolio_rtn_matrics_{xsym}.csv'
     else:
         fn += f'/portfolio_rtn_matrics_{sym}.csv'
-    print(df.closes.shape, len(portfolio), len(assets))
     rtns_df = pd.DataFrame.from_dict({
         'Date': pdf.index,
         'rtn': ((1+r1).cumprod()-1)*100,
@@ -281,10 +280,8 @@ def add_sigma_signals(df):
     df.loc[df['1sigma_dw_sig_flag']==True, '1sigma_dw_sig'] = df.closes
     return df 
 
-def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str='', new_struct=False):
+def volume_hiking_standard( sym, ts, closes,volume,volt=50,rsi=pd.DataFrame() ):
     months = 9 # volume ranking window
-    trade_horizon = 30*2    # how long to wait to sell after buy
-
     wd = 30*months
     rtn = closes.pct_change()
     cumrtn = (1+rtn).cumprod()
@@ -325,9 +322,9 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
     df.set_index('ts',inplace=True)
     df = df[wd:]
     df = select_data(df)
-
+    
     is_not_volatile = df.rtn <= .25
-    is_jump = (df.volrank.shift(2) <= volt/100) \
+    volume_hiking = is_jump = (df.volrank.shift(2) <= volt/100) \
                 & (df.volrank.shift(1) <= volt/100) \
                 & (df.volrank>=volt/100) 
 
@@ -349,7 +346,20 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
         df['sig_count'] = df.sig.fillna(0).rolling(fwd).apply(lambda arr: np.count_nonzero( np.array(arr) ) )
         df.loc[ df.sig_count>1, 'sig'] = np.nan;df.loc[ df.sig_count>1, 'r1'] = np.nan
     #------------------------- Signals ---------------------
+    return df  
 
+def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str='', new_struct=False):
+    if True:
+        df = volume_hiking_standard(
+            sym, ts, closes,volume,volt=volt,rsi=rsi
+        )
+    else: 
+        from signals.volume_hiking_core import build_reversals_signals
+        df = build_reversals_signals(
+            sym, ts, closes,volume,volt=volt,rsi=rsi
+        )
+
+    trade_horizon = 30*2    # how long to wait to sell after buy
     fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(18,12))
 
     pseudo_metrics = rec = pseudo_trade(sym, df, volt=volt, new_stuct=new_struct, ax=ax3) # a different trading strategy!
@@ -436,6 +446,7 @@ def _main(sym, volt,offline=False, new_struct=False):
                 df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
                 df.columns = [s.lower() for s in df.columns ]
                 df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
+                df.timestamp = pd.to_datetime(df['timestamp']).dt.tz_localize('UTC')
                 try:
                     file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
                 except Exception as e:
