@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime,os,requests
-import pandas as pd 
+import requests
 
 from signals.meta import ExtMixedEmitter, ActionT, ExtRsiEmitter, ExtSentimentEmitter, TradeAction,construct_lastest_signal, trade_recs2df
 

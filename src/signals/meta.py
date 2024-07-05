@@ -151,6 +151,7 @@ def construct_lastest_signal(symbol:str,
             'emitter': last_act.emitter.name(),
             'asset_class': get_asset_class(symbol).value,
         }
+    """ Will NOT save to db, in case of conflicting with the Fin project.
     if not table_exists(tbname, emmiter_engine):
         with emmiter_engine.connect() as conn:
             pd.DataFrame.from_records( [ rec ] ).to_sql(tbname,conn,index=0)
@@ -170,6 +171,7 @@ def construct_lastest_signal(symbol:str,
             '''
             conn.execute( text(stmt))
             conn.commit()
+    """
         
     return rec
 

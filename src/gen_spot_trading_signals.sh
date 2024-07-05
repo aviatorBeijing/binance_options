@@ -8,10 +8,10 @@ ASHARE=000729.SZ,000001.SZ,601186.SS,200550.SZ,600502.SS
 
 #./cf.sh $SYMS	# Simulate Climb-Fall   algo
 
-./vh.sh $SYMS	# Simulate Volume-Hikes algo
-./vh.sh msft,goog,nvda,cdns,amzn,nvo,cere,lbrdk,armk,j,bkng,tsla,^gspc,^fvx,gld,'bz=f'
-#./vh.sh $ASHARE
-#./vh.sh `cat $USER_HOME/tmp/_rics_open_in_portfolio.csv`
-./vh.sh $MERC
+./fin_vh.sh 4151.T,4502.T,4568.T,4578.T
+./fin_vh.sh $SYMS	# Simulate Volume-Hikes algo
+./fin_vh.sh msft,goog,nvda,cdns,amzn,nvo,cere,lbrdk,armk,j,bkng,tsla,^gspc,^fvx,gld,'bz=f'
+#./fin_vh.sh `cat $USER_HOME/tmp/_rics_open_in_portfolio.csv`
+./fin_vh.sh $MERC
 
 ./ext.sh	# Collect mixed/rsi/sentiment signals (no simulation is done, ran separately to simulate.)
