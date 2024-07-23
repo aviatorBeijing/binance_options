@@ -237,7 +237,7 @@ def analyze_trades(ric, tds, days, save=True):
     tds.loc[tds['agg']==0,'neutral'] = 'ok'
     print('-- [trades]')
     if tds.shape[0]>10:
-        print( tabulate(tds.head(3),headers="keys") )
+        print( tabulate(tds.head(6),headers="keys") )
     print( tabulate(tds.tail(10),headers="keys") )
     return tds
 
