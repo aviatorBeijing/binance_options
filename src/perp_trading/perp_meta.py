@@ -220,7 +220,15 @@ class BinancePerp:
         return df
 
     def check_trades_today(self)  -> pd.DataFrame:
-        return self.check_trades(hours=24)
+        """dfs = []
+        for i in range(5):
+            dfs += [ self.check_trades(hours=24) ]
+        df = pd.concat(dfs,axis=1)
+        print("$"*30)
+        print(df)"""
+        df = self.check_trades(hours=24*3)
+        print(df )
+        return df
     
     def check_trades(self, hours=24):
         dt = datetime.datetime.utcnow().timestamp() - hours*3600
