@@ -347,7 +347,7 @@ def check_cvar(cryptos=''):
         c.timestamp = c.timestamp.apply(pd.Timestamp)
         c.set_index('timestamp',inplace=True,drop=True)
         #print('***', col, c.index[0])
-        rtns += [ c.close.pct_change() ]
+        rtns += [ c.close.pct_change().resample('1d').sum() ]
         wts += [df[df.asset==col].iloc[0].value]
     rtns =  pd.concat(rtns, ignore_index=False, axis=1).dropna()
     rtns.columns = list(df.asset.values)
@@ -459,7 +459,7 @@ def assets():
 
 @click.command()
 @click.option('--ric',default="DOGE-USDT")
-@click.option('--days',default=3)
+@click.option('--days',default=7)
 #@click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--check_cached', is_flag=True, default=False)
 @click.option('--spot', default=0.155, help="the current spot price (mainly used for offline purpose)")
