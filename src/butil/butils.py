@@ -173,8 +173,8 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     xdf['dt'] = xdf.ts.diff() # The adjacent data should have SAME time differences, o.w., missing data is possible.
     td = set(list(xdf.dt))
     #assert len( set(list(xdf.dt))) ==2, f'Missing data? symbol={symbol}, span={span}, td: {td} \n {xdf.sort_values("dt", ascending=False)} \n{df}'
-    if len( set(list(xdf.dt))) > 2:
-        print( f'*** Missing data? symbol={symbol}, span={span}, td: {td} \n {xdf.sort_values("dt", ascending=False)} \n{df}' )
+    #if len( set(list(xdf.dt))) > 2:
+    #    print( f'*** Missing data? symbol={symbol}, span={span}, td: {td} \n {xdf.sort_values("dt", ascending=False)} \n{df}' )
 
     return df
 

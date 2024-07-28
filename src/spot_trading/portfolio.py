@@ -314,6 +314,14 @@ def portfolio_check(ric,days=3):
     print(f'-- current price level: 24hr_high = {high24}, 24hr_low = {low24}')
     print(f'--                       1wk_high = {high1wk},  1wk_low = {low1wk}')
     print(f'--                       1mo_high = {high1mo},  1mo_low = {low1mo}')
+
+    k5 = binance_kline(symbol=ric.replace('-','/'), span='5m')
+    r5 = k5.close.pct_change().dropna().apply(abs)
+    print()
+    print(f'-- rtn (5m) now: {(r5.iloc[-1]*10000):.0f} bps, {(r5.iloc[-2]*10000):.0f} bps')
+    print(f'-- rtn 50% percentile: { (np.percentile( r5, 50)*10000):.0f} bps')
+    print(f'-- rtn 95% percentile: { (np.percentile( r5, 95)*10000):.0f} bps')
+    print(f'-- rtn 98% percentile: { (np.percentile( r5, 98)*10000):.0f} bps')
     
     # orders
     openDf = mkt.check_open_orders()
