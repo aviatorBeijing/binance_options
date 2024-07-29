@@ -6,6 +6,9 @@ SERVER=3.114.152.67
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/bal.csv ./ && mv bal.csv ~/tmp
 
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/doge-usdt_5m.csv ./ && mv doge-usdt_5m.csv ~/tmp
+scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/btc-usdt_5m.csv ./ && mv btc-usdt_5m.csv ~/tmp
+
+
 
 #for s in doge sei ace pendle sol avax trx btc matic;do
 #  scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1d.csv ./ && mv $s-usdt_1d.csv ~/tmp
