@@ -127,7 +127,12 @@ def binance_spot(symbol='BTC/USDT')->tuple:
     symbol = symbol.replace('-','/')
     qts = ex_binance.fetch_ticker(symbol)
     bid,ask = qts['bid'],qts['ask']
-    return float(bid),float(ask)
+    try:
+        return float(bid),float(ask)
+    except Exception as e:
+        print('*** bid/ask data errors:')
+        print('***', symbol, qts )
+        raise e
 
 def get_underlying(contract):
     fds = contract.split('-')
