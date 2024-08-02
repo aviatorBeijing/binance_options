@@ -117,7 +117,8 @@ def on_open(ws):
     if DEBUG:
         print("Opened connection")
 
-endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
+#endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
+endpoint = 'wss://nbstream.binance.com/eoptions/ws/'
 
 def sync_fetch_ticker( contract:str, handler=None ):
     try:
@@ -144,10 +145,15 @@ def sync_fetch_ticker( contract:str, handler=None ):
 def _main(ric:str, channel=''):
     import websocket
     rics = [ric] # FIXME only support single ric for now. How to support more?
-    uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics) )
+    #uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics) )
+    if len(rics) == 1: rics = rics[0].split(',')
+
+    uris = [ f'{ric}@{channel}' for ric in rics ]
+    uris = [ endpoint + '/'.join( uris ) ]
+    
     websocket.enableTrace(False) #True)
     for uri in uris:
-        print( uri )
+        print( 'connecting:',  uri )
         ws = websocket.WebSocketApp(uri, #wss://api.gemini.com/v1/marketdata/BTCUSD",
                               on_open=on_open,
                               on_message=on_message,
