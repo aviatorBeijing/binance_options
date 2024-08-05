@@ -46,6 +46,16 @@ Example #4 (Term-structure of C/P pair, ignoring volatility changes, and interes
 python brisk/pricing.py --contracts BTC-240506-59000-C,BTC-240506-59000-P
 ```
 
+Summaries:
+
+| Command  | Shorthand | Function |
+| ------------- | ------------- | ------------- |
+| ```./buy.sh```  |   | place single options order |
+| ```./cancel.sh```  |  |cancel an option order|
+|```python bbroker/check_status.py```|```./status.sh```|check options account positions, pnl, etc.|
+|```python brisk/pricing.py --contract BTC-240607-56500-C --user_cost 585```||check the pnl against spot price movement|
+|``````|||
+
 Notes:
 ```
 Only support BTC,BNB, and DOGE contracts, for now.
