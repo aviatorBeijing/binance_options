@@ -7,6 +7,18 @@ python -m pip install -r requirements.txt
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
 ```
 
+Summaries:
+
+| Command  | Shorthand | Function |
+| ------------- | ------------- | ------------- |
+| ```./buy.sh```  |   | place single options order |
+| ```./cancel.sh```  |  |cancel an option order|
+|```python bbroker/check_status.py```|```./status.sh```|check options account positions, pnl, etc.|
+|```python brisk/pricing.py --contract BTC-240607-56500-C --user_cost 585```||check the pnl against spot price movement|
+|```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1```||pnl monitor of trading a straddle|
+|```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1 --user_premium 95.5```||pnl calc of a straddle position|
+|``````|||
+
 Example#1 (Long straddle):
 
 ```
@@ -45,18 +57,6 @@ Example #4 (Term-structure of C/P pair, ignoring volatility changes, and interes
 ```
 python brisk/pricing.py --contracts BTC-240506-59000-C,BTC-240506-59000-P
 ```
-
-Summaries:
-
-| Command  | Shorthand | Function |
-| ------------- | ------------- | ------------- |
-| ```./buy.sh```  |   | place single options order |
-| ```./cancel.sh```  |  |cancel an option order|
-|```python bbroker/check_status.py```|```./status.sh```|check options account positions, pnl, etc.|
-|```python brisk/pricing.py --contract BTC-240607-56500-C --user_cost 585```||check the pnl against spot price movement|
-|```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1```||pnl monitor of trading a straddle|
-|```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1 --user_premium 95.5```||pnl calc of a straddle position|
-|``````|||
 
 Notes:
 ```
