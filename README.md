@@ -7,8 +7,7 @@ python -m pip install -r requirements.txt
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
 ```
 
-Summaries:
-
+Summaries [Options]:
 | Command  | Shorthand | Function |
 | ------------- | ------------- | ------------- |
 | ```./buy.sh```  |   | place single options order |
@@ -17,6 +16,16 @@ Summaries:
 |```python brisk/pricing.py --contract BTC-240607-56500-C --user_cost 585```||check the pnl against spot price movement|
 |```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1```||pnl monitor of trading a straddle|
 |```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1 --user_premium 95.5```||pnl calc of a straddle position|
+|``````|||
+
+Summaries [Perp]  (DOGE/USDT):
+| Command  | Shorthand | Function |
+| ------------- | ------------- | ------------- |
+|```./perp_trading/doge/check.sh```|```./pp```|check current perp positions & pnl|
+|```./perp_trading/doge/buyup.sh```|```./pu```|("u" stands for "upward") send a order pair: buy at best ask, sell at 50bps above|
+|```./perp_trading/doge/selldown.sh```|```./pd```|("d" stands for "downward") send a order pair: sell at best bid, buy at 50bps below|
+|```./perp_trading/doge/cancel.sh```|```./pc```|cancel orders by order IDs, comma separated.|
+|```./perp_trading/doge/instant_pair.sh```|```./ps```|send an order pair: at 25bps each side|
 |``````|||
 
 Example#1 (Long straddle):
