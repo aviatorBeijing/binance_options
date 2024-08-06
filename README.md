@@ -28,6 +28,12 @@ Summaries [Perp]  (DOGE/USDT):
 |```./perp_trading/doge/instant_pair.sh```|```./ps```|send an order pair: at 25bps each side|
 |``````|||
 
+Summaries [Spot]:
+| Command  | Shorthand | Function |
+| ------------- | ------------- | ------------- |
+|```python spot_trading/grid.py  --ric BTC-USDT --uniform_grid_gap 50```||grid generator, 50bps gap|
+|``````|||
+
 Example#1 (Long straddle):
 
 ```
