@@ -39,7 +39,6 @@ class PriceGrid_:
             gdf.columns = ['action','price']
             gdf['bps']=(gdf.price-self.current_price)/self.current_price*10_000
             gdf.bps = gdf.bps.apply(int)
-            gdf['inc'] = gdf.bps.diff()
             info += '\n' + str(gdf)
         return info
     def __repr__(self) -> str:
@@ -195,7 +194,8 @@ class HFTUniformGrid(PriceGrid_):
         grid = np.arange(self.lb + stp,self.hb - stp, stp)
         grid = list(reversed(grid))
         aug_grid = []
-
+        
+        fa = 1e4
         if self.ric.upper().startswith('DOGE'): fa = 1e4
         if self.ric.upper().startswith('BTC'): fa = 1e2
         fa_ = lambda v: int(v*fa)/fa
@@ -351,7 +351,7 @@ async def on_ohlcv(data):
     print(ddf)
 
 @click.command()
-@click.option('--ric',default="DOGE-USDT")
+@click.option('--ric',deffault="DOGE-USDT")
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
