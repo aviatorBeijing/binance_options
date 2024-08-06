@@ -351,7 +351,7 @@ async def on_ohlcv(data):
     print(ddf)
 
 @click.command()
-@click.option('--ric',deffault="DOGE-USDT")
+@click.option('--ric',default="DOGE-USDT")
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
