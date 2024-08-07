@@ -11,13 +11,13 @@ function _dat(){
 }
 
 echo "reading:"
-for s in doge sol pendle ace sei btc matic
+for s in doge sol pendle ace sei btc matic bnb
 do
         _fee $s
 done 
 
 echo "check:"
-for s in doge sol pendle ace sei btc matic
+for s in doge sol pendle ace sei btc matic bnb
 do
 	_dat $s
 done 
