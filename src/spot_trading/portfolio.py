@@ -408,6 +408,7 @@ def check_cvar(cryptos=''):
 
 def check_bal():
     fn = os.getenv('USER_HOME','') + "/tmp/bal.csv"
+    print('-- using:',fn)
     if os.path.exists( fn ):
         df = pd.read_csv( fn )
         df['ref'] = df['value'] / df['ttl']
@@ -420,10 +421,16 @@ def check_bal():
         stables = df['value'].sum() - cryptos
         stables_free = stb['free'].sum()
 
+        btc = df[df.asset=='BTC'].pce.values[0]
+        doge = df[df.asset=='DOGE'].pce.values[0]
+
         print('\n-- hedging:')
         print(f'  -- ttl:          ${(cryptos+stables):,.0f}')
-        print(f'  -- cryptos:      ${cryptos:,.0f} ({(cryptos/(cryptos+stables)*100):.1f}%)')
         print(f'  -- stable coins: ${stables:,.0f}, free: ${stables_free:.0f} ({(stables_free/stables*100):.1f}%)')
+        print(f'  -- cryptos:      ${cryptos:,.0f} ({(cryptos/(cryptos+stables)*100):.1f}%)')
+        print(f'  -- hedge by BTC:  (short) {(cryptos/btc):12.4f} btc')
+        print(f'  -- hedge by DOGE: (short) {(cryptos/doge):12.1f} doge')
+        print()
     else:
         print(f'-- {fn} NOT found.')
 

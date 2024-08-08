@@ -23,8 +23,11 @@ scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_kline.tar.
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_ot.tar.gz ./;mv binance_ot.tar.gz ~/tmp;cd ~/tmp;tar xvfz binance_ot.tar.gz;cd $CPWD
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/binance_fee_gain.dat ./
 
+# Check hedging
 cd $BINANCE_OPTIONS_DIR
 $PYTHON spot_trading/portfolio.py  --check_assets
+
+# Check pnl by assets (in .png)
 ./win_losses.sh
 
 #python spot_trading/grid.py --ric doge/usdt --test --ref_spot=0.13908 --start_ts 2024-04-13T22:30:00.000Z
