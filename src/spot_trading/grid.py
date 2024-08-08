@@ -351,21 +351,22 @@ async def on_ohlcv(data):
     print(ddf)
 
 @click.command()
-@click.option('--ric',default="DOGE-USDT")
+@click.option('--rics',default="DOGE-USDT")
 @click.option('--start_ts', default='2024-04-10T07:10:00.000Z', help='for selecting the start of timeframe, usually from visual detection')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--uniform_grid_gap', default=200., help="bps for uniform grid")
 @click.option('--span',default='5m')
 @click.option('--ref_spot', default=0.155, help="spot price, used for offline plot")
-def main(ric,start_ts,test, uniform_grid_gap,span,ref_spot):
-    ric = ric.upper()
+def main(rics,start_ts,test, uniform_grid_gap,span,ref_spot):
+    rics = rics.upper()
     global pgrid 
     if not pgrid: # Init
-        prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
-        current_price = prange[-1].iloc[-1].close #test
-        pgrid = HFTUniformGrid( current_price, uniform_grid_gap, *prange)
-        pgrid.plot( ref_spot )
-        print(pgrid)
+        for ric in rics.split(','):
+            prange = low_freq_price_range(ric,span=span,start_ts=start_ts, is_test=test)
+            current_price = prange[-1].iloc[-1].close #test
+            pgrid = HFTUniformGrid( current_price, uniform_grid_gap, *prange)
+            pgrid.plot( ref_spot )
+            print(pgrid)
 
     if not test:
         from cryptofeed import FeedHandler
@@ -374,7 +375,7 @@ def main(ric,start_ts,test, uniform_grid_gap,span,ref_spot):
 
         f = FeedHandler()
         f.add_feed(Binance(
-                symbols=[ric.replace('/','-')],
+                symbols=[ric.replace('/','-') for ric in rics.split(',') ],
                 channels=[TRADES,L2_BOOK,TICKER], 
                 callbacks={
                     TRADES: OHLCV(on_ohlcv, window=WINDOW_IN_SECONDS),

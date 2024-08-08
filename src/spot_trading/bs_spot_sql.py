@@ -32,7 +32,7 @@ def read_latest_ticker(ric):
 
             tnow = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
             tnow = int( tnow.timestamp()*1000)
-            assert( tnow>=ts and (tnow-ts)<5000 ), f"tnow={tnow}, db ts={ts}, diff={tnow-ts}"
+            assert( tnow>=ts and (tnow-ts)<5000 ), f"{ric}: tnow={tnow}, db ts={ts}, diff={tnow-ts}"
 
             return bid,ask,ts,timestamp 
     raise Exception(f"data error in read_latest_ticker(ric)")
