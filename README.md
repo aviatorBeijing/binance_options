@@ -32,6 +32,8 @@ Summaries [Spot]:
 | Command  | Shorthand | Function |
 | ------------- | ------------- | ------------- |
 |```python spot_trading/grid.py  --ric BTC-USDT --uniform_grid_gap 50```||grid generator, 50bps gap|
+|```cd spot_trading/doge;./c```||cancel a comma-separated list of orderID (current orderIDs can be obtained by ./p command) |
+|```cd spot_trading/<crypto>;./c```||for any crypto indicated in the '<>' enclosed|
 |``````|||
 
 Example#1 (Long straddle):
