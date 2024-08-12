@@ -4,6 +4,7 @@ from tabulate import tabulate
 from butil.butils import binance_kline
 
 def _main(ric,span):
+    ric = ric.upper()
     fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
     df = binance_kline(ric, span=span, grps=5 if span=='1d'  else 50)
 
