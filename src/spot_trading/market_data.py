@@ -1,7 +1,16 @@
-import os,datetime,click 
+import os,datetime,click,pandas as pd
 from tabulate import tabulate
 
 from butil.butils import binance_kline
+
+def cached(ric,span):
+    fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+        return df 
+    else:
+        print(f'*** {fn} not found.')
+        return pd.DataFrame()
 
 def _main(ric,span):
     ric = ric.upper()
