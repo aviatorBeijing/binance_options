@@ -16,7 +16,7 @@ export USER_HOME=<set_a_tmp_directory_for_data_cache>
 |```python brisk/pricing.py --contract BTC-240607-56500-C --user_cost 585```||check the pnl against spot price movement|
 |```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1```||pnl monitor of trading a straddle|
 |```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1 --user_premium 95.5```||pnl calc of a straddle position|
-|```./atm.sh <btc|eth>```||fetch and sort the options on Binance, 1) list the most interested contracts, and 2) sort the ATM contracts by OI|
+|```./atm.sh btc```||fetch and sort the options on Binance, 1) list the most interested contracts, and 2) sort the ATM contracts by OI|
 |``````|||
 
 [Perp]  (DOGE/USDT):
