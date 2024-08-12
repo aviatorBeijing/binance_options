@@ -34,6 +34,7 @@ Summaries [Spot]:
 |```python spot_trading/grid.py  --ric BTC-USDT --uniform_grid_gap 50```||grid generator, 50bps gap|
 |```cd spot_trading/doge;./c```||cancel a comma-separated list of orderID (current orderIDs can be obtained by ./p command) |
 |```cd spot_trading/<crypto>;./c```||for any crypto indicated in the '<>' enclosed|
+|```python spot_trading/kline_trend.py --use_cached --span=1d --period=90```||STL timeseries decomposition to detect trend & seasonal movement|
 |``````|||
 
 Example#1 (Long straddle):
