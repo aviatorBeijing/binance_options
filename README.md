@@ -7,7 +7,7 @@ python -m pip install -r requirements.txt
 export USER_HOME=<set_a_tmp_directory_for_data_cache>
 ```
 
-Summaries [Options]:
+[Options]:
 | Command  | Shorthand | Function |
 | ------------- | ------------- | ------------- |
 | ```./buy.sh```  |   | place single options order |
@@ -18,7 +18,7 @@ Summaries [Options]:
 |```python strategy/straddle.py --left BTC-240807-56500-C --right BTC-240807-56500-P --size=0.1 --user_premium 95.5```||pnl calc of a straddle position|
 |``````|||
 
-Summaries [Perp]  (DOGE/USDT):
+[Perp]  (DOGE/USDT):
 | Command  | Shorthand | Function |
 | ------------- | ------------- | ------------- |
 |```./perp_trading/doge/check.sh```|```./pp```|check current perp positions & pnl|
@@ -28,7 +28,7 @@ Summaries [Perp]  (DOGE/USDT):
 |```./perp_trading/doge/instant_pair.sh```|```./ps```|send an order pair: at 25bps each side|
 |``````|||
 
-Summaries [Spot]:
+[Spot]:
 | Command  | Shorthand | Function |
 | ------------- | ------------- | ------------- |
 |```python spot_trading/grid.py  --ric BTC-USDT --uniform_grid_gap 50```||grid generator, 50bps gap|
