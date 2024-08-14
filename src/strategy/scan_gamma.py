@@ -24,8 +24,8 @@ def _multiprocess_main(contracts):
         df = df[['contract','gamma','ask','last_trade','delta','theta','impvol']]
         df.gamma = df.gamma.apply(float)
         df.sort_values('gamma', ascending=False,inplace=True)
-        df = df.head(10)
-        print( '-- first 10:\n', tabulate(df, headers="keys") )
+        n = 50;df = df.head(n)
+        print( f'-- first {n}:\n', tabulate(df, headers="keys") )
         time.sleep(5)
 
 @click.command()
