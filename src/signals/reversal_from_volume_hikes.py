@@ -444,6 +444,9 @@ def _main(sym, volt,offline=False, new_struct=False):
                 file_ts = datetime.datetime.strptime(ds, "%Y-%m-%dT%H:%M:%S.%fZ")
             else:
                 df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
+                fn = os.getenv("USER_HOME","") + f'/tmp/{sym.lower().replace("/","-")}_1d.csv'
+                df.to_csv(fn,index=0)
+                print('-- market data saved:', fn)
                 df.columns = [s.lower() for s in df.columns ]
                 df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
                 df.timestamp = pd.to_datetime(df['timestamp']).dt.tz_localize('UTC')
