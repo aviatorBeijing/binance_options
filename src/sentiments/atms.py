@@ -54,7 +54,8 @@ def get_atm( underlying, df ):
 @click.command()
 @click.option('--underlying', default="BTC")
 @click.option('--refresh_oi', is_flag=True, default=False)
-def main(underlying, refresh_oi):
+@click.option('--check_price_ranges', is_flag=True, default=False)
+def main(underlying, refresh_oi, check_price_ranges):
     assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
 
     fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
@@ -88,6 +89,18 @@ def main(underlying, refresh_oi):
     odf.sumOpenInterestUsd = odf.sumOpenInterestUsd.apply(float)
     print('-- ranked all by OI:')
     print(tabulate(odf.sort_values('sumOpenInterestUsd', ascending=False).head(5), headers="keys"))
+
+    if check_price_ranges:
+        print('\n-- prices range indicated by options OI (implied by insidious market-maker, who can sell options on binance):')
+        for datestr in sorted(expiries):
+            ddf =  odf[ odf['symbol'].str.contains(datestr) ].sort_values('sumOpenInterestUsd', ascending=False)
+            cdf = ddf[ddf['symbol'].str.contains('-C')]
+            pdf = ddf[ddf['symbol'].str.contains('-P')]
+            cps = [float(s.split('-')[2]) for s in cdf.head(2).symbol.values]
+            pps = [float(s.split('-')[2]) for s in pdf.head(2).symbol.values]
+            #print(pdf.head(2))
+            print( datestr, '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )   )
+        import sys;sys.exit()
 
     atm_contracts = get_atm( underlying, df )
     contracts = []

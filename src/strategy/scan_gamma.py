@@ -1,6 +1,5 @@
-import time
 import pandas as pd
-import click,time
+import click,time,os
 from tabulate import tabulate
 import numpy  as np
 from multiprocessing import Process
@@ -24,6 +23,9 @@ def _multiprocess_main(contracts):
         df = df[['contract','gamma','ask','last_trade','delta','theta','impvol']]
         df.gamma = df.gamma.apply(float)
         df.sort_values('gamma', ascending=False,inplace=True)
+        fn = os.getenv("USER_HOME","")+'/tmp/binance_greeks.csv'
+        df.to_csv(fn,index=0)
+        print('--  written  greeks in:', fn)
         n = 50;df = df.head(n)
         print( f'-- first {n}:\n', tabulate(df, headers="keys") )
         time.sleep(5)
