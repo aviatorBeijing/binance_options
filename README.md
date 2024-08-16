@@ -39,6 +39,7 @@ export USER_HOME=<set_a_tmp_directory_for_data_cache>
 |```cd spot_trading/doge;./c```||cancel a comma-separated list of orderID (current orderIDs can be obtained by ./p command) |
 |```cd spot_trading/<crypto>;./c```||for any crypto indicated in the '<>' enclosed|
 |```python spot_trading/kline_trend.py --use_cached --span=1d --period=90```||STL timeseries decomposition to detect trend & seasonal movement|
+|```./price_ranges_indicated_by_binance_options_market-makers.sh```||prices range indicated by Options market-makers (Note: only mm can sell options on Binance for now)|
 |``````|||
 
 Example#1 (Long straddle):
