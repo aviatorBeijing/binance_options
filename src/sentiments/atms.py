@@ -96,8 +96,8 @@ def main(underlying, refresh_oi, check_price_ranges):
             ddf =  odf[ odf['symbol'].str.contains(datestr) ].sort_values('sumOpenInterestUsd', ascending=False)
             cdf = ddf[ddf['symbol'].str.contains('-C')]
             pdf = ddf[ddf['symbol'].str.contains('-P')]
-            cps = [float(s.split('-')[2]) for s in cdf.head(2).symbol.values]
-            pps = [float(s.split('-')[2]) for s in pdf.head(2).symbol.values]
+            cps = [float(s.split('-')[2]) for s in cdf.head(3).symbol.values]
+            pps = [float(s.split('-')[2]) for s in pdf.head(3).symbol.values]
             #print(pdf.head(2))
             print( datestr, '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )   )
         import sys;sys.exit()
