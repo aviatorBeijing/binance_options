@@ -457,7 +457,7 @@ def _main(sym, volt,offline=False, new_struct=False):
                     if not isinstance( file_ts, datetime.datetime): raise e
                     #datetime.datetime.strptime(ds, "%Y-%m-%d %H:%M:%S")
         else:
-            df = pd.read_csv( fn ) #,index_col=0 )
+            df = pd.read_csv( fn )
         return df, file_ts
     df, file_ts = _data(sym)
     """fvx = _data('^fvx')
