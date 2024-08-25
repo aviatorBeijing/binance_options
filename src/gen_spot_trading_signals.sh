@@ -6,7 +6,7 @@ ASHARE=000729.SZ,000001.SZ,601186.SS,200550.SZ,600502.SS
 
 PWD=`pwd`
 
-cd $FINAPI/api/strategies
+cd $FINAPI/api/strategies/scripts
 
 # Signals will be stored in db="emmited_signals", table="signals".
 
