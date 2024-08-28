@@ -50,6 +50,7 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
         cash = 0
         shares = 0
         p0 = -1
+        price_at_rebalance = 0.
         for t in range(N): # price path
             S = S_paths[i, t]
             tau = T - t*dt
@@ -62,8 +63,9 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
                 shares = delta
                 premium = black_scholes_call_price(S, K, tau, r, sigma) 
                 cash = premium - shares * S
-                print('\tsell 1 call gain: $', premium )
-                print(f'buy {shares:.2f} stock cost: $', shares * S, ', net capital: $', cash )
+                price_at_rebalance = p0 # init
+                #print('\t sell 1 call gain: $', premium )
+                #print(f'buy {shares:.2f} stock cost: $', shares * S, ', net capital: $', cash )
             else:
                 shares_new = delta
                 delta_shares = shares_new - shares
@@ -71,22 +73,26 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
                 
                 # Gamma scalping: profit from mean-reverting price movements
                 p1 = S_paths[i, t]
-                if t > 0 and np.abs(p1-p0) > 0:
-                    gamma_scalping_pnl = 0.5 * gamma * (p1- p0)**2
+                if t > 0 and np.abs(p1-price_at_rebalance) > 0:
+                    gamma_scalping_pnl = 0.5 * gamma * (p1- price_at_rebalance)**2
                     cash += gamma_scalping_pnl
                     rtn = gamma_scalping_pnl/(abs(trade_volume))*10_000
                     if rtn>50: # Trade only if the potential gain is great enough.
                         cash -= trade_volume
                         shares = shares_new
+                        price_at_rebalance = p1
 
+                        """
                         if delta_shares>0:
                             print(f'buy {delta_shares:.6f} stock')
                         elif delta_shares<0:
                             print(f'\tsell {-delta_shares:.6f} stock')
-
-
+                        
                         print(f'\t\t\tscalping pnl: $ {gamma_scalping_pnl:.3f}, {rtn:.0f} bps (prices: {p0} --> {p1}')
-                p0 = S_paths[i, t] # Update price
+                        """
+                    else:
+                        pass
+                p0 = p1 # Update price
 
             portfolio_values[i, t] = shares * S + cash
         
@@ -110,7 +116,7 @@ print('95th Percentile:', np.percentile(pnl_gamma_scalping, 95))
 
 
 plt.figure(figsize=(12,6))
-sns.kdeplot(pnl_gamma_scalping, label='Gamma Scalping', shade=True)
+sns.kdeplot(pnl_gamma_scalping, label='Gamma Scalping', fill=True)
 plt.title('PnL Distribution for Gamma Scalping')
 plt.xlabel('Profit and Loss')
 plt.ylabel('Density')
