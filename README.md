@@ -88,6 +88,13 @@ Only support BTC,BNB, and DOGE contracts, for now.
 Ref: https://www.fidelity.com/learning-center/investment-products/options/options-strategy-guide/long-strangle
 ```
 
+## Gamma-scalping (GBM simulation)
+```
+python strategy/gamma_scalping/gamma_scalping_sell_call.py
+```
+<img width="886" alt="Screenshot 2024-08-30 at 16 16 29" src="https://github.com/user-attachments/assets/b3261eec-cdca-4814-9108-7389e8370f47">
+
+
 ## SPOT (MPT)
 ```
 python signals/reversal_from_volume_hikes.py --syms btc,doge,sol --volt 68
