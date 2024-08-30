@@ -27,7 +27,8 @@ def extract_specs( contract):
 # Call option pprice
 def callprice(S,K,T,sigma,r)->float:
     d1=(np.log(S/K) + (r + 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
-    d2=(np.log(S/K) + (r - 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
+    #d2=(np.log(S/K) + (r - 0.5 * sigma**2)*T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
     return S*scs.norm.cdf(d1) - np.exp(-r *T) * K * scs.norm.cdf(d2)
 
 # Parity: C+PV(S) = P+S

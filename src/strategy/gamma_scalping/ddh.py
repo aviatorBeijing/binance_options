@@ -1,9 +1,14 @@
-import numpy as np
+import numpy as np,os
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import seaborn as sns
+from tqdm import tqdm 
 
+"""
+Compare the P&L at expiry of options in three scenario:
+    Dynamic hedging, static hedging, and no hedging.
+"""
 # Option parameters
 S0 = 100       # Initial stock price
 K = 100        # Strike price
@@ -12,7 +17,7 @@ sigma = 0.2    # Volatility
 T = 1.0        # Time to maturity in years
 dt = 1/252     # Time step (daily)
 N = int(T/dt)  # Number of time steps
-n_sim = 1000   # Number of simulations
+n_sim = 1_000   # Number of simulations
 
 def black_scholes_call_price(S, K, T, r, sigma):
     d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*np.sqrt(T))
@@ -38,7 +43,7 @@ def simulate_gbm_paths(S0, r, sigma, T, dt, n_sim):
 def dynamic_delta_hedging(S_paths, K, r, sigma, T, dt):
     n_sim, N = S_paths.shape
     portfolio_values = np.zeros((n_sim, N))
-    for i in range(n_sim):
+    for i in tqdm(range(n_sim)):
         cash = 0
         shares = 0
         for t in range(N):
@@ -95,15 +100,17 @@ pnl_no_hedging = no_hedging(S_paths, K)
 
 # Plot results
 plt.figure(figsize=(12,6))
-sns.kdeplot(pnl_dynamic, label='Dynamic Delta Hedging', shade=True)
-sns.kdeplot(pnl_static, label='Static Delta Hedging', shade=True)
-sns.kdeplot(pnl_no_hedging, label='No Hedging', shade=True)
+sns.kdeplot(pnl_dynamic, label='Dynamic Delta Hedging', fill=True)
+sns.kdeplot(pnl_static, label='Static Delta Hedging', fill=True)
+sns.kdeplot(pnl_no_hedging, label='No Hedging', fill=True)
 plt.title('PnL Distribution Comparison')
 plt.xlabel('Profit and Loss')
 plt.ylabel('Density')
 plt.legend()
 plt.grid(True)
-plt.show()
+fn = os.getenv('USER_HOME','') + '/tmp/ddh.png'
+plt.savefig(fn)
+print('-- saved: ', fn)
 
 # Summary statistics
 print('Dynamic Hedging PnL:')
