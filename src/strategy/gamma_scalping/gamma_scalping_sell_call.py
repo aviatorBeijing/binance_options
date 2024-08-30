@@ -8,18 +8,21 @@ from butil.options_calculator import callprice
 from butil.options_calculator import deltafunc
 from butil.options_calculator import gamma as calc_gamma
 
+plt.style.use('fivethirtyeight')
+
 # Option parameters
-S0 = 100       # Initial stock price
-K = 100        # Strike price
+S0 = 60000       # Initial stock price
+K = 60000        # Strike price
 r = 0.05       # Risk-free interest rate
 sigma = 0.5    # Volatility
 T = 1.0        # Time to maturity in years
 dt = 1/252     # Time step (daily)
 N = int(T/dt)  # Number of time steps
-n_sim = 100   # Number of simulations
+fee_rate = .5/100   # Spot trading fee rate
+n_sim = 10   # Number of simulations
 
 # Simulate GBM paths
-np.random.seed(47) # Set seed for reproducibility
+#np.random.seed(47) # Set seed for reproducibility
 def simulate_gbm_paths(S0, r, sigma, T, dt, n_sim):
     N = int(T/dt)
     S_paths = np.zeros((n_sim, N))
@@ -34,6 +37,9 @@ def simulate_gbm_paths(S0, r, sigma, T, dt, n_sim):
 def gamma_scalping(S_paths, K, r, sigma, T, dt):
     n_sim, N = S_paths.shape
     portfolio_values = np.zeros((n_sim, N))
+    cum_fees = np.zeros(n_sim)
+    cum_vols = np.zeros(n_sim) # $ amount
+    cum_amt = np.zeros(n_sim)  # count 
     
     for i in tqdm( range(n_sim) ):
         cash = 0
@@ -51,6 +57,9 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
                 premium = callprice(S, K, tau, sigma, r) 
                 cash = premium - shares * S     # sell options & buy shares
                 price_at_rebalance = S # init & record the 1st rebalance by buying shares
+                cum_fees[i] += abs(shares*S*fee_rate)
+                cum_vols[i] += abs(shares*S)
+                cum_amt[i] += shares
                 #print('\t sell 1 call gain: $', premium )
                 #print(f'buy {shares:.2f} stock cost: $', shares * S, ', net capital: $', cash )
             else:
@@ -60,13 +69,17 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
                 
                 # Gamma scalping: profit from mean-reverting price movements
                 if abs(trade_volume)>0 and t > 0 and np.abs(S - price_at_rebalance) > 0:
-                    gamma_scalping_pnl = 0.5 * gamma * (S - price_at_rebalance)**2
+                    fee = abs(trade_volume) * fee_rate
+                    gamma_scalping_pnl = 0.5 * gamma * (S - price_at_rebalance)**2 - fee
                     rtn = gamma_scalping_pnl/(abs(trade_volume))*10_000
                     if rtn>50: # Trade only if the potential gain is great enough.
                         cash += gamma_scalping_pnl
                         cash -= trade_volume
                         shares = shares_new
                         price_at_rebalance = S
+                        cum_fees[i] += fee
+                        cum_vols[i] += abs(trade_volume)
+                        cum_amt[i] += delta_shares
 
                         """
                         if delta_shares>0:
@@ -86,26 +99,47 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
         portfolio_values[i, -1] -= payoff   # Because the sell position on options
     
     pnl = portfolio_values[:, -1]
-    return pnl
+    return pnl, cum_fees, cum_vols, cum_amt
 
 S_paths = simulate_gbm_paths(S0, r, sigma, T, dt, n_sim)
-pnl_gamma_scalping = gamma_scalping(S_paths, K, r, sigma, T, dt)
+pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = gamma_scalping(S_paths, K, r, sigma, T, dt)
 
 # Summary statistics
 print('Gamma Scalping PnL:')
-print('Mean:', np.mean(pnl_gamma_scalping))
-print('Std Dev:', np.std(pnl_gamma_scalping))
-print('Median:', np.median(pnl_gamma_scalping))
-print('5th Percentile:', np.percentile(pnl_gamma_scalping, 5))
-print('95th Percentile:', np.percentile(pnl_gamma_scalping, 95))
+print('\tMean:', np.mean(pnl_gamma_scalping))
+print('\tStd Dev:', np.std(pnl_gamma_scalping))
+print('\tMedian:', np.median(pnl_gamma_scalping))
+print('\t5th Percentile:', np.percentile(pnl_gamma_scalping, 5))
+print('\t95th Percentile:', np.percentile(pnl_gamma_scalping, 95))
 
 
-plt.figure(figsize=(12,6))
-sns.kdeplot(pnl_gamma_scalping, label='Gamma Scalping', fill=True)
-plt.title('PnL Distribution for Gamma Scalping')
+plt.figure(figsize=(18,10))
+
+plt.subplot(2, 2, 1)
+sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
+plt.title(f'Net PnL Distribution for Scalping ({n_sim} sims)')
 plt.xlabel('Profit and Loss')
-plt.ylabel('Density')
 plt.legend()
+
+plt.subplot(2, 2, 2)
+sns.kdeplot(cum_fees, label='Fee', fill=True)
+sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
+plt.title(f'Fee Distribution (rate={(fee_rate*100):.2f}%)')
+plt.xlabel('Fee')
+plt.legend()
+
+plt.subplot(2, 2, 3)
+sns.kdeplot(cum_vols, label='Volume', fill=True)
+plt.title('Trading Volume Distribution')
+plt.xlabel('Volume ($)')
+plt.legend()
+
+plt.subplot(2, 2, 4)
+sns.kdeplot(cum_amt, label='Volume', fill=True)
+plt.title('Trading Amount Distribution')
+plt.xlabel('Amount (#)')
+plt.legend()
+
 plt.grid(True)
 
 fn = os.getenv('USER_HOME','') + '/tmp/gamma_scalping.png'
