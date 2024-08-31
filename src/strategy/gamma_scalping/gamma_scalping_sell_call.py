@@ -10,17 +10,6 @@ from butil.options_calculator import gamma as calc_gamma
 
 plt.style.use('fivethirtyeight')
 
-# Option parameters
-S0 = 60000       # Initial stock price
-K = 60000        # Strike price
-r = 0.05       # Risk-free interest rate
-sigma = 0.5    # Volatility
-T = 5.0        # Time to maturity in years
-dt = 1/252     # Time step (daily)
-N = int(T/dt)  # Number of time steps
-fee_rate = .5/100   # Spot trading fee rate
-n_sim = 10   # Number of simulations
-
 # Simulate GBM paths
 #np.random.seed(47) # Set seed for reproducibility
 def simulate_gbm_paths(S0, r, sigma, T, dt, n_sim):
@@ -134,53 +123,68 @@ def gamma_scalping(S_paths, K, r, sigma, T, dt):
     pnl = portfolio_values[:, -1]
     return pnl, cum_fees, cum_vols, cum_amt
 
+
+# Option parameters
+S0 = 59_000       # Initial stock price
+K = 60_000        # Strike price
+r = 0.05       # Risk-free interest rate
+sigma = 0.5    # Volatility
+T = 5.0        # Time to maturity in years
+dt = 1/365     # Time step (daily)
+N = int(T/dt)  # Number of time steps
+fee_rate = .5/100   # Spot trading fee rate
+n_sim = 10   # Number of simulations
+
 #S_paths = simulate_gbm_paths(S0, r, sigma, T, dt, n_sim)
 S_paths = simulate_jump_paths(S0, sigma, T, dt, n_sim)
 pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = gamma_scalping(S_paths, K, r, sigma, T, dt)
 
-# Summary statistics
-print('Gamma Scalping PnL:')
-print('\tMean:', np.mean(pnl_gamma_scalping))
-print('\tStd Dev:', np.std(pnl_gamma_scalping))
-print('\tMedian:', np.median(pnl_gamma_scalping))
-print('\t5th Percentile:', np.percentile(pnl_gamma_scalping, 5))
-print('\t95th Percentile:', np.percentile(pnl_gamma_scalping, 95))
+def _plot():
+    # Summary statistics
+    print('Gamma Scalping PnL:')
+    print('\tMean:', np.mean(pnl_gamma_scalping))
+    print('\tStd Dev:', np.std(pnl_gamma_scalping))
+    print('\tMedian:', np.median(pnl_gamma_scalping))
+    print('\t5th Percentile:', np.percentile(pnl_gamma_scalping, 5))
+    print('\t95th Percentile:', np.percentile(pnl_gamma_scalping, 95))
 
 
-plt.figure(figsize=(24,16))
+    plt.figure(figsize=(24,16))
 
-nrow = 2
-ncol = 3
+    nrow = 2
+    ncol = 3
 
-plt.subplot(nrow, ncol, 1)
-sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
-plt.title(f'Net PnL Distribution for Scalping ({n_sim} sims)')
-plt.legend()
+    plt.subplot(nrow, ncol, 1)
+    sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
+    plt.title(f'Net PnL Distribution for Scalping ({n_sim} sims)')
+    plt.legend()
 
-plt.subplot(nrow, ncol, 2)
-sns.kdeplot(cum_fees, label='Fee', fill=True)
-sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
-plt.title(f'Fee Distribution (rate={(fee_rate*100):.2f}%)')
-plt.legend()
+    plt.subplot(nrow, ncol, 2)
+    sns.kdeplot(cum_fees, label='Fee', fill=True)
+    sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
+    plt.title(f'Fee Distribution (rate={(fee_rate*100):.2f}%)')
+    plt.legend()
 
-plt.subplot(nrow, ncol, 3)
-sns.kdeplot(cum_vols, label='Volume', fill=True)
-plt.title('Trading Volume ($) Distribution')
-plt.legend()
+    plt.subplot(nrow, ncol, 3)
+    sns.kdeplot(cum_vols, label='Volume', fill=True)
+    plt.title('Trading Volume ($) Distribution')
+    plt.legend()
 
-plt.subplot(nrow, ncol, 4)
-sns.kdeplot(cum_amt, label='Volume', fill=True)
-plt.title('Trading Amount (#) Distribution')
-plt.legend()
+    plt.subplot(nrow, ncol, 4)
+    sns.kdeplot(cum_amt, label='Volume', fill=True)
+    plt.title('Trading Amount (#) Distribution')
+    plt.legend()
 
-plt.subplot(nrow, ncol, 5)
-for i in range(5): plt.plot( S_paths[i,:] )
-plt.title(f'Path Examples ({T} yrs)')
-plt.ylabel('Price ($)')
-plt.legend()
+    plt.subplot(nrow, ncol, 5)
+    for i in range(5): plt.plot( S_paths[i,:] )
+    plt.title(f'Path Examples ({T} yrs)')
+    plt.ylabel('Price ($)')
+    plt.legend()
 
-plt.grid(True)
+    plt.grid(True)
 
-fn = os.getenv('USER_HOME','') + '/tmp/gamma_scalping.png'
-plt.savefig(fn)
-print('-- saved:', fn)
+    fn = os.getenv('USER_HOME','') + '/tmp/gamma_scalping.png'
+    plt.savefig(fn)
+    print('-- saved:', fn)
+
+_plot()
