@@ -7,6 +7,7 @@ from tqdm import tqdm
 from butil.options_calculator import callprice
 from butil.options_calculator import deltafunc
 from butil.options_calculator import gamma as calc_gamma
+from strategy.gamma_scalping._configs import *
 
 plt.style.use('fivethirtyeight')
 
@@ -56,7 +57,7 @@ def simulate_jump_paths(S0, sigma, T, dt, n_sim):
     return all_paths
 
 # Gamma scalping strategy
-def gamma_scalping(S_paths, K, r, sigma, T, dt):
+def _scalping(S_paths, K, r, sigma, T, dt):
     n_sim, N = S_paths.shape
     portfolio_values = np.zeros((n_sim, N))
     cum_fees = np.zeros(n_sim)
@@ -139,18 +140,18 @@ def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
     ncol = 3
 
     plt.subplot(nrow, ncol, 1)
-    sns.kdeplot(pnl, label='Net Gain', fill=True)
-    plt.title(f'Net PnL Distribution for Scalping ({n_sim} sims)')
+    sns.kdeplot(pnl, label='Net Gain $', fill=True)
+    plt.title(f'Net PnL Distribution for Scalping ({len(S_paths)} sims)')
     plt.legend()
 
     plt.subplot(nrow, ncol, 2)
-    sns.kdeplot(cum_fees, label='Fee', fill=True)
-    sns.kdeplot(pnl, label='Net Gain', fill=True)
+    sns.kdeplot(cum_fees, label='Fee $', fill=True)
+    sns.kdeplot(pnl, label='Net Gain $', fill=True)
     plt.title(f'Fee Distribution (rate={(fee_rate*100):.2f}%)')
     plt.legend()
 
     plt.subplot(nrow, ncol, 3)
-    sns.kdeplot(cum_vols, label='Volume', fill=True)
+    sns.kdeplot(cum_vols, label='Volume $', fill=True)
     plt.title('Trading Volume ($) Distribution')
     plt.legend()
 
@@ -160,8 +161,8 @@ def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
     plt.legend()
 
     plt.subplot(nrow, ncol, 5)
-    for i in range(5): plt.plot( S_paths[i,:] )
-    plt.title(f'Path Examples ({T} yrs)')
+    for i in range(5): plt.plot( S_paths[i,:], label=f'path{i}' )
+    plt.title(f'Path Examples ({(len(S_paths[0,:])/nDays):.1f} yrs)')
     plt.ylabel('Price ($)')
     plt.legend()
 
@@ -179,23 +180,26 @@ def main():
     r = 0.05       # Risk-free interest rate
     sigma = 0.5    # Volatility
     T = 1.0        # Time to maturity in years
-    dt = 1/365     # Time step (daily)
-    N = int(T/dt)  # Number of time steps
-    fee_rate = .5/100   # Spot trading fee rate
-    n_sim = 10   # Number of simulations
-    nDays = 365
 
+    #n_sim = 10   # Number of simulations
     #S_paths = simulate_gbm_paths(S0, r, sigma, T, dt, n_sim)
     #S_paths = simulate_jump_paths(S0, sigma, T, dt, n_sim)
 
-    from strategy.gamma_scalping.merton_jump_model import calibrate_and_generate,read_prices_from_csv
-    prices, dates = read_prices_from_csv( 'btc')
-    prices = prices[-nDays*5:]
-    dates  = dates[-nDays*5:]
-    paths, gen_dates = calibrate_and_generate(prices, n_paths=100, t0=str(dates[-1]) )
-    S_paths = paths.transpose()
+    from strategy.gamma_scalping.merton_jump_model import (calibrate_and_generate,
+    read_prices_from_csv,calculate_annualized_volatility)
 
-    pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = gamma_scalping(S_paths, K, r, sigma, T, dt)
+    cYrs = 5    # data length (yrs) used for calibration
+    N = 100     # number of future paths
+    prices, dates = read_prices_from_csv( 'btc')
+    prices = prices[-nDays*cYrs:]
+    dates  = dates[-nDays*cYrs:]
+    paths, mle_sigma, gen_dates = calibrate_and_generate(prices, n_paths=N, t0=str(dates[-1]) )
+    volatilities = calculate_annualized_volatility(paths, dt)
+    mean_volatility = np.mean(volatilities)
+
+    S_paths = paths.transpose()
+    pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = _scalping(
+        S_paths, K, r, mean_volatility, T, dt)
 
     _plot( S_paths, pnl_gamma_scalping, cum_fees, cum_vols, cum_amt )
 

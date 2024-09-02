@@ -4,6 +4,8 @@ from scipy.optimize import minimize
 from scipy.stats import norm, poisson
 import matplotlib.pyplot as plt
 
+from strategy.gamma_scalping._configs import *
+
 plt.style.use('fivethirtyeight')
 
 def read_prices_from_csv(sym):
@@ -75,9 +77,6 @@ def calculate_annualized_volatility(paths, dt):
 def calc_log_returns(prices):
     return np.log(prices[1:] / prices[:-1])
 
-
-nDays = 365 # Trading days per year
-
 def calibrate_and_generate(prices, n_paths=100, horizon=1, t0:str=''):
     T = horizon  # Time horizon (1 year)
 
@@ -94,7 +93,7 @@ def calibrate_and_generate(prices, n_paths=100, horizon=1, t0:str=''):
     dates = list( range( n_steps ) )
     if t0:
         dates = pd.date_range(start=t0, periods=n_steps+1 )
-    return paths, dates
+    return ( paths, sigma_mle, dates )
 
 def main():
     x = 5
@@ -103,7 +102,6 @@ def main():
     dates  = dates[-nDays*x:]
     
     n_paths = 100
-    dt = 1/nDays  # Time step size
     paths, gen_dates = calibrate_and_generate(prices, n_paths=n_paths, t0=str(dates[-1]) )
     volatilities = calculate_annualized_volatility(paths, dt)
 
