@@ -148,14 +148,14 @@ S_paths = paths.transpose()
 
 pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = gamma_scalping(S_paths, K, r, sigma, T, dt)
 
-def _plot():
+def _plot(pnl):
     # Summary statistics
     print('Gamma Scalping PnL:')
-    print('\tMean:', np.mean(pnl_gamma_scalping))
-    print('\tStd Dev:', np.std(pnl_gamma_scalping))
-    print('\tMedian:', np.median(pnl_gamma_scalping))
-    print('\t5th Percentile:', np.percentile(pnl_gamma_scalping, 5))
-    print('\t95th Percentile:', np.percentile(pnl_gamma_scalping, 95))
+    print('\tMean:', np.mean(pnl))
+    print('\tStd Dev:', np.std(pnl))
+    print('\tMedian:', np.median(pnl))
+    print('\t5th Percentile:', np.percentile(pnl, 5))
+    print('\t95th Percentile:', np.percentile(pnl, 95))
 
 
     plt.figure(figsize=(24,16))
@@ -164,13 +164,13 @@ def _plot():
     ncol = 3
 
     plt.subplot(nrow, ncol, 1)
-    sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
+    sns.kdeplot(pnl, label='Net Gain', fill=True)
     plt.title(f'Net PnL Distribution for Scalping ({n_sim} sims)')
     plt.legend()
 
     plt.subplot(nrow, ncol, 2)
     sns.kdeplot(cum_fees, label='Fee', fill=True)
-    sns.kdeplot(pnl_gamma_scalping, label='Net Gain', fill=True)
+    sns.kdeplot(pnl, label='Net Gain', fill=True)
     plt.title(f'Fee Distribution (rate={(fee_rate*100):.2f}%)')
     plt.legend()
 
@@ -196,4 +196,4 @@ def _plot():
     plt.savefig(fn)
     print('-- saved:', fn)
 
-_plot()
+_plot( pnl_gamma_scalping )
