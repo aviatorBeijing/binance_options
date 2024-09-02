@@ -196,6 +196,7 @@ def main():
     paths, mle_sigma, gen_dates = calibrate_and_generate(prices, n_paths=N, t0=str(dates[-1]) )
     volatilities = calculate_annualized_volatility(paths, dt)
     mean_volatility = np.mean(volatilities)
+    print(f'-- using sigma of averaged {N} paths from calibrated model: {mean_volatility:.3f}')
 
     S_paths = paths.transpose()
     pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = _scalping(
