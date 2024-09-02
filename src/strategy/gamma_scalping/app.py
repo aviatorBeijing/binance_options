@@ -127,11 +127,11 @@ def _scalping(S_paths, K, r, sigma, T, dt):
 def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
     # Summary statistics
     print('Gamma Scalping PnL:')
-    print('\tMean:', np.mean(pnl))
-    print('\tStd Dev:', np.std(pnl))
-    print('\tMedian:', np.median(pnl))
-    print('\t5th Percentile:', np.percentile(pnl, 5))
-    print('\t95th Percentile:', np.percentile(pnl, 95))
+    print(f'\tMean: $ {np.mean(pnl):,.0f}')
+    print(f'\tStd:: $ {np.std(pnl):,.0f}')
+    print(f'\tMedian:: $ {np.median(pnl):,.0f}')
+    print(f'\t5th Percentile:: $ {np.percentile(pnl, 5):,.0f}')
+    print(f'\t95th Percentile: $ {np.percentile(pnl, 95):,.0f}')
 
 
     plt.figure(figsize=(24,16))
