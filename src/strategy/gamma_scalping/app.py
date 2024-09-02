@@ -175,13 +175,12 @@ def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
 
 def main():
     # Option parameters
-    S0 = 59_000       # Initial stock price
+    asset = 'btc'
     K = 60_000        # Strike price
-    r = 0.05       # Risk-free interest rate
-    sigma = 0.5    # Volatility
-    T = 1.0        # Time to maturity in years
+    T = .5        # Time to maturity in years
 
     #n_sim = 10   # Number of simulations
+    #S0 = 59_000       # Initial stock price
     #S_paths = simulate_gbm_paths(S0, r, sigma, T, dt, n_sim)
     #S_paths = simulate_jump_paths(S0, sigma, T, dt, n_sim)
 
@@ -190,7 +189,7 @@ def main():
 
     cYrs = 5    # data length (yrs) used for calibration
     N = 100     # number of future paths
-    prices, dates = read_prices_from_csv( 'btc')
+    prices, dates = read_prices_from_csv( asset )
     prices = prices[-nDays*cYrs:]
     dates  = dates[-nDays*cYrs:]
     paths, mle_sigma, gen_dates = calibrate_and_generate(prices, n_paths=N, t0=str(dates[-1]) )
