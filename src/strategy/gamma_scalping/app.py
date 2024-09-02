@@ -64,6 +64,8 @@ def _scalping(S_paths, K, r, sigma, T, dt):
     cum_vols = np.zeros(n_sim) # $ amount
     cum_amt = np.zeros(n_sim)  # count 
     
+    premium0 = callprice(S_paths[0,0], K, T, sigma, r) 
+    print(f'-- options premium: $ {premium0:,.2f}')
     for i in tqdm( range(n_sim) ):
         cash = 0
         shares = 0
@@ -175,9 +177,8 @@ def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
 
 def main():
     # Option parameters
-    asset = 'btc'
-    K = 60_000        # Strike price
-    T = .5        # Time to maturity in years
+    asset = 'msft'
+    T = 1.        # Time to maturity in years
 
     #n_sim = 10   # Number of simulations
     #S0 = 59_000       # Initial stock price
@@ -199,7 +200,9 @@ def main():
 
     S_paths = paths.transpose()
     pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = _scalping(
-        S_paths, K, r, mean_volatility, T, dt)
+        S_paths, 
+        S_paths[0,0], # = K
+        r, mean_volatility, T, dt)
 
     _plot( S_paths, pnl_gamma_scalping, cum_fees, cum_vols, cum_amt )
 

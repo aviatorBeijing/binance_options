@@ -11,6 +11,8 @@ plt.style.use('fivethirtyeight')
 def read_prices_from_csv(sym):
     from spot_trading.market_data import get_filebased_kline
     data, _ts = get_filebased_kline( sym )
+    if 'timestamp' not in data:
+        data = data.reset_index()
     dates = pd.date_range( end=data['timestamp'].iloc[-1],periods=data.shape[0] )
     return data['close'].values, dates 
 
