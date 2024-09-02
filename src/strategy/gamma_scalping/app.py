@@ -129,14 +129,23 @@ S0 = 59_000       # Initial stock price
 K = 60_000        # Strike price
 r = 0.05       # Risk-free interest rate
 sigma = 0.5    # Volatility
-T = 5.0        # Time to maturity in years
+T = 1.0        # Time to maturity in years
 dt = 1/365     # Time step (daily)
 N = int(T/dt)  # Number of time steps
 fee_rate = .5/100   # Spot trading fee rate
 n_sim = 10   # Number of simulations
+nDays = 365
 
 #S_paths = simulate_gbm_paths(S0, r, sigma, T, dt, n_sim)
 S_paths = simulate_jump_paths(S0, sigma, T, dt, n_sim)
+
+from strategy.gamma_scalping.merton_jump_model import calibrate_and_generate,read_prices_from_csv
+prices, dates = read_prices_from_csv( 'btc')
+prices = prices[-nDays*5:]
+dates  = dates[-nDays*5:]
+paths, gen_dates = calibrate_and_generate(prices, n_paths=100, t0=str(dates[-1]) )
+S_paths = paths.transpose()
+
 pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = gamma_scalping(S_paths, K, r, sigma, T, dt)
 
 def _plot():

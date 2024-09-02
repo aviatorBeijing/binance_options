@@ -421,12 +421,6 @@ def find_reversals(sym, ts, closes,volume,volt=50,rsi=pd.DataFrame(),file_ts:str
         'pseudo_trade': pseudo_metrics,
     }
 
-def _file_ts(fn):
-    s = os.stat(fn)
-    t = int( s.st_mtime )
-    d = datetime.datetime.fromtimestamp(int(s.st_mtime) )
-    return str(d)
-
 def _main(sym, volt,offline=False, new_struct=False):
     print('-'*14)
     print(f'|    {sym.upper()}    |')

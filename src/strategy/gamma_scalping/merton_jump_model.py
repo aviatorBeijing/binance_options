@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 
 plt.style.use('fivethirtyeight')
 
-def read_prices_from_csv(filename):
-    data = pd.read_csv(filename)
+def read_prices_from_csv(sym):
+    from spot_trading.market_data import get_filebased_kline
+    data, _ts = get_filebased_kline( sym )
     dates = pd.date_range( end=data['timestamp'].iloc[-1],periods=data.shape[0] )
     return data['close'].values, dates 
 
@@ -89,6 +90,7 @@ def calibrate_and_generate(prices, n_paths=100, horizon=1, t0:str=''):
     n_steps = nDays * T
 
     paths = simulate_jump_diffusion_paths(S0, mu_mle, sigma_mle, lambda_mle, mu_j_mle, sigma_j_mle, T, n_steps, n_paths)
+
     dates = list( range( n_steps ) )
     if t0:
         dates = pd.date_range(start=t0, periods=n_steps+1 )
@@ -96,7 +98,7 @@ def calibrate_and_generate(prices, n_paths=100, horizon=1, t0:str=''):
 
 def main():
     x = 5
-    prices, dates = read_prices_from_csv(os.getenv('USER_HOME','') + "/tmp/btc-usdt_1d.csv")
+    prices, dates = read_prices_from_csv('btc')
     prices = prices[-nDays*x:]
     dates  = dates[-nDays*x:]
     

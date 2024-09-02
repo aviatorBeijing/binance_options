@@ -138,6 +138,12 @@ def get_underlying(contract):
     fds = contract.split('-')
     return f"{fds[0]}/USDT"
 
+def _file_ts(fn):
+    s = os.stat(fn)
+    t = int( s.st_mtime )
+    d = datetime.datetime.fromtimestamp(int(s.st_mtime) )
+    return str(d)
+
 def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     """
     @param grps (int): how many sets of data needed? Each set contains the "limit" by exchange limit, 1000.
@@ -182,7 +188,6 @@ def binance_kline(symbol='BTC/USDT', span="1d", grps=10) -> pd.DataFrame:
     #    print( f'*** Missing data? symbol={symbol}, span={span}, td: {td} \n {xdf.sort_values("dt", ascending=False)} \n{df}' )
 
     return df
-
 
 # Options
 def get_maturity( contract:str )->float:

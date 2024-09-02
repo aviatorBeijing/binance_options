@@ -1,7 +1,8 @@
 import os,datetime,click,pandas as pd
 from tabulate import tabulate
 
-from butil.butils import binance_kline
+from butil.butils import binance_kline, _file_ts
+from butil.yahoo_api import AssetClass, get_asset_class,get_data
 
 def cached(ric,span):
     fn =os.getenv('USER_HOME','')+f'/tmp/{ric.lower().replace("/","-")}_{span}.csv'
@@ -23,6 +24,35 @@ def _main(ric,span):
 
     df.to_csv(fn)
     print('-- saved:', fn)
+
+def get_filebased_kline(sym, offline=True):
+    sym = sym.lower()
+    sym = sym.replace('/','-').replace('-usdt','').replace('-usd','')
+    fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+    if os.path.exists(fn):
+        file_ts = _file_ts( fn )
+    if not offline or not os.path.exists(fn):
+        if get_asset_class(sym) == AssetClass.CRYPTO:
+            df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
+            ds = df.iloc[-1].timestamp
+            file_ts = datetime.datetime.strptime(ds, "%Y-%m-%dT%H:%M:%S.%fZ")
+        else:
+            df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
+            fn = os.getenv("USER_HOME","") + f'/tmp/{sym.lower().replace("/","-")}_1d.csv'
+            df.to_csv(fn,index=0)
+            print('-- market data saved:', fn)
+            df.columns = [s.lower() for s in df.columns ]
+            df.timestamp = df.timestamp.apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
+            df.timestamp = pd.to_datetime(df['timestamp']).dt.tz_localize('UTC')
+            try:
+                file_ts = datetime.datetime.fromtimestamp(int(df.iloc[-1].timestamp) )
+            except Exception as e:
+                file_ts = df.iloc[-1].timestamp
+                if not isinstance( file_ts, datetime.datetime): raise e
+                #datetime.datetime.strptime(ds, "%Y-%m-%d %H:%M:%S")
+    else:
+        df = pd.read_csv( fn, index_col=0 )
+    return df, file_ts
 
 @click.command()
 @click.option('--ric', default='DOGE/USDT')
