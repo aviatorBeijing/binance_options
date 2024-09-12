@@ -63,6 +63,7 @@ def _scalping(S_paths, K, r, sigma, T, dt):
     cum_fees = np.zeros(n_sim)
     cum_vols = np.zeros(n_sim) # $ amount
     cum_amt = np.zeros(n_sim)  # count 
+    payoffs = np.zeros(n_sim)  # options payoff at maturity
     
     premium0 = callprice(S_paths[0,0], K, T, sigma, r) 
     print(f'-- options premium: $ {premium0:,.2f}')
@@ -122,11 +123,12 @@ def _scalping(S_paths, K, r, sigma, T, dt):
         # At maturity, settle the option
         payoff = max(S_paths[i, -1] - K, 0)
         portfolio_values[i, -1] -= payoff   # Because the sell position on options
-    
-    pnl = portfolio_values[:, -1]
-    return pnl, cum_fees, cum_vols, cum_amt
+        payoffs[i] = payoff 
 
-def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
+    pnl = portfolio_values[:, -1]
+    return pnl, cum_fees, cum_vols, cum_amt, payoffs
+
+def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt, payoffs):
     # Summary statistics
     print('Gamma Scalping PnL:')
     print(f'\tMean: $ {np.mean(pnl):,.0f}')
@@ -168,6 +170,10 @@ def _plot(S_paths, pnl, cum_fees, cum_vols, cum_amt):
     plt.ylabel('Price ($)')
     plt.legend()
 
+    plt.subplot(nrow, ncol, 6)
+    sns.kdeplot(payoffs, label='Option Payoffs $', fill=True)
+    plt.legend()
+
     plt.grid(True)
 
     fn = os.getenv('USER_HOME','') + '/tmp/gamma_scalping.png'
@@ -189,7 +195,7 @@ def main():
     read_prices_from_csv,calculate_annualized_volatility)
 
     cYrs = 5    # data length (yrs) used for calibration
-    N = 100     # number of future paths
+    N = 10     # number of future paths
     prices, dates = read_prices_from_csv( asset )
     prices = prices[-nDays*cYrs:]
     dates  = dates[-nDays*cYrs:]
@@ -199,12 +205,12 @@ def main():
     print(f'-- using sigma of averaged {N} paths from calibrated model: {mean_volatility:.3f}')
 
     S_paths = paths.transpose()
-    pnl_gamma_scalping, cum_fees, cum_vols, cum_amt = _scalping(
+    pnl_gamma_scalping, cum_fees, cum_vols, cum_amt, payoffs = _scalping(
         S_paths, 
         S_paths[0,0], # = K
         r, mean_volatility, T, dt)
 
-    _plot( S_paths, pnl_gamma_scalping, cum_fees, cum_vols, cum_amt )
+    _plot( S_paths, pnl_gamma_scalping, cum_fees, cum_vols, cum_amt, payoffs )
 
 if __name__ == '__main__':
     main()
