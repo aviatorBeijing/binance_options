@@ -19,7 +19,6 @@ def _main(contracts:list, reference_spots:list):
     """
     @brief 
     """
-    contracts = list( sorted( list(set(contracts)) ) )
     underlying = get_underlying( contracts[0])
     spot_now, _ = get_binance_spot(underlying)
     recs = [] 
@@ -51,6 +50,9 @@ def _main(contracts:list, reference_spots:list):
     print( tabulate(df[df.contract.str.contains('-P')], headers="keys"))
 
 def _multiprocess_main(contracts:list,projected_spot_prices:list):
+    contracts = list( sorted( list(set(contracts)) ) )
+    projected_spot_prices = list(set(projected_spot_prices))
+    
     print('-- waiting data...')
     time.sleep(2)
     while True:
