@@ -45,7 +45,7 @@ def _main(contracts:list, reference_spots:list):
             spr = (S-spot_now)/spot_now*100
             recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': f"{S} ({spr:.1f}%)", 'option_projected': op, 'opr': f"{opr:.1f}%"} ]
     df = pd.DataFrame.from_records( recs )
-    df.sort_values('contract', ascending=True, inplace=True)
+    df.sort_values('spot', ascending=True, inplace=True)
     print()
     print(' '*30, '*** Calls ***')
     print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
