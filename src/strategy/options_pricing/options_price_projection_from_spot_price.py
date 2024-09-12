@@ -69,6 +69,8 @@ def _multiprocess_main(contracts:list,projected_spot_prices:list):
 def main(contracts,projected_spot_prices):
     projected_spot_prices = list(map(lambda s: float(s), projected_spot_prices.split(',')))
     
+    contracts = list(set( contracts.split(',')))
+    contracts = ','.join(contracts)
     conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
     calc = Process( target=_multiprocess_main, args=(contracts.split(','), projected_spot_prices) )
     conn.start()
