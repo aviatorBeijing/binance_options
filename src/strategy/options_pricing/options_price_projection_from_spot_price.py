@@ -19,6 +19,7 @@ def _main(contracts:list, reference_spots:list):
     """
     @brief 
     """
+    contracts = list( sorted( list(set(contracts)) ) )
     underlying = get_underlying( contracts[0])
     spot_now, _ = get_binance_spot(underlying)
     recs = [] 
