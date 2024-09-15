@@ -71,9 +71,9 @@ def simulate_jump_diffusion_paths(S0, mu, sigma, lambda_, mu_j, sigma_j, T, n_st
     
     return paths
 
-def calculate_annualized_volatility(paths, dt):
+def calculate_annualized_volatility(paths, tS):
     log_returns = np.log(paths[1:] / paths[:-1])
-    volatilities = np.std(log_returns, axis=1) / np.sqrt(dt) 
+    volatilities = np.std(log_returns, axis=1) * np.sqrt(tS) 
     return volatilities
 
 def calc_log_returns(prices):
@@ -97,20 +97,75 @@ def calibrate_and_generate(prices, n_paths=100, horizon=1, t0:str=''):
         dates = pd.date_range(start=t0, periods=n_steps+1 )
     return ( paths, sigma_mle, dates )
 
-def main():
-    x = 5
-    prices, dates = read_prices_from_csv('btc')
-    prices = prices[-nDays*x:]
-    dates  = dates[-nDays*x:]
+def bootstrap_history(prices, dates, tailn=10):
+    sigmas = []
+    for i in range(1, tailn+1):
+        xdates = dates[:-(tailn+1-i)]
+        xprices = prices[:-(tailn+1-i)]
+        mle_sigma, _, mean_sigma, std_sigma, p68_sigma,_,_ = _sim(
+            xprices, xdates, nDays, 
+            n_paths=100 )
+        sigmas += [{
+            'calc_date': xdates[-1],
+            'mle_sigma': mle_sigma,
+            'sim_mean': mean_sigma,
+            'sim_std':  std_sigma }]
+    df = pd.DataFrame.from_records(sigmas)
+    df.calc_date = df.calc_date.apply(pd.Timestamp)
+    df.set_index('calc_date',inplace=True)
+
+    from tabulate import tabulate
+    print( tabulate(df,headers="keys"))
+    fn = os.getenv("USER_HOME","")
+    fn = f'{fn}/tmp/merton_jump_bootstraping.png'
     
-    n_paths = 100
-    paths, gen_dates = calibrate_and_generate(prices, n_paths=n_paths, t0=str(dates[-1]) )
-    volatilities = calculate_annualized_volatility(paths, dt)
+    fig, (ax1,ax2) = plt.subplots(2,1, figsize=(18, 20))
+    
+    df[['mle_sigma']].plot(ax=ax1,label='sigma from MLE calibration')
+    df[['sim_mean']].plot(ax=ax1,label='avg. sigma from montecarlo')
+    (df.sim_mean+df.sim_std).plot(ax=ax1,linestyle='--',label='+1s')
+    (df.sim_mean-df.sim_std).plot(ax=ax1,linestyle='--',label='-1s')
+    ax1.set_title('Bootstrapping Historical MLE Sigma')
+    ax1.legend()
+
+    ax2.plot(dates[:-tailn],prices[:-tailn],label='history')
+    ax2.plot(dates[-tailn:],prices[-tailn:],label="bootstrapping")
+    ax2.set_title('Market Closes')
+    ax2.legend()
+
+    plt.savefig(fn)
+    print('-- saved:',fn)
+    
+    
+def _sim(prices,dates,tScale,n_paths = 100):
+    np.random.seed(371723)
+    paths, sigma_mle, gen_dates = calibrate_and_generate(prices, n_paths=n_paths, t0=str(dates[-1]) )
+    volatilities = calculate_annualized_volatility(paths, tScale)
 
     mean_volatility = np.mean(volatilities)
     std_volatility = np.std(volatilities)
     p68 = np.percentile(volatilities,68)
-    print('\t', mean_volatility, std_volatility, p68)
+    return sigma_mle,volatilities,\
+            mean_volatility,std_volatility,p68,\
+            paths,gen_dates
+
+def main():
+    x = 5
+    prices, dates = read_prices_from_csv('btc')
+    print(dates[0],'~',dates[-1])
+    tScale = nDays    # Indicates the time scale in the data "prices"
+    prices = prices[-nDays*x:]
+    dates  = dates[-nDays*x:]
+    n_paths = 100
+
+    mle_sigma,\
+        volatilities, mean_volatility,std_volatility,p68, \
+            paths,gen_dates = _sim(
+        prices,dates,tScale,n_paths = n_paths)
+    print('-- Simulated sigma:', 
+            f'{mean_volatility:.2f}', 
+            f'{std_volatility:.2f}', 
+            f'{p68:.2f}')
 
     plt.figure(figsize=(18, 20))
     
@@ -137,6 +192,9 @@ def main():
     fn = os.getenv('USER_HOME','') + '/tmp/merton_jump_model.png'
     plt.savefig(fn)
     print( '-- saved:', fn)
+
+    # Bootstrapping
+    bootstrap_history(prices,dates,tailn=365)
 
 if __name__ == "__main__":
     main()

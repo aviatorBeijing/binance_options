@@ -27,8 +27,12 @@ def _main(ric,span):
 
 def get_filebased_kline(sym, offline=True):
     sym = sym.lower()
-    sym = sym.replace('/','-').replace('-usdt','').replace('-usd','')
-    fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+    if any([ sym in s for s in ['btc','doge','sol','bnb']]):
+        sym = sym.replace('/','-').replace('-usdt','').replace('-usd','')
+        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+    else:
+        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}_1d.csv'
+    
     if os.path.exists(fn):
         file_ts = _file_ts( fn )
     if not offline or not os.path.exists(fn):
