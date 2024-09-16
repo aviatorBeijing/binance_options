@@ -1,10 +1,3 @@
-rel == 0.4.9
-websocket-client == 1.7.0
-ccxt == 4.2.52 
-click == 8.1.7
-flask-swagger == 0.2.14
-flask-swagger-ui == 4.11.1
-pypugjs == 5.11.0
 arrow==1.2.2
 Babel==2.10.3
 beautifulsoup4==4.11.1
@@ -69,4 +62,3 @@ wasabi==0.9.1
 Werkzeug==2.2.1
 WTForms==3.0.1
 zipp==3.8.1
-
