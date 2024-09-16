@@ -148,6 +148,49 @@ swagger_json = {
                     }
                 }
             }
+        },
+        "/price_ranges": {
+            "get": {
+                "summary": "Fetch price ranges indicated by Open Interests of options market",
+                "parameters": [
+                    {
+                        "name": "underlying",
+                        "in": "query",
+                        "required": True,
+                        "type": "string",
+                        "description": "BTC,ETH, etc"
+                    },
+                    {
+                        "name": "atm_contracts",
+                        "in": "query",
+                        "required": False,
+                        "type": "string",
+                        "description": "collect also the ATM contract names"
+                    },
+                    {
+                        "name": "update",
+                        "in": "query",
+                        "required": False,
+                        "type": "string",
+                        "description": "true or [not provide], indicating using cached file, or fetch in realtime."
+                    },
+                    
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing parameters"
+                    }
+                }
+            }
         }
     }
 }

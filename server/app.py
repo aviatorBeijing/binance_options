@@ -128,6 +128,23 @@ def historical_vol():
             }
         ), 200
 
+@app.route('/price_ranges', methods=['GET'])
+def price_ranges():
+    underlying = request.args.get('underlying') # BTC,ETH
+    atm_contracts = request.args.get('atm_contracts') # Return atm contracts as well
+    update = request.args.get('update')
+    if atm_contracts:
+        atm_contracts = atm_contracts.lower()=='true'
+    if update:
+        update = update.lower()=='true'
+
+    from sentiments.atms import _wrapper_price_range
+    rst = _wrapper_price_range( underlying.upper(), 
+                            show_atm_contracts=atm_contracts, 
+                            update=update)
+    
+    return jsonify( rst  ),200
+
 from swagger_template import swagger_json
 @app.route('/static/swagger.json')
 def swagger_spec():

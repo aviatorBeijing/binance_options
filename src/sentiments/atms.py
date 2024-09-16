@@ -43,7 +43,11 @@ def fetch_contracts(underlying):
     return pd.DataFrame()
 
 def get_atm( underlying, df ):
-    bid,ask = binance_spot(f"{underlying.upper()}/USDT")
+    if os.getenv("YAHOO_LOCAL"):
+        print("\n","*"*10, " faking prices on local environment","\n")
+        bid,ask = 30000,30000 #binance_spot(f"{underlying.upper()}/USDT")
+    else:
+        bid,ask = binance_spot(f"{underlying.upper()}/USDT")
     df['distance'] = abs(df.strikePrice-(bid+ask)*.5)
     recs = {}
     for expiry in sorted( list(set(df.expiryDate.values))):
@@ -84,16 +88,15 @@ def fetch_price_ranges(expiries, odf):
             cps_dollar = [float(s) for s in cdf.head(3).sumOpenInterestUsd.values]
             pps_dollar = [float(s) for s in pdf.head(3).sumOpenInterestUsd.values]
             
-            crange = '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps_btc,cps_btc)) ] )
-            drange = '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps_dollar,cps_dollar)) ] )
+            crange = ';'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps_btc,cps_btc)) ] )
+            drange = ';'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps_dollar,cps_dollar)) ] )
             
-            prange = '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )
+            prange = ';'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )
             print( datestr, prange ) 
-
-            recs +=[{ "expiry": datestr, "price_range": prange}]
-            recs +=[{ "expiry": datestr, "oi_qty": crange}]
-            recs +=[{ "expiry": datestr, "oi_value": drange}]
+            
+            recs +=[{ "expiry": datestr, "price_range": prange,"oi_qty": crange,"oi_value": drange}]
         rdf = pd.DataFrame.from_records( recs )
+        
         return rdf 
 
 def fetch_open_interests(df, underlying, refresh_oi=False):
@@ -125,6 +128,24 @@ def fetch_open_interests(df, underlying, refresh_oi=False):
     
     return expiries, odf 
 
+def _wrapper_price_range(underlying, show_atm_contracts=False, update=False):
+    df = refresh_contracts( underlying,update=update )
+    expiries, odf = fetch_open_interests(df, underlying, refresh_oi=update)
+    rdf = fetch_price_ranges( expiries, odf )
+    
+    rsp = {
+        "columns": list(rdf.columns),
+        "data": [list(e) for e in rdf.to_records(index=False) ]
+    }
+
+    if show_atm_contracts:
+        r = get_atm(underlying,df)
+        rsp['atm_contracts']={}
+        rsp['atm_contracts']['columns'] = list( r.keys())
+        rsp['atm_contracts']['data'] = list( r.values())
+
+    return rsp
+
 @click.command()
 @click.option('--underlying', default="BTC")
 @click.option('--update', is_flag=True, default=False, help='update contracts list')
@@ -132,8 +153,6 @@ def fetch_open_interests(df, underlying, refresh_oi=False):
 @click.option('--check_price_ranges', is_flag=True, default=False)
 def main(underlying,update,refresh_oi, check_price_ranges):
     assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
-
-    fdir = _dir()
 
     df = refresh_contracts( underlying,update=update )
     expiries, odf = fetch_open_interests(df, underlying, refresh_oi=refresh_oi)
@@ -171,10 +190,10 @@ def main(underlying,update,refresh_oi, check_price_ranges):
     print('  -- ATM by maturities (Calls):')
     print( tabulate(df[df.ctype=='call'], headers="keys") )
 
-    fn = f"{fdir}/_atms_{underlying.lower()}.csv"
+    fn = f"{_dir()}/_atms_{underlying.lower()}.csv"
     with open(fn, 'w') as fh:
         fh.write(','.join(contracts))
-    print('-- written:', f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
+    print('-- written:', f"{_dir()}/_all_binance_contracts_{underlying.lower()}.csv")
     print('-- written:', fn )
 
 if __name__ == '__main__':
