@@ -28,5 +28,4 @@ RUN pip install -r requirements.txt
 # copy project
 COPY . /usr/src/binance_options/
 
-cd /usr/src/binance_options/src
-sh price_ranges_indicated_by_binance_options_market-makers.sh
+RUN sh /usr/src/binance_options/src/price_ranges_indicated_by_binance_options_market-makers.sh
