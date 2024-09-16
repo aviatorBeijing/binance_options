@@ -6,6 +6,7 @@ WORKDIR /usr/src/binance_options
 
 # set environment variables
 ENV BINANCE_OPTIONS_DIR=/usr/src/binance_options/src
+ENV PYTHONPATH=/usr/src/binance_options/src:$PYTHONPATH
 ENV PYTHON=python
 
 #ENV ES_USERNAME=
