@@ -8,7 +8,6 @@ WORKDIR /usr/src/binance_options
 ENV BINANCE_OPTIONS_DIR=/usr/src/binance_options/src
 ENV PYTHON=python
 
-INCLUDE+ /home/ubuntu/.ssh/SECRETS_DOCKER
 #ENV ES_USERNAME=
 #ENV ES_PASSWORD=
 #ENV PG_USERNAME=
