@@ -51,26 +51,56 @@ def get_atm( underlying, df ):
         recs[expiry] = list(edf.head(4).symbol.values)
     return recs 
 
-@click.command()
-@click.option('--underlying', default="BTC")
-@click.option('--refresh_oi', is_flag=True, default=False)
-@click.option('--check_price_ranges', is_flag=True, default=False)
-def main(underlying, refresh_oi, check_price_ranges):
-    assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
-
+def _dir():
     fdir = os.getenv("USER_HOME", "") + '/tmp/binance_options/'
     fdir += datetime.datetime.strftime(datetime.datetime.today(),'%Y_%m_%d')
     if not os.path.exists(fdir):
         os.makedirs( fdir )
+    return fdir 
 
-    df = fetch_contracts( underlying )
-    df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
-    df.to_csv(f"{fdir}/_all_binance_contracts_{underlying.lower()}.csv")
-    
-    # Open Interests
-    expiries = list( set(df.expiry.values) )
+def refresh_contracts(underlying,update=False):
+    fn = f"{_dir()}/_all_binance_contracts_{underlying.lower()}.csv"
+    if update:
+        df = fetch_contracts( underlying )
+        df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
+        df.to_csv( fn )
+    else:
+        print('-- reading contracts cached:',fn)
+        df = pd.read_csv(fn,index_col=0)
+    return df 
+
+def fetch_price_ranges(expiries, odf):
+        recs = []
+        for datestr in sorted(expiries):
+            ddf =  odf[ odf['symbol'].str.contains(datestr) ].sort_values('sumOpenInterestUsd', ascending=False)
+            cdf = ddf[ddf['symbol'].str.contains('-C')]
+            pdf = ddf[ddf['symbol'].str.contains('-P')]
+            cps = [float(s.split('-')[2]) for s in cdf.head(3).symbol.values]
+            pps = [float(s.split('-')[2]) for s in pdf.head(3).symbol.values]
+
+            cps_btc = [float(s) for s in cdf.head(3).sumOpenInterest.values]
+            pps_btc = [float(s) for s in pdf.head(3).sumOpenInterest.values]
+
+            cps_dollar = [float(s) for s in cdf.head(3).sumOpenInterestUsd.values]
+            pps_dollar = [float(s) for s in pdf.head(3).sumOpenInterestUsd.values]
+            
+            crange = '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps_btc,cps_btc)) ] )
+            drange = '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps_dollar,cps_dollar)) ] )
+            
+            prange = '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )
+            print( datestr, prange ) 
+
+            recs +=[{ "expiry": datestr, "price_range": prange}]
+            recs +=[{ "expiry": datestr, "oi_qty": crange}]
+            recs +=[{ "expiry": datestr, "oi_value": drange}]
+        rdf = pd.DataFrame.from_records( recs )
+        return rdf 
+
+def fetch_open_interests(df, underlying, refresh_oi=False):
+    expiries = list( set(df.expiry.astype(str).values) )
     odf = pd.DataFrame()
-    oi_fn = f"{fdir}/_all_binance_openinterests_{underlying.lower()}.csv"
+    oi_fn = f"{_dir()}/_all_binance_openinterests_{underlying.lower()}.csv"
+    
     if refresh_oi:
         oi_df = []
         for expiry in expiries:
@@ -92,17 +122,25 @@ def main(underlying, refresh_oi, check_price_ranges):
     odf.sumOpenInterestUsd = odf.sumOpenInterestUsd.apply(float)
     print('-- ranked all by OI:')
     print(tabulate(odf.sort_values('sumOpenInterestUsd', ascending=False).head(5), headers="keys"))
+    
+    return expiries, odf 
+
+@click.command()
+@click.option('--underlying', default="BTC")
+@click.option('--update', is_flag=True, default=False, help='update contracts list')
+@click.option('--refresh_oi', is_flag=True, default=False, help='update OI of contracts')
+@click.option('--check_price_ranges', is_flag=True, default=False)
+def main(underlying,update,refresh_oi, check_price_ranges):
+    assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
+
+    fdir = _dir()
+
+    df = refresh_contracts( underlying,update=update )
+    expiries, odf = fetch_open_interests(df, underlying, refresh_oi=refresh_oi)
 
     if check_price_ranges:
         print('\n-- prices range indicated by options OI (implied by insidious market-maker, who can sell options on binance):')
-        for datestr in sorted(expiries):
-            ddf =  odf[ odf['symbol'].str.contains(datestr) ].sort_values('sumOpenInterestUsd', ascending=False)
-            cdf = ddf[ddf['symbol'].str.contains('-C')]
-            pdf = ddf[ddf['symbol'].str.contains('-P')]
-            cps = [float(s.split('-')[2]) for s in cdf.head(3).symbol.values]
-            pps = [float(s.split('-')[2]) for s in pdf.head(3).symbol.values]
-            #print(pdf.head(2))
-            print( datestr, '\t'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )   )
+        fetch_price_ranges( expiries, odf )
         import sys;sys.exit()
 
     atm_contracts = get_atm( underlying, df )
