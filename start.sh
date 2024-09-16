@@ -1,4 +1,5 @@
 #!/bin/bash
 
 export PYTHONPATH=$BINANCE_OPTIONS_DIR:$PYTHONPATH
-cd server; make run
+cd server
+export PYTHONPATH=../src:$PYTHONPATH;${PYTHON} app.py
