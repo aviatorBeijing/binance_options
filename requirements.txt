@@ -2,3 +2,6 @@ rel == 0.4.9
 websocket-client == 1.7.0
 ccxt == 4.2.52 
 click == 8.1.7
+flask-swagger == 0.2.14
+flask-swagger-ui == 4.11.1
+pypugjs == 5.11.0
