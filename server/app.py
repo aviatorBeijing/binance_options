@@ -1,11 +1,9 @@
 from flask import Flask, jsonify, request, send_file
-from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 import numpy as np
 import pandas as pd
 
 app = Flask(__name__)
-CORS(app)
 
 # Swagger UI setup
 SWAGGER_URL = '/swagger'  # URL for Swagger UI
