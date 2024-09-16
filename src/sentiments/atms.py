@@ -58,7 +58,10 @@ def get_atm( underlying, df ):
 def main(underlying, refresh_oi, check_price_ranges):
     assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
 
-    fdir = os.getenv("USER_HOME", "/home/ubuntu") + '/tmp'
+    fdir = os.getenv("USER_HOME", "") + '/tmp/binance_options/'
+    fdir += datetime.datetime.strftime(datetime.datetime.today(),'%Y_%m_%d')
+    if not os.path.exists(fdir):
+        os.makedirs( fdir )
 
     df = fetch_contracts( underlying )
     df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
