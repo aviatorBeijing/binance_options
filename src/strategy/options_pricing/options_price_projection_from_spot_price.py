@@ -45,12 +45,15 @@ def _main(contracts:list, reference_spots:list):
             spr = (S-spot_now)/spot_now*100
             recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': f"{S} ({spr:.1f}%)", 'option_projected': op, 'opr': f"{opr:.1f}%"} ]
     df = pd.DataFrame.from_records( recs )
-    df.sort_values('spot', ascending=True, inplace=True)
-    print()
-    print(' '*30, '*** Calls ***')
-    print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
-    print(' '*30, '*** Puts ***')
-    print( tabulate(df[df.contract.str.contains('-P')], headers="keys"))
+    if not df.empty and 'spot' in df:
+        df.sort_values('spot', ascending=True, inplace=True)
+        print()
+        print(' '*30, '*** Calls ***')
+        print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
+        print(' '*30, '*** Puts ***')
+        print( tabulate(df[df.contract.str.contains('-P')], headers="keys"))
+    else:
+        print('*** data error')
 
 def _multiprocess_main(contracts:list,projected_spot_prices:list):
     contracts = list( sorted( list(set(contracts)) ) )
