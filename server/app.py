@@ -153,6 +153,16 @@ def price_ranges():
     
     return jsonify( rst  ),200
 
+@app.route('/pricing_options_from_spot', methods=['GET'])
+def price_ranges():
+    contracts = request.args.get('contracts') # Return atm contracts as well
+    if contracts:
+        contracts = contracts.split(',')
+
+    from strategy.options_pricing.options_price_projection_from_spot_price import _main
+    rst = _main(contracts, list( range(50000,63001,500)) )
+    return jsonify( rst  ),200
+
 from swagger_template import swagger_json
 @app.route('/static/swagger.json')
 def swagger_spec():
