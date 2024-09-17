@@ -45,6 +45,10 @@ def _main(contracts:list, reference_spots:list):
             spr = (S-spot_now)/spot_now*100
             recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': f"{S} ({spr:.1f}%)", 'option_projected': op, 'opr': f"{opr:.1f}%"} ]
     df = pd.DataFrame.from_records( recs )
+
+    if not df.empty: df['option_price (ask)'] = df['option_price (ask)'].apply(float)
+    calls = df[df.contract.str.contains('-C')]
+    puts  = df[df.contract.str.contains('-P')]
     if not df.empty and 'spot' in df:
         df.sort_values('spot', ascending=True, inplace=True)
         print()
@@ -52,8 +56,23 @@ def _main(contracts:list, reference_spots:list):
         print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
         print(' '*30, '*** Puts ***')
         print( tabulate(df[df.contract.str.contains('-P')], headers="keys"))
+        return {
+            "ok": True,
+            "calls":{
+                "columns": [str(s) for s in df.columns ]  if not calls.empty else [],
+                "data": [ list(e) for e in calls.to_records(index=False) ] if not calls.empty else [],
+            },
+            "puts":{
+                "columns": [str(s) for s in df.columns ] if not puts.empty else [],
+                "data": [ list(e) for e in puts.to_records(index=False) ] if not puts.empty else [],
+            }
+        }
     else:
         print('*** data error')
+        return {
+            "ok": False,
+            "msg": "wait for market data" 
+        }
 
 def _multiprocess_main(contracts:list,projected_spot_prices:list):
     contracts = list( sorted( list(set(contracts)) ) )
