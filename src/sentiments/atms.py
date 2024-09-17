@@ -45,14 +45,16 @@ def fetch_contracts(underlying):
 def get_atm( underlying, df ):
     if os.getenv("YAHOO_LOCAL",None):
         print("\n","*"*10, " faking prices on local environment","\n")
-        bid,ask = 30000,30000 #binance_spot(f"{underlying.upper()}/USDT")
+        bid,ask = 59000,59000 #binance_spot(f"{underlying.upper()}/USDT")
     else:
         bid,ask = binance_spot(f"{underlying.upper()}/USDT")
-    df['distance'] = abs(df.strikePrice-(bid+ask)*.5)
+    df['distance'] = df.strikePrice-(bid+ask)*.5
     recs = {}
     for expiry in sorted( list(set(df.expiryDate.values))):
-        edf = df[df.expiryDate==expiry].sort_values( ['expiryDate','distance'], ascending=True)
-        recs[expiry] = list(edf.head(4).symbol.values)
+        edf = df[df.expiryDate==expiry]
+        s1 = edf[edf.distance>=0].sort_values(['expiryDate','distance'], ascending=True).head(2).symbol.values
+        s2 = edf[edf.distance<0 ].sort_values(['expiryDate','distance'], ascending=False).head(2).symbol.values
+        recs[expiry] = list(s1) + list(s2)
     return recs 
 
 def _dir():
