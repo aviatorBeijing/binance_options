@@ -98,6 +98,7 @@ def historical_vol():
                 "n_paths": n_paths,
                 "start" : str(dates[0]),
                 "end"   : str(dates[-1]),
+                "last_close": float(prices[-1]),
             },
             "data":{
                 "mle_sigma": mle_sigma,
