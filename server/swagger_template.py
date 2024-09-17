@@ -191,6 +191,42 @@ swagger_json = {
                     }
                 }
             }
+        },
+        "/pricing_options_from_spot": {
+            "get": {
+                "summary": "Calculate options contract prices according to a sequence of spot prices",
+                "parameters": [
+                    {
+                        "name": "contracts",
+                        "in": "query",
+                        "required": True,
+                        "type": "string",
+                        "description": "BTC-240919-58000-C,BTC-240918-58500-P,BTC-240919-59000-C"
+                    },
+                    {
+                        "name": "prange",
+                        "in": "query",
+                        "required": False,
+                        "type": "string",
+                        "description": "50000,60000,1000"
+                    },
+                    
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing parameters"
+                    }
+                }
+            }
         }
     }
 }

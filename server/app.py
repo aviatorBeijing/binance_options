@@ -164,12 +164,12 @@ def pricing_options_from_spot():
         return jsonify({
             'ok': True,
             "calls":{
-                "columns": ['col1','col2'],
-                "data": [[1,2],[3,4]]
+                "columns": ['col1','col2','col3','col4','col5'],
+                "data": [[1,2,3,4,5,],[3,4,5,6,7,]]
             },
             "puts":{
-                "columns": ['col1','col2'],
-                "data": [[1,2],[3,4]]
+                "columns": ['col1','col2','col3','col4','col5'],
+                "data": [[1,2,3,4,5,],[3,4,5,6,7,]]
             },
         }), 200
     else:
@@ -178,7 +178,7 @@ def pricing_options_from_spot():
             px = prange.split(',')
             rst = _main(contracts, list( np.range(px[0],px[1],px[2])) )
         else:
-            rst = _main(contracts, list( range(50000,63001,500)) )
+            rst = _main(contracts, list( range(55000,63001,1000)) )
         return jsonify( rst  ),200
 
 from swagger_template import swagger_json
