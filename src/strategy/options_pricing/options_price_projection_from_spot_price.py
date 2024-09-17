@@ -69,18 +69,23 @@ def _multiprocess_main(contracts:list,projected_spot_prices:list):
 @click.command()
 @click.option('--contracts', help="contract name")
 @click.option('--projected_spot_prices')
-def main(contracts,projected_spot_prices):
+@click.option('--adhoc',is_flag=True,default=False)
+def main(contracts,projected_spot_prices,adhoc):
     projected_spot_prices = list(map(lambda s: float(s), projected_spot_prices.split(',')))
-    
+    projected_spot_prices = list(set(projected_spot_prices))
     contracts = list(set( contracts.split(',')))
-    contracts = ','.join(contracts)
-    conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
-    calc = Process( target=_multiprocess_main, args=(contracts.split(','), projected_spot_prices) )
-    conn.start()
-    calc.start()
-    
-    conn.join()
-    calc.join()
+
+    if adhoc:
+        _main(contracts,projected_spot_prices)
+    else:
+        contracts = ','.join(contracts)
+        conn = Process( target=ws_connector, args=(f"{contracts}", "ticker",) )
+        calc = Process( target=_multiprocess_main, args=(contracts.split(','), projected_spot_prices) )
+        conn.start()
+        calc.start()
+        
+        conn.join()
+        calc.join()
 
 if __name__ == '__main__':
     main()
