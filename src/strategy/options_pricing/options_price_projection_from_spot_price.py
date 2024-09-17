@@ -19,6 +19,7 @@ def _main(contracts:list, reference_spots:list):
     """
     @brief 
     """
+    assert isinstance(contracts, list), f'error: "{contracts}" is NOT a list'
     underlying = get_underlying( contracts[0])
     spot_now, _ = get_binance_spot(underlying)
     recs = [] 
