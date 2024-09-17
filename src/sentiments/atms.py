@@ -43,7 +43,7 @@ def fetch_contracts(underlying):
     return pd.DataFrame()
 
 def get_atm( underlying, df ):
-    if os.getenv("YAHOO_LOCAL"):
+    if os.getenv("YAHOO_LOCAL",None):
         print("\n","*"*10, " faking prices on local environment","\n")
         bid,ask = 30000,30000 #binance_spot(f"{underlying.upper()}/USDT")
     else:
@@ -141,7 +141,7 @@ def _wrapper_price_range(underlying, show_atm_contracts=False, update=False):
     if show_atm_contracts:
         r = get_atm(underlying,df)
         rsp['atm_contracts']={}
-        rsp['atm_contracts']['columns'] = list( r.keys())
+        rsp['atm_contracts']['columns'] = [ str(v) for v in r.keys() ]
         rsp['atm_contracts']['data'] = list( r.values())
 
     return rsp
