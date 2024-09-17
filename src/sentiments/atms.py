@@ -54,7 +54,7 @@ def get_atm( underlying, df ):
         edf = df[df.expiryDate==expiry]
         s1 = edf[edf.distance>=0].sort_values(['expiryDate','distance'], ascending=True).head(2).symbol.values
         s2 = edf[edf.distance<0 ].sort_values(['expiryDate','distance'], ascending=False).head(2).symbol.values
-        recs[expiry] = list(s1) + list(s2)
+        recs[expiry] = list( sorted( list(s1) + list(s2) ))
     return recs 
 
 def _dir():
