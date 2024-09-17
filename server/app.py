@@ -154,7 +154,7 @@ def price_ranges():
     return jsonify( rst  ),200
 
 @app.route('/pricing_options_from_spot', methods=['GET'])
-def price_ranges():
+def pricing_options_from_spot():
     contracts = request.args.get('contracts') # Return atm contracts as well
     if contracts:
         contracts = contracts.split(',')
