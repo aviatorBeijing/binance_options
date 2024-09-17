@@ -155,13 +155,31 @@ def price_ranges():
 
 @app.route('/pricing_options_from_spot', methods=['GET'])
 def pricing_options_from_spot():
-    contracts = request.args.get('contracts') # Return atm contracts as well
+    contracts = request.args.get('contracts')
+    prange = request.args.get('prange')
     if contracts:
         contracts = contracts.split(',')
 
-    from strategy.options_pricing.options_price_projection_from_spot_price import _main
-    rst = _main(contracts, list( range(50000,63001,500)) )
-    return jsonify( rst  ),200
+    if os.getenv("YAHOO_LOCAL",None):
+        return jsonify({
+            'ok': True,
+            "calls":{
+                "columns": ['col1','col2'],
+                "data": [[1,2],[3,4]]
+            },
+            "puts":{
+                "columns": ['col1','col2'],
+                "data": [[1,2],[3,4]]
+            },
+        }), 200
+    else:
+        from strategy.options_pricing.options_price_projection_from_spot_price import _main
+        if prange:
+            px = prange.split(',')
+            rst = _main(contracts, list( np.range(px[0],px[1],px[2])) )
+        else:
+            rst = _main(contracts, list( range(50000,63001,500)) )
+        return jsonify( rst  ),200
 
 from swagger_template import swagger_json
 @app.route('/static/swagger.json')

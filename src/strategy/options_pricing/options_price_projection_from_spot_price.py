@@ -47,10 +47,12 @@ def _main(contracts:list, reference_spots:list):
     df = pd.DataFrame.from_records( recs )
 
     if not df.empty: df['option_price (ask)'] = df['option_price (ask)'].apply(float)
-    calls = df[df.contract.str.contains('-C')]
-    puts  = df[df.contract.str.contains('-P')]
+    
     if not df.empty and 'spot' in df:
         df.sort_values('spot', ascending=True, inplace=True)
+        calls = df[df.contract.str.contains('-C')]
+        puts  = df[df.contract.str.contains('-P')]
+
         print()
         print(' '*30, '*** Calls ***')
         print( tabulate(df[df.contract.str.contains('-C')], headers="keys"))
