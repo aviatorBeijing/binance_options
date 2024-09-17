@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, send_file
 from flask_swagger_ui import get_swaggerui_blueprint
 import numpy as np
 import pandas as pd
+import os 
 
 app = Flask(__name__)
 
@@ -68,7 +69,12 @@ def historical_vol():
     from strategy.gamma_scalping.merton_jump_model import _sim,read_prices_from_csv,calc_log_returns
     from strategy.gamma_scalping._configs import nDays
     x = int(years)
-    prices, dates = read_prices_from_csv(ric)
+
+    if os.getenv("YAHOO_LOCAL",None):
+        prices, dates = read_prices_from_csv(ric)
+    else:
+        from spot_trading.market_data import binance_kline
+        df = binance_kline(ric, span='1d', grps=10)
 
     tScale = nDays    # Indicates the time scale in the data "prices"
     n_paths = 100
