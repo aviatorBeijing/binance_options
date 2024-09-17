@@ -74,7 +74,10 @@ def historical_vol():
         prices, dates = read_prices_from_csv(ric)
     else:
         from spot_trading.market_data import binance_kline
-        df = binance_kline(ric, span='1d', grps=10)
+        df = binance_kline(ric.upper().replace('-','/'), span='1d', grps=10)
+        df.columns = [v.lower() for v in df.columns]
+        prices = df.close.values 
+        dates = pd.date_range( end=df['timestamp'].iloc[-1],periods=df.shape[0] )
 
     tScale = nDays    # Indicates the time scale in the data "prices"
     n_paths = 100
