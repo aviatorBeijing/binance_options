@@ -69,6 +69,9 @@ def _main(contracts:list, reference_spots:list):
             "puts":{
                 "columns": [str(s) for s in df.columns ] if not puts.empty else [],
                 "data": [ list(e) for e in puts.to_records(index=False) ] if not puts.empty else [],
+            },
+            "spot":{
+                "price": spot_now,
             }
         }
     else:
