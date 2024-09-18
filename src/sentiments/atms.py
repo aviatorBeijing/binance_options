@@ -66,7 +66,7 @@ def _dir():
 
 def refresh_contracts(underlying,update=False):
     fn = f"{_dir()}/_all_binance_contracts_{underlying.lower()}.csv"
-    if update:
+    if update or not os.path.exists(fn):
         df = fetch_contracts( underlying )
         df['expiry'] = df.symbol.apply(lambda s: s.split('-')[1])
         df.to_csv( fn )
