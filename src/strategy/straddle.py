@@ -82,8 +82,8 @@ def calc_straddle(  lcontract, rcontract,
     timeValueRPct = timeValueR/rask * 100 
 
     resp['time_values'] = {}
-    resp['time_values'][lcontract] = timeValueL
-    resp['time_values'][rcontract] = timeValueR
+    resp['time_values_left'] = timeValueL
+    resp['time_values_right'] = timeValueR
 
     # vols
     K = float(lcontract.split('-')[2])
