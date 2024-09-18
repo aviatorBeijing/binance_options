@@ -207,7 +207,7 @@ def calc_straddle():
         lc = puts = list(filter(lambda s: s.endswith('-P'), contracts))[0]
         rc = calls = list(filter(lambda s: s.endswith('-C'), contracts))[0]
         resp  = cstraddle(lc,rc,1.)
-        print( resp  )
+        resp['be_prices'] = [float(v) for v in resp['be_prices']]
         return jsonify( resp  ),200
 
 from swagger_template import swagger_json
