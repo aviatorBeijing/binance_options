@@ -206,7 +206,7 @@ def calc_straddle():
         assert len(contracts)==2, f"{contracts} contains elements NOT equal to 2!"
         lc = puts = list(filter(lambda s: s.endswith('-P'), contracts))[0]
         rc = calls = list(filter(lambda s: s.endswith('-C'), contracts))[0]
-        resp, _  = cstraddle(lc,rc,1.)
+        resp  = cstraddle(lc,rc,1.)
         return jsonify( resp  ),200
 
 from swagger_template import swagger_json
