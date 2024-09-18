@@ -178,7 +178,7 @@ def pricing_options_from_spot():
             px = prange.split(',')
             rst = _main(contracts, list( np.range(px[0],px[1],px[2])) )
         else:
-            rst = _main(contracts, list( range(55000,63001,1000)) )
+            rst = _main(contracts, list( range(55000,65001,1000)) )
         return jsonify( rst  ),200
 
 from swagger_template import swagger_json
