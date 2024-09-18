@@ -24,7 +24,7 @@ def _main( contracts,sz ):
             continue 
         if DEBUG: print('--', p, c)
         with redirect_stdout(io.StringIO()) as f:
-            resp = calc_straddle(p,c,vol=sz)
+            resp, _ = calc_straddle(p,c,vol=sz)
         if resp:
             recs += [resp]
     df = pd.DataFrame.from_records( recs )

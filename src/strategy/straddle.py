@@ -81,6 +81,10 @@ def calc_straddle(  lcontract, rcontract,
     timeValueLPct = timeValueL/lask * 100
     timeValueRPct = timeValueR/rask * 100 
 
+    resp['time_values'] = {}
+    resp['time_values'][lcontract] = timeValueL
+    resp['time_values'][rcontract] = timeValueR
+
     # vols
     K = float(lcontract.split('-')[2])
     rf = 0.
@@ -220,7 +224,7 @@ def calc_straddle(  lcontract, rcontract,
     print(f'-- order size: {vol} contract  (call&put each)')
     print(f'-- investment  ${premium:,.2f} (premium) + ${fee:,.2f} (fee)')
 
-    return resp 
+    return resp, df
     
 
 def _main(left,right, vol, is_taker=True, user_premium=0,check_parity=False):
@@ -268,7 +272,7 @@ def _main(left,right, vol, is_taker=True, user_premium=0,check_parity=False):
 
     strike_left = float(left.split("-")[-2])
     strike_right= float(right.split("-")[-2])
-    resp = calc_straddle(  left, right,
+    resp, df = calc_straddle(  left, right,
                     ldata,rdata, 
                     strike_left,strike_right,
                     vol, 
