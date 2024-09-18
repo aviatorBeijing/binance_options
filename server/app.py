@@ -181,6 +181,34 @@ def pricing_options_from_spot():
             rst = _main(contracts, list( range(55000,65001,1000)) )
         return jsonify( rst  ),200
 
+@app.route('/calc_straddle', methods=['GET'])
+def calc_straddle():
+    contracts = request.args.get('contracts')
+    if contracts:
+        contracts = contracts.split(',')
+
+    if os.getenv("YAHOO_LOCAL",None):
+        return jsonify({
+            'ok': True,
+            "be_prices":[1,2,3,4,5,],
+            "be_returns":[1,2,3,4,5,],
+            "straddle_returns":[1,2,3,4,5,],
+            "left": "put-contract",
+            "right": "call-contract",
+            "time_values":{
+                "put-contract": 100.,
+                "call-contract": 100.,
+            }
+
+        }), 200
+    else:
+        from strategy.straddle import _main as cstraddle
+        assert len(contracts)==2, f"{contracts} contains elements NOT equal to 2!"
+        lc = puts = list(filter(lambda s: s.endswith('-P'), contracts))[0]
+        rc = calls = list(filter(lambda s: s.endswith('-C'), contracts))[0]
+        resp, _  = cstraddle(lc,rc,1.)
+        return jsonify( resp  ),200
+
 from swagger_template import swagger_json
 @app.route('/static/swagger.json')
 def swagger_spec():
