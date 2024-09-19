@@ -181,7 +181,7 @@ def pricing_options_from_spot():
             px = prange.split(',')
             rst = _main(contracts, list( np.range(px[0],px[1],px[2])) )
         else:
-            rst = _main(contracts, list( range(55000,65001,1000)) )
+            rst = _main(contracts, list( range(55000,70001,1000)) )
         return jsonify( rst  ),200
 
 @app.route('/calc_straddle', methods=['GET'])

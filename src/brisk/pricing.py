@@ -130,9 +130,9 @@ def _multicontracts_main(contracts:list):
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
-        'assets': contracts + ['spot'],
+        'assets': contracts + ['Spot'],
         'bid':    cbids + [sbid],
-        'asks':   casks + [sask],
+        'ask':   casks + [sask],
     })
     print('-- current:')
     print(xdf)
