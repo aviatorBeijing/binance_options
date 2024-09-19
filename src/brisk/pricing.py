@@ -107,8 +107,9 @@ def _multicontracts_main(contracts:list):
             func_ = putprice
         
         #crng = np.arange( sbid*(1-0.1), sbid*(1+0.1), 200)
-        m = (sbid+sask)/2//500
-        crng = np.arange( (m-10)*500, (m+10)*500, 500 )
+        g = 100
+        m = (sbid+sask)/2//g
+        crng = np.arange( (m-10)*g, (m+10)*g, g )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [S,option_price,contract, (bid +ask)*.5] ]
