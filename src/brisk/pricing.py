@@ -91,6 +91,8 @@ def _multicontracts_main(contracts:list):
     dfs = []
     cbids = []
     casks = []
+
+    fairs = [] # Black-Scholes "Fair" Prices of Call/Put
     for contract in contracts:
         recs= []
         sym, T, K, ctype = extract_specs(contract)
@@ -107,12 +109,14 @@ def _multicontracts_main(contracts:list):
         elif ctype == 'put':
             func_ = putprice
         
+        fairs += [ func_(smid,K,T/365,sigma,0.04) ]
+
         #crng = np.arange( sbid*(1-0.1), sbid*(1+0.1), 200)
         g = 100  # price gaps (spot)
         m = (sbid+sask)*.5//g
         crng = np.arange( (m-10)*g, (m+10)*g, g )
         for S in crng:
-            option_price = func_(S,K,T/365,sigma,0.)
+            option_price = func_(S,K,T/365,sigma,0.04)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
         df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid'] )
         df.set_index('Spot',inplace=True)
@@ -134,7 +138,7 @@ def _multicontracts_main(contracts:list):
         'assets': contracts + ['Spot'],
         'bid':    cbids + [sbid],
         'ask':   casks + [sask],
-        'deviate_from_BS': list(map(lambda v: v-smid, casks)) + [0.] # Deviation from Black-Scholes (for ask price only)
+        'deviate_from_BS': list( np.array(casks)-np.array(fairs )) + [0.] # Deviation from Black-Scholes (for ask price only)
     })
     xdf['deviate_from_BS'] = xdf['deviate_from_BS'].apply(lambda v: f'{v:.2f}')
     print('-- current:')
