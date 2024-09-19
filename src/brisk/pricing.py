@@ -111,18 +111,21 @@ def _multicontracts_main(contracts:list):
         crng = np.arange( (m-10)*500, (m+10)*500, 500 )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
-            recs += [ [S,option_price,contract] ]
-        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper()] )
+            recs += [ [S,option_price,contract, (bid +ask)*.5] ]
+        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid'] )
         df.set_index('Spot',inplace=True)
         dfs += [df]
 
     df = pd.concat(dfs,axis=1,ignore_index=False)
     df['Spot'] = df.index
     df['dp'] = (df['Spot']-sbid).apply(abs)/sbid
+    df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']
+    df['p%'] = (df['BS_PUT'] - df['PUT_mid'])/df['PUT_mid']
+    for col in ['c%','p%']: df[col] = df.col.apply(lambda v: f'{(v*100):.1f}%')
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
-    df = df[['moneyness', 'CALL','BS_CALL','dp','BS_PUT','PUT']]
+    df = df[['moneyness','dp', 'CALL','BS_CALL','c%','p%','BS_PUT','PUT']]
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
