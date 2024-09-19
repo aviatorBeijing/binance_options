@@ -112,8 +112,8 @@ def _multicontracts_main(contracts:list):
         crng = np.arange( (m-10)*g, (m+10)*g, g )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
-            recs += [ [S,option_price,contract, (bid +ask)*.5] ]
-        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid'] )
+            recs += [ [S,option_price,contract, (bid +ask)*.5], ask ]
+        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid',f'{ctype.upper()}_ask'] )
         df.set_index('Spot',inplace=True)
         dfs += [df]
 
@@ -122,11 +122,17 @@ def _multicontracts_main(contracts:list):
     df['dp'] = (df['Spot']-sbid).apply(abs)/sbid
     df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']
     df['p%'] = (df['BS_PUT'] - df['PUT_mid'])/df['PUT_mid']
+
+    df['dCall'] = -df['BS_CALL'] + df['CALL_ask'] # Deviations from BS prices
+    df['dPut'] = -df['BS_PUT'] + df['PUT_ask']
+
     for col in ['c%','p%']: df[col] = df[col].apply(lambda v: f'{(v*100):.1f}%')
+    for col in ['dCall','dPut']: df[col] = df[col].apply(lambda v: f'{v:.2f}')
+    
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
-    df = df[['moneyness','dp', 'CALL','BS_CALL','c%','p%','BS_PUT','PUT']]
+    df = df[['moneyness','dp', 'CALL','dCall', 'BS_CALL','c%','p%','BS_PUT','dPut','PUT']]
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
