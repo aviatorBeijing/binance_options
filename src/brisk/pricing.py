@@ -112,13 +112,13 @@ def _multicontracts_main(contracts:list):
         for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [S,option_price,contract] ]
-        df = pd.DataFrame.from_records( recs, columns=['strike',f'BS_{ctype.upper()}', ctype.upper()] )
-        df.set_index('strike',inplace=True)
+        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper()] )
+        df.set_index('Spot',inplace=True)
         dfs += [df]
 
     df = pd.concat(dfs,axis=1,ignore_index=False)
-    df['strike'] = df.index
-    df['dp'] = (df.strike-sbid).apply(abs)/sbid
+    df['Spot'] = df.index
+    df['dp'] = (df['Spot']-sbid).apply(abs)/sbid
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
