@@ -112,8 +112,8 @@ def _multicontracts_main(contracts:list):
         crng = np.arange( (m-10)*g, (m+10)*g, g )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
-            recs += [ [S,option_price,contract, (bid +ask)*.5], ask ]
-        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid',f'{ctype.upper()}_ask'] )
+            recs += [ [S,option_price,contract, (bid +ask)*.5, ask ] ]
+        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid', f'{ctype.upper()}_ask'] )
         df.set_index('Spot',inplace=True)
         dfs += [df]
 
