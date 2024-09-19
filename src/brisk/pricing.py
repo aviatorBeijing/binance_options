@@ -14,7 +14,7 @@ from ws_bcontract import _main as ws_connector
 from butil.options_calculator import extract_specs, invert_callprice,invert_putprice,callprice,putprice
 
 
-def _main(contract,user_cost, reference_spot):
+def _main(contract, user_cost, reference_spot):
     """
     @brief Given the 
                 average cost of an option trade, 
@@ -28,8 +28,9 @@ def _main(contract,user_cost, reference_spot):
     bid = float(cdata['bid'])
     sigma = float(cdata['impvol_bid'])
     
+    # Options returns
     x = bid/user_cost-1
-    rtns = np.array([-.1, -.05,.1,.2,.5,1.0, 2.0, 3.0,4.0,5.0, x ])
+    rtns = np.array([-.1, -.05,.1,.2,.5,1.0, 2.0, 3.0,4.0,5.0, round(x,4) ])
     rtns = np.array(sorted(rtns))
     pce_ranges = (1+rtns)*user_cost
 
@@ -74,16 +75,21 @@ def _multicontracts_loop(contracts:list):
     print('waiting for options data...')
     time.sleep(5)
     while True:
-        _multicontracts_main(contracts)
-        print( bjnow_str(), ', next calc in 10 secs','\n' )
+        try:
+            _multicontracts_main(contracts)
+            print( bjnow_str(), ', next calc in 10 secs','\n' )
+        except AssertionError as e:
+            print('*** ', str(e), ' (waiting)')
         time.sleep(10)
 
 def _multicontracts_main(contracts:list):
     sbid,sask = get_binance_spot( get_underlying(contracts[0]))
     spread = (sbid-sask)/(sbid+sask)*2
-    assert spread < 1/1000, f'Spread is too large. {contracts[0]}, {sbid},{sask},{spread}'
+    assert spread < 1/1000, f'Spread is too large: {sbid},{sask},{spread}'
     
     dfs = []
+    cbids = []
+    casks = []
     for contract in contracts:
         recs= []
         sym, T, K, ctype = extract_specs(contract)
@@ -91,27 +97,41 @@ def _multicontracts_main(contracts:list):
         bid = float(cdata['bid'])
         ask = float(cdata['ask'])
         sigma = float(cdata['impvol_bid'])
+        cbids += [bid]
+        casks += [ask]
 
         func_ = None
         if ctype == 'call':
             func_ = callprice
         elif ctype == 'put':
             func_ = putprice
-        for S in np.arange( sbid*(1-0.1), sbid*(1+0.1), 200):
+        
+        #crng = np.arange( sbid*(1-0.1), sbid*(1+0.1), 200)
+        m = (sbid+sask)/2//500
+        crng = np.arange( (m-10)*500, (m+10)*500, 500 )
+        for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
             recs += [ [S,option_price,contract] ]
-        df = pd.DataFrame.from_records( recs, columns=['price',f'BS_{ctype.upper()}', ctype.upper()] )
-        df.set_index('price',inplace=True)
+        df = pd.DataFrame.from_records( recs, columns=['strike',f'BS_{ctype.upper()}', ctype.upper()] )
+        df.set_index('strike',inplace=True)
         dfs += [df]
 
     df = pd.concat(dfs,axis=1,ignore_index=False)
-    df['price'] = df.index
-    df['dp'] = (df.price-sbid).apply(abs)/sbid
+    df['strike'] = df.index
+    df['dp'] = (df.strike-sbid).apply(abs)/sbid
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
     df = df[['CALL','BS_CALL','dp','BS_PUT','PUT','moneyness']]
     print( tabulate(df,headers='keys'))
+
+    xdf = pd.DataFrame.from_dict({
+        'assets': contracts + ['spot'],
+        'bid':    cbids + [sbid],
+        'asks':   casks + [sask],
+    })
+    print('-- current:')
+    print(xdf)
 
 @click.command()
 @click.option('--contract', help="contract name")
@@ -119,11 +139,13 @@ def _multicontracts_main(contracts:list):
 @click.option('--contracts', help="multiple contracts",default="")
 def main(contract,user_cost,contracts):
 
-    if not contracts and contract:
+    # Calculation
+    if not contracts and contract: # user_cost required
         calc = Process( target=_multiprocess_main, args=(contract, user_cost) )
-    else:
+    else: # only require contracts string 
         calc = Process( target=_multicontracts_loop, args=(contracts.split(','),) )
     
+    # Market data
     if not contracts:
         assert contract, 'Must provide contract'
         contracts = contract

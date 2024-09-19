@@ -171,6 +171,9 @@ def pricing_options_from_spot():
                 "columns": ['col1','col2','col3','col4','col5'],
                 "data": [[1,2,3,4,5,],[3,4,5,6,7,]]
             },
+            "spot":{
+                "price": 60000,
+            }
         }), 200
     else:
         from strategy.options_pricing.options_price_projection_from_spot_price import _main
