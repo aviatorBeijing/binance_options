@@ -84,7 +84,8 @@ def _multicontracts_loop(contracts:list):
 
 def _multicontracts_main(contracts:list):
     sbid,sask = get_binance_spot( get_underlying(contracts[0]))
-    spread = (sbid-sask)/(sbid+sask)*2
+    smid =(sbid+sask)*.5
+    spread = (sbid-sask)/smid
     assert spread < 1/1000, f'Spread is too large: {sbid},{sask},{spread}'
     
     dfs = []
@@ -112,8 +113,8 @@ def _multicontracts_main(contracts:list):
         crng = np.arange( (m-10)*g, (m+10)*g, g )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,0.)
-            recs += [ [S,option_price,contract, (bid +ask)*.5, ask ] ]
-        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid', f'{ctype.upper()}_ask'] )
+            recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
+        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid'] )
         df.set_index('Spot',inplace=True)
         dfs += [df]
 
@@ -123,23 +124,22 @@ def _multicontracts_main(contracts:list):
     df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']
     df['p%'] = (df['BS_PUT'] - df['PUT_mid'])/df['PUT_mid']
 
-    df['dCall'] = -df['BS_CALL'] + df['CALL_ask'] # Deviations from BS prices
-    df['dPut'] = -df['BS_PUT'] + df['PUT_ask']
-
     for col in ['c%','p%']: df[col] = df[col].apply(lambda v: f'{(v*100):.1f}%')
     for col in ['dCall','dPut']: df[col] = df[col].apply(lambda v: f'{v:.2f}')
     
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
-    df = df[['moneyness','dp', 'CALL','dCall', 'BS_CALL','c%','p%','BS_PUT','dPut','PUT']]
+    df = df[['moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
         'assets': contracts + ['Spot'],
         'bid':    cbids + [sbid],
         'ask':   casks + [sask],
+        'deviate_from_BS': list(map(lambda v: v-smid, casks)) + [0.] # Deviation from Black-Scholes (for ask price only)
     })
+    xdf['deviate_from_BS'] = xdf['deviate_from_BS'].apply(lambda v: f'{v:.2f}')
     print('-- current:')
     print(xdf)
 
