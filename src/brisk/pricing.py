@@ -122,7 +122,7 @@ def _multicontracts_main(contracts:list):
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
-    df = df[['CALL','BS_CALL','dp','BS_PUT','PUT','moneyness']]
+    df = df[['moneyness', 'CALL','BS_CALL','dp','BS_PUT','PUT']]
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
