@@ -121,7 +121,7 @@ def _multicontracts_main(contracts:list):
     df['dp'] = (df['Spot']-sbid).apply(abs)/sbid
     df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']
     df['p%'] = (df['BS_PUT'] - df['PUT_mid'])/df['PUT_mid']
-    for col in ['c%','p%']: df[col] = df.col.apply(lambda v: f'{(v*100):.1f}%')
+    for col in ['c%','p%']: df[col] = df[col].apply(lambda v: f'{(v*100):.1f}%')
     df['moneyness'] = df.dp < 1./100
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
