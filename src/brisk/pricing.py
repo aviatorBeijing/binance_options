@@ -135,7 +135,7 @@ def _multicontracts_main(contracts:list):
     df = df[['moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
     for col in ['BS_CALL','BS_PUT','c%','p%']:
         df[col] = df[col].apply(lambda v: f'{v:.2f}')
-        
+
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
@@ -148,7 +148,7 @@ def _multicontracts_main(contracts:list):
     print('-- current:')
     print(xdf)
 
-    odf = df.reset_index(drop=True)
+    odf = df.reset_index()
     odf['Spot'] = odf['Spot'].apply(float)
     odf = odf[['Spot','moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
     return {
