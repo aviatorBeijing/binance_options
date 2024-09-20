@@ -88,6 +88,7 @@ def _multicontracts_main(contracts:list):
     spread = (sbid-sask)/smid
     assert spread < 1/1000, f'Spread is too large: {sbid},{sask},{spread}'
     
+    rf = 0.04 # risk-free rate
     dfs = []
     cbids = []
     casks = []
@@ -109,14 +110,14 @@ def _multicontracts_main(contracts:list):
         elif ctype == 'put':
             func_ = putprice
         
-        fairs += [ func_(smid,K,T/365,sigma,0.04) ]
+        fairs += [ func_(smid,K,T/365,sigma,rf) ]
 
         #crng = np.arange( sbid*(1-0.1), sbid*(1+0.1), 200)
         g = 100  # price gaps (spot)
         m = (sbid+sask)*.5//g
         crng = np.arange( (m-10)*g, (m+10)*g, g )
         for S in crng:
-            option_price = func_(S,K,T/365,sigma,0.04)
+            option_price = func_(S,K,T/365,sigma,rf)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
         df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid'] )
         df.set_index('Spot',inplace=True)
@@ -143,6 +144,20 @@ def _multicontracts_main(contracts:list):
     xdf['deviate_from_BS'] = xdf['deviate_from_BS'].apply(lambda v: f'{v:.2f}')
     print('-- current:')
     print(xdf)
+
+    odf = df.reset_index(drop=True)
+    odf['Spot'] = odf['Spot'].apply(float)
+    odf = odf[['Spot','moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
+    return {
+        "columns": [s for s in odf.columns ],
+        "data": [ list(rec) for rec in odf.to_records(index=False)],
+        "market": {
+            "columns": [s for s in xdf.columns],
+            "data": [
+                list(row) for row in xdf.to_records(index=False)
+            ]
+        }
+    }
 
 @click.command()
 @click.option('--contract', help="contract name")

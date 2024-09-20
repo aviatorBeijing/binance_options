@@ -11,7 +11,8 @@ def mgr(symbol,action,qty,pce, timing='limit'):
         #print( ex.market(symbol ))
         #ex.markets[symbol]['precision']['amount'] = 2
         #ex.markets[symbol]['precision']['price'] = 1
-    ex.create_order(symbol,timing,action,qty,pce)
+    orderinfo = ex.create_order(symbol,timing,action,qty,pce)
+    return orderinfo
 
 
 def validate_buy(symbol,qty,pce):

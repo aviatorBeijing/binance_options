@@ -302,11 +302,17 @@ def _multiprocess_main(left,right,vol,user_premium,check_parity):
 @click.command()
 @click.option('--left', help="left leg (OTM put option) contract name")
 @click.option('--right', help="right leg (OTM call option)")
+@click.option('--contracts', help="a pair of put/call contracts, comma-separated")
 @click.option('--size', default=1.0, help="1, 0.1, ... contract size, 1=1BTC contract")
 @click.option('--user_premium', default=0., help="a fixed float value, for an existing positions.")
 @click.option('--check_parity', is_flag=True, default=False)
-def main(left,right, size,user_premium, check_parity):
-
+def main(left,right,contracts,size,user_premium, check_parity):
+    
+    if contracts:
+        print('-- ignoring "--left" and "--right", using "--contracts". ')
+        left = list(filter lambda s: s.endswith('P'), contracts.split(',') )[0]
+        right = list(filter lambda s: s.endswith('C'), contracts.split(','))[0]
+    
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
     calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium,check_parity) )
     conn.start()

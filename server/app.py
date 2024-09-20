@@ -138,6 +138,10 @@ def historical_vol():
 
 @app.route('/price_ranges', methods=['GET'])
 def price_ranges():
+    """
+    @brief
+        Show possible spot price ranges, based on the options open interests.
+    """
     underlying = request.args.get('underlying') # BTC,ETH
     atm_contracts = request.args.get('atm_contracts') # Return atm contracts as well
     update = request.args.get('update')
@@ -212,6 +216,66 @@ def calc_straddle():
         resp  = cstraddle(lc,rc,1.)
         resp['be_prices'] = [float(v) for v in resp['be_prices']]
         return jsonify( resp  ),200
+
+@app.route('/pricing_pairs', methods=['GET'])
+def pricing_pairs():
+    contracts = request.args.get('contracts')
+    if contracts:
+        contracts = contracts.split(',')
+
+    if os.getenv("YAHOO_LOCAL",None):
+        return jsonify({
+            'ok': True,
+            "columns": 'a,b,c'.split(','),
+            "data": [ [1,2,3],[4,5,6]],
+            "market": {
+                "columns": 'assets,bid,asks,deviation_from_BS'.split(','),
+                "data": [
+                    ['a',2,3,4],
+                    ['b',4,5,6],
+                ]
+            }
+        }), 200
+    else:
+        from brisk.pricing import _multicontracts_main
+        resp = _multicontracts_main( contracts )
+        resp['ok'] = True
+        return jsonify( resp  ),200
+
+
+@app.route('/send_buy_order', methods=['GET'])
+def send_buy_order():
+    contract = request.args.get('contract')
+    pce = request.args.get('price')
+    qty = request.args.get('qty')
+    
+    try:
+        pce = float(pce)
+        qty = float(qty)
+        assert pce>0, f'{pce} is not a valid price'
+        assert qty>0, f'{qty} is not a valid qty'
+        assert len(contract)>1 and ('-P' in contract or '-C' in contract), f'{contract} is not acceptable contract name.'
+        
+        if os.getenv("YAHOO_LOCAL",None):
+            return jsonify({ # Local fake return
+                'ok': True,
+                'info': {}
+            }),200
+        
+        from bbroker.order_mgr import buy_
+        info = buy_(contract, qty, pce )
+        return jsonify( {
+            'ok': True,
+            'info': info
+            }),200
+    except Exception as e:
+        print('***', str(e))
+        return jsonify({
+            'ok': False,
+            'msg': f'Server error: {str(e)}'
+        }, 200)
+
+
 
 from swagger_template import swagger_json
 @app.route('/static/swagger.json')
