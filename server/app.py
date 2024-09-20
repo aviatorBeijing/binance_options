@@ -239,7 +239,6 @@ def pricing_pairs():
     else:
         from brisk.pricing import _multicontracts_main
         resp = _multicontracts_main( contracts )
-        resp['ok'] = True
         return jsonify( resp  ),200
 
 
