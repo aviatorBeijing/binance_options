@@ -259,14 +259,22 @@ def send_buy_order():
         if os.getenv("YAHOO_LOCAL",None):
             return jsonify({ # Local fake return
                 'ok': True,
-                'info': {}
+                'info': {
+                    'oid': '4711026509648199680',
+                    'datetime':'2024-09-20T08:30:03.384Z',
+                    'status': 'ACCEPTED(local fake)',
+                }
             }),200
         
         from bbroker.order_mgr import buy_
         info = buy_(contract, qty, pce )
         return jsonify( {
             'ok': True,
-            'info': info
+            'info': {
+                'oid': info['id'],
+                'datetime': info['datetime'],
+                'status': info['info']['status'],
+            }
             }),200
     except Exception as e:
         print('***', str(e))

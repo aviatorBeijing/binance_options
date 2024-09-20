@@ -61,7 +61,29 @@ def validate_sell(symbol,qty,pce):
 
 def buy_(symbol,qty,pce):
     #validate_buy(symbol,qty,pce)
-    mgr(symbol,'buy', qty,pce,timing='limit')
+    return mgr(symbol,'buy', qty,pce,timing='limit')
+    """
+    {'info': 
+        {'orderId': '4711026509648199680', 
+            'symbol': 'BTC-240923-63500-C', 
+            'price': '100.0', 
+            'quantity': '0.01', 
+            'executedQty': '0.00', 
+            'fee': '0', 'side': 'BUY', 'type': 'LIMIT', 
+            'timeInForce': 'GTC', 'reduceOnly': False, 'postOnly': 
+            False, 'createTime': '1726821003384', 
+            'updateTime': '1726821003384', 
+            'status': 'ACCEPTED', 'avgPrice': '0', 
+            'source': 'API', 'clientOrderId': '', 
+            'priceScale': '1', 'quantityScale': '2', 
+            'optionSide': 'CALL', 'quoteAsset': 'USDT', 'mmp': False
+        }, 
+    'id': '4711026509648199680', 
+    'clientOrderId': None, 
+    'timestamp': 1726821003384, 
+    'datetime': '2024-09-20T08:30:03.384Z', 
+    'lastTradeTimestamp': None, 'lastUpdateTimestamp': 1726821003384, 'symbol': 'BTC/USDT:USDT-240923-63500-C', 'type': 'limit', 'timeInForce': 'GTC', 'postOnly': False, 'reduceOnly': False, 'side': 'buy', 'price': 100.0, 'triggerPrice': None, 'amount': 0.01, 'cost': 0.0, 'average': None, 'filled': 0.0, 'remaining': 0.01, 'status': 'open', 'fee': {'currency': 'USDT', 'cost': 0.0, 'rate': None}, 'trades': [], 'fees': [{'currency': 'USDT', 'cost': 0.0, 'rate': None}], 'stopPrice': None, 'takeProfitPrice': None, 'stopLossPrice': None}
+    """
 
 def sell_(symbol,qty,pce):
     validate_sell(symbol,qty,pce)
