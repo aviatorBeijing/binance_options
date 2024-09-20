@@ -46,7 +46,8 @@ def _main(contracts:list, reference_spots:list):
             spr = (S-spot_now)/spot_now*100
             recs += [ {'contract': contract, 'option_price (ask)':ask, 'spot': f"{S} ({spr:.1f}%)", 'option_projected': op, 'opr': f"{opr:.1f}%"} ]
     df = pd.DataFrame.from_records( recs )
-    df['option_projected'] = df['option_projected'].apply(lambda v: round(v,2))
+    if 'option_projected' in df:
+        df['option_projected'] = df['option_projected'].apply(lambda v: round(v,2))
 
     if not df.empty: df['option_price (ask)'] = df['option_price (ask)'].apply(float)
     
