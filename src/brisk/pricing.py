@@ -126,15 +126,17 @@ def _multicontracts_main(contracts:list):
     df = pd.concat(dfs,axis=1,ignore_index=False)
     df['Spot'] = df.index
     df['dp'] = (df['Spot']-sbid).apply(abs)/sbid
-    df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']
-    df['p%'] = (df['BS_PUT'] - df['PUT_mid'])/df['PUT_mid']
+    df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']*100
+    df['p%'] = (df['BS_PUT'] - df['PUT_mid'])/df['PUT_mid']*100
     
-    df['moneyness'] = df.dp < 1./100
+    df['moneyness'] = df.dp < 5/1000
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
     df = df[['moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
-    for col in ['BS_CALL','BS_PUT','c%','p%']:
+    for col in ['BS_CALL','BS_PUT']:
         df[col] = df[col].apply(lambda v: f'{v:.2f}')
+    for col in ['c%','p%']:
+        df[col] = df[col].apply(lambda v: f'{v:.1f}')
 
     print( tabulate(df,headers='keys'))
 
