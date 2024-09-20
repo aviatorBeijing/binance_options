@@ -133,6 +133,9 @@ def _multicontracts_main(contracts:list):
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
     df = df[['moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
+    for col in ['BS_CALL','BS_PUT','c%','p%']:
+        df[col] = df[col].apply(lambda v: f'{v:.2f}')
+        
     print( tabulate(df,headers='keys'))
 
     xdf = pd.DataFrame.from_dict({
