@@ -152,7 +152,9 @@ def _multicontracts_main(contracts:list):
 
     odf = df.reset_index()
     odf['Spot'] = odf['Spot'].apply(float)
-    odf = odf[['Spot','moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
+    odf['Spot(d%)'] = odf['Spot'].apply(lambda v: f"{v:.0f} (")+odf['dp'].apply(lambda s: f'{s}) ') + odf['moneyness']
+    #odf = odf[['Spot','moneyness','dp', 'CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
+    odf = odf[['Spot(d%)','CALL', 'BS_CALL','c%','p%','BS_PUT','PUT']]
     return {
         "ok": True,
         "columns": [s for s in odf.columns ],
