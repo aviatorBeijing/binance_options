@@ -11,7 +11,7 @@ from butil.butils import ( DATADIR,DEBUG, get_binance_spot,
                 get_maturity, get_underlying )
 from brisk.bfee import calc_fee
 from ws_bcontract import _main as ws_connector
-from strategy.delta_gamma import callprice,putprice
+#from strategy.delta_gamma import callprice,putprice
 from butil.options_calculator import extract_specs, callprice, putprice, invert_callprice, invert_putprice
 
 

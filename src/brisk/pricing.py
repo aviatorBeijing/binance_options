@@ -88,7 +88,7 @@ def _multicontracts_main(contracts:list):
     spread = (sbid-sask)/smid
     assert spread < 1/1000, f'Spread is too large: {sbid},{sask},{spread}'
     
-    rf = 0.04 # risk-free rate
+    rf = 0. #0.04 # risk-free rate
     dfs = []
     cbids = []
     casks = []
