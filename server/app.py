@@ -233,7 +233,19 @@ def pricing_pairs():
                 "data": [
                     ['a',2,3,4],
                     ['b',4,5,6],
-                ]
+                ],
+                "greeks":{
+                    "impvols":{
+                        'a': {
+                            'bid': 0.4,
+                            'ask': 0.5,
+                        },
+                        'b': {
+                            'bid': 0.4,
+                            'ask': 0.5,
+                        },
+                    }
+                }
             }
         }), 200
     else:
@@ -246,8 +258,7 @@ def pricing_pairs():
 def send_buy_order():
     contract = request.args.get('contract')
     pce = request.args.get('price')
-    qty = request.args.get('qty')
-    
+    qty = request.args.get('qty')    
     try:
         pce = float(pce)
         qty = float(qty)

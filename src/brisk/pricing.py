@@ -94,6 +94,7 @@ def _multicontracts_main(contracts:list):
     casks = []
 
     fairs = [] # Black-Scholes "Fair" Prices of Call/Put
+    impvols = {}
     for contract in contracts:
         recs= []
         sym, T, K, ctype = extract_specs(contract)
@@ -103,6 +104,11 @@ def _multicontracts_main(contracts:list):
         sigma = float(cdata['impvol_bid'])
         cbids += [bid]
         casks += [ask]
+        
+        if contract not in impvols:
+            impvols[contract] = {}
+        impvols[contract] = {'bid': float(cdata['impvol_bid']),
+                             'ask': float(cdata['impvol_ask'])}
 
         func_ = None
         if ctype == 'call':
@@ -119,7 +125,15 @@ def _multicontracts_main(contracts:list):
         for S in crng:
             option_price = func_(S,K,T/365,sigma,rf)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
-        df = pd.DataFrame.from_records( recs, columns=['Spot',f'BS_{ctype.upper()}', ctype.upper(), f'{ctype.upper()}_mid'] )
+        df = pd.DataFrame.from_records( 
+                                recs, 
+                                columns=[
+                                    'Spot',
+                                    f'BS_{ctype.upper()}', 
+                                    ctype.upper(), 
+                                    f'{ctype.upper()}_mid'
+                                ]
+                            )
         df.set_index('Spot',inplace=True)
         dfs += [df]
 
@@ -163,7 +177,10 @@ def _multicontracts_main(contracts:list):
             "columns": [s for s in xdf.columns],
             "data": [
                 list(row) for row in xdf.to_records(index=False)
-            ]
+            ],
+            "greeks":{
+                "impvols": impvols,
+            }
         }
     }
 
