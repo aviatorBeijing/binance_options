@@ -158,9 +158,11 @@ def _multicontracts_main(contracts:list):
         'assets': contracts + ['Spot'],
         'bid':    cbids + [sbid],
         'ask':   casks + [sask],
+        'spd':  list( np.array(casks)-np.array(cbids )) + [sask-sbid],
         'deviate_from_BS': list( np.array(casks)-np.array(fairs )) + [0.] # Deviation from Black-Scholes (for ask price only)
     })
     xdf['deviate_from_BS'] = xdf['deviate_from_BS'].apply(lambda v: f'{v:.2f}')
+    xdf['spd'] = xdf['spd'].apply(lambda v: f'{v:.0f}')
     print('-- current:')
     print(xdf)
 
