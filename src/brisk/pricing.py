@@ -166,6 +166,7 @@ def _multicontracts_main(contracts:list):
     })
     xdf['deviate_from_BS'] = xdf['deviate_from_BS'].apply(lambda v: f'{v:.2f}')
     xdf['spd'] = xdf['spd'].apply(lambda v: f'{v:.0f}')
+    xdf['fee'] = xdf['fee'].apply(lambda v: f'{v:.2f}')
     print('-- current:')
     print(xdf)
 
