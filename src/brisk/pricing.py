@@ -95,6 +95,7 @@ def _multicontracts_main(contracts:list):
 
     fairs = [] # Black-Scholes "Fair" Prices of Call/Put
     impvols = {}
+    fees = []
     for contract in contracts:
         recs= []
         sym, T, K, ctype = extract_specs(contract)
@@ -104,6 +105,7 @@ def _multicontracts_main(contracts:list):
         sigma = float(cdata['impvol_bid'])
         cbids += [bid]
         casks += [ask]
+        fees += [ calc_fee(ask,1,contract) + calc_fee(bid,1,contract) ]
         
         if contract not in impvols:
             impvols[contract] = {}
@@ -153,13 +155,14 @@ def _multicontracts_main(contracts:list):
         df[col] = df[col].apply(lambda v: f'{v:.1f}')
 
     print( tabulate(df,headers='keys'))
-
+    
     xdf = pd.DataFrame.from_dict({
         'assets': contracts + ['Spot'],
         'bid':    cbids + [sbid],
         'ask':   casks + [sask],
         'spd':  list( np.array(casks)-np.array(cbids )) + [sask-sbid],
-        'deviate_from_BS': list( np.array(casks)-np.array(fairs )) + [0.] # Deviation from Black-Scholes (for ask price only)
+        'deviate_from_BS': list( np.array(casks)-np.array(fairs )) + [0.], # Deviation from Black-Scholes (for ask price only)
+        'fee': fees + [ 0.],
     })
     xdf['deviate_from_BS'] = xdf['deviate_from_BS'].apply(lambda v: f'{v:.2f}')
     xdf['spd'] = xdf['spd'].apply(lambda v: f'{v:.0f}')
