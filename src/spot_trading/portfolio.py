@@ -102,7 +102,7 @@ def analyze_trades_cached(ric) -> pd.DataFrame:
     print('-- current:', kline_close.iloc[-1],kline_close.index[-1])
     kline_close = kline_close[kline_close.index>=port.index[0]]
     port_last = port.index[-1]
-    assert port_last<=kline_close.index[-1], f'{ric} daily kline is out-of-dated.'
+    assert port_last<=kline_close.index[-1], f'{ric} daily kline is out-of-dated. {port_last}, {kline_close.index[-1]}'
     port = pd.concat([port,kline_close],axis=1,ignore_index=False).ffill()
     port.portfolio += port.asset * port.close
 

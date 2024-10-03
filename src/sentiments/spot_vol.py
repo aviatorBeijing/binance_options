@@ -51,6 +51,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
     
     df.dropna(inplace=True)
     df['rtn'] = df.close.pct_change()
+    df['amp'] = (df.high-df.low)/df.low
     df['gamma'] = df.rtn.pct_change()
     df['gamma_rnk'] = df.rtn.pct_change().rolling(30).rank(pct=True)
     last_row = df.tail(1)
@@ -62,7 +63,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
     last_gamma_rnk = df.gamma_rnk.iloc[-1]
     print( last_row )
     
-    col = 'rtn' if check == 'return' else 'gamma' if check == 'gamma' else None 
+    col = 'rtn' if check == 'return' else 'gamma' if check == 'gamma' else 'amp' if check=='amp' else None 
     assert col, f"check={check} is NOT supported."
 
     recs = []
@@ -89,7 +90,7 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
 @click.command()
 @click.option('--ric')
 @click.option('--rics')
-@click.option('--check', default='return', help="return | gamma (derivative of return)")
+@click.option('--check', default='return', help="return | amp ((h-l)/l) | gamma (derivative of return)")
 def main(ric,rics, check):
     if ric:
         df,startts,endts = _main(ric,check)
