@@ -86,12 +86,16 @@ def get_binance_index(contract)->tuple:
     fd = list(filter(lambda s: s.startswith(symbol), cached_files))
     if len(fd) == 1:
         fd = fd[0]
-        with open(f"{INDICESDIR}/{fd}", 'r') as fh:
-            t,v = fh.read().split('\n')
-            cachedt = datetime.datetime.fromisoformat( t )
-            if (bjnow() - cachedt).seconds < 10: # less than 10 sec
-                return float(v)
-
+        try:
+            with open(f"{INDICESDIR}/{fd}", 'r') as fh:
+                print(f'-- reading: {INDICESDIR}/{fd}')
+                t,v = fh.read().split('\n')
+                cachedt = datetime.datetime.fromisoformat( t )
+                if (bjnow() - cachedt).seconds < 10: # less than 10 sec
+                    return float(v)
+        except Exception as e:
+            print('*** error:', str(e) )
+            print('-- re-fetching index data for:', contract)
 
     resp = ex_binance.fapiPublicGetPremiumIndex()
     r = list(filter(lambda e: symbol == e['symbol'],resp ) )
