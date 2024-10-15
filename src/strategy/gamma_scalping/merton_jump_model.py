@@ -47,12 +47,13 @@ def find_mle(log_returns, dt):
     
     mu_mle, sigma_mle, lambda_mle, mu_j_mle, sigma_j_mle = result.x
 
-    print('-- MLE results:')
-    print(f"\tEstimated mu: {mu_mle}")
-    print(f"\tEstimated sigma: {sigma_mle}")
-    print(f"\tEstimated lambda (jump intensity): {lambda_mle}")
-    print(f"\tEstimated mu_j (mean jump size): {mu_j_mle}")
-    print(f"\tEstimated sigma_j (jump volatility): {sigma_j_mle}")
+    if False:
+        print('-- MLE results:')
+        print(f"\tEstimated mu: {mu_mle}")
+        print(f"\tEstimated sigma: {sigma_mle}")
+        print(f"\tEstimated lambda (jump intensity): {lambda_mle}")
+        print(f"\tEstimated mu_j (mean jump size): {mu_j_mle}")
+        print(f"\tEstimated sigma_j (jump volatility): {sigma_j_mle}")
 
     return mu_mle, sigma_mle, lambda_mle, mu_j_mle, sigma_j_mle
 
@@ -194,7 +195,7 @@ def main():
     print( '-- saved:', fn)
 
     # Bootstrapping
-    bootstrap_history(prices,dates,tailn=365)
+    bootstrap_history(prices,dates,tailn=10) #365)
 
 if __name__ == "__main__":
     main()
