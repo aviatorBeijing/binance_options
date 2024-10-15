@@ -10,11 +10,6 @@ scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/btc-usdt_5m.csv ./
 
 
 
-#for s in doge sei ace pendle sol avax trx btc matic;do
-#  scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1d.csv ./ && mv $s-usdt_1d.csv ~/tmp
-#  #scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/$s-usdt_1h.csv ./ && mv $s-usdt_1h.csv ~/tmp
-#done
-
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/perp_dogeusdt_5m.csv ./ && mv perp_dogeusdt_5m.csv ~/tmp
 scp -i ~/.ssh/junma-japan.pem ubuntu@$SERVER:/home/ubuntu/tmp/perp_dogeusdt_1h.csv ./ && mv perp_dogeusdt_1h.csv ~/tmp
 
