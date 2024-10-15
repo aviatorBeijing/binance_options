@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import ccxt
+import numpy  as np
 
 def top_rics(n):
     exchange = ccxt.binance()
