@@ -198,5 +198,6 @@ def main():
     bootstrap_history(prices,dates,tailn=10) #365)
 
 if __name__ == "__main__":
+    print('***** Volatility Estimation by MLE (fitting Merton-Jump model) *****')
     main()
 
