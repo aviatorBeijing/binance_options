@@ -22,6 +22,11 @@ $PYTHON spot_trading/market_data.py --ric $RIC --span 1d
 $PYTHON perp_trading/marketdata.py  --ric $RIC --span 1h
 $PYTHON perp_trading/marketdata.py  --ric $RIC --span 1d
 
+RIC=GNS/USDT
+$PYTHON spot_trading/market_data.py --ric $RIC --span 1d
+RIC=IOTA/USDT
+$PYTHON spot_trading/market_data.py --ric $RIC --span 1d
+
 ./bal.sh
 ./reversal.sh 60
 ./kline_spot.sh
