@@ -91,7 +91,7 @@ Ref: https://www.fidelity.com/learning-center/investment-products/options/option
 
 ## Gamma-scalping (GBM simulation)
 ```
-python strategy/gamma_scalping/gamma_scalping_sell_call.py
+python strategy/gamma_scalping/app.py
 ```
 <img width="886" alt="Screenshot 2024-08-30 at 16 16 29" src="https://github.com/user-attachments/assets/b3261eec-cdca-4814-9108-7389e8370f47">
 
