@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from butil.portfolio_stats import calc_cagr, max_drawdowns,sharpe,sortino
 from signals.meta import ActionT,TradeAction,VolumeHikesEmitter
-from butil.butils import binance_kline
+from butil.butils import binance_kline,_file_ts
 from butil.yahoo_api import AssetClass, get_asset_class,get_data
 
 import matplotlib.pyplot as plt
