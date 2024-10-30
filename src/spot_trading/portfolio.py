@@ -349,8 +349,11 @@ def check_cvar(cryptos=''):
     wts = []
     for col in df.asset:
         if col !='USDT':
-            fn = os.getenv('USER_HOME','') + f"/tmp/{col.lower()}-usdt_1d.csv"
-            c = pd.read_csv( fn )
+            try:
+                fn = os.getenv('USER_HOME','') + f"/tmp/{col.lower()}-usdt_1d.csv"
+                c = pd.read_csv( fn )
+            except FileNotFoundError as e:
+                c = binance_kline(symbol=f"{col.upper()}/USDT", span='1d')
         else:
             fn = os.getenv('USER_HOME','') + f"/tmp/btc-usdt_1d.csv" # Need the timestamp
             c = pd.read_csv( fn )
