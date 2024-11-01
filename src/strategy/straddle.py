@@ -310,8 +310,8 @@ def main(left,right,contracts,size,user_premium, check_parity):
     
     if contracts:
         print('-- ignoring "--left" and "--right", using "--contracts". ')
-        left = list(filter lambda s: s.endswith('P'), contracts.split(',') )[0]
-        right = list(filter lambda s: s.endswith('C'), contracts.split(','))[0]
+        left = list(filter(lambda s: s.endswith('P'), contracts.split(',')))[0]
+        right = list(filter(lambda s: s.endswith('C'), contracts.split(',')))[0]
     
     conn = Process( target=ws_connector, args=(f"{left},{right}", "ticker",) )
     calc = Process( target=_multiprocess_main, args=(left,right,size,user_premium,check_parity) )
