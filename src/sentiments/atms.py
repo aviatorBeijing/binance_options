@@ -36,7 +36,7 @@ def fetch_contracts(underlying):
         #df['minQty'] = df['filters'].apply(lambda v: v[1]['minQty'])
         
         df = df[df.symbol.str.startswith(underlying.upper())]
-        df.drop(['filters','contractId','unit','id'], axis=1, inplace=True)
+        #df.drop(['filters','contractId','unit','id'], axis=1, inplace=True)
         df = df.sort_values(['expiryDate','symbol','strikePrice'], ascending=True)
         df.reset_index(inplace=True,drop=True)
         return df 
