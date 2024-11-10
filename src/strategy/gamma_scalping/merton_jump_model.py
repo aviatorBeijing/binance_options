@@ -150,9 +150,12 @@ def _sim(prices,dates,tScale,n_paths = 100):
             mean_volatility,std_volatility,p68,\
             paths,gen_dates
 
-def main():
+import click
+@click.command()
+@click.option('--sym', default='btc')
+def main(sym):
     x = 5
-    prices, dates = read_prices_from_csv('btc')
+    prices, dates = read_prices_from_csv(sym)
     print(dates[0],'~',dates[-1])
     tScale = nDays    # Indicates the time scale in the data "prices"
     prices = prices[-nDays*x:]
@@ -163,7 +166,7 @@ def main():
         volatilities, mean_volatility,std_volatility,p68, \
             paths,gen_dates = _sim(
         prices,dates,tScale,n_paths = n_paths)
-    print('-- Simulated sigma:', 
+    print('-- Simulated sigma (mean,std,p68):', 
             f'{mean_volatility:.2f}', 
             f'{std_volatility:.2f}', 
             f'{p68:.2f}')
@@ -172,7 +175,7 @@ def main():
     
     plt.subplot(3,1,1)
     plt.plot(dates, prices)
-    plt.title(f'Market Prices ({x}-Yr)')
+    plt.title(f'{sym.upper()} Market Prices ({x}-Yr)')
 
     plt.subplot(3,1,2)
     for i in range(n_paths):
@@ -190,7 +193,7 @@ def main():
     plt.xlabel('Time Steps (Days)')
     plt.ylabel('Annualized Vol.')
     
-    fn = os.getenv('USER_HOME','') + '/tmp/merton_jump_model.png'
+    fn = os.getenv('USER_HOME','') + f'/tmp/merton_jump_model_{sym}.png'
     plt.savefig(fn)
     print( '-- saved:', fn)
 
