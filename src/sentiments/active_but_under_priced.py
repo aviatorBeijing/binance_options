@@ -59,5 +59,8 @@ for sym in tqdm.tqdm( symbols):
         }]
 pdf = pd.DataFrame.from_records(recs)
 pdf.sort_values('pct_close', ascending=True,inplace=True)
+fn = os.getenv('USER_HOME','') + '/tmp/active_but_underpriced.csv'
+pdf.to_csv( fn )
+print('-- saved:', fn)
 print( pdf )
 
