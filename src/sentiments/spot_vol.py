@@ -20,9 +20,8 @@ def ydata(ric,startts,endts):
     )
     return resp.json()
 
-def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivative of return)
-    fn = f"{ric.lower()}.csv"
-    if True: #not os.path.exists(fn):
+def _main(ric,span='1d',check='return',offline=False): # check='return' | 'gamma'  (gamma is the derivative of return)
+    if not offline: #not os.path.exists(fn):
         """endts = (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).timestamp()
         startts = endts - 10*365*24*3600
         resp = ydata( ric, startts,endts)
@@ -41,6 +40,8 @@ def _main(ric,check='return'): # check='return' | 'gamma'  (gamma is the derivat
         endts = df.timestamp.iloc[-1]
         #df.to_csv(fn, index=False)
     else:
+        fdir = os.getenv("USER_HOME",'')
+        fn = f"{fdir}/{ric.lower()}-usdt_{span.lower()}.csv"
         df = pd.read_csv(fn)
         startts = df.timestamp.iloc[0]
         endts = df.timestamp.iloc[-1]
