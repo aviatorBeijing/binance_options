@@ -25,24 +25,24 @@ def _main(ric,span):
     df.to_csv(fn)
     print('-- saved:', fn)
 
-def get_filebased_kline(sym, offline=True):
+def get_filebased_kline(sym, span='1d', offline=True):
     sym = sym.lower()
     if any([ sym in s for s in ['btc','doge','sol','bnb']]):
         sym = sym.replace('/','-').replace('-usdt','').replace('-usd','')
-        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_1d.csv'
+        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}-usdt_{span.lower()}.csv'
     else:
-        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}_1d.csv'
+        fn = os.getenv("USER_HOME","") + f'/tmp/{sym}_{span.lower()}.csv'
     
     if os.path.exists(fn):
         file_ts = _file_ts( fn )
     if not offline or not os.path.exists(fn):
         if get_asset_class(sym) == AssetClass.CRYPTO:
-            df = binance_kline(f'{sym.upper()}/USDT', span='1d', grps=20)
+            df = binance_kline(f'{sym.upper()}/USDT', span=span.lower(), grps=20)
             ds = df.iloc[-1].timestamp
             file_ts = datetime.datetime.strptime(ds, "%Y-%m-%dT%H:%M:%S.%fZ")
         else:
             df = get_data(f'{sym.upper()}', '1d', 365*10, realtime=not offline)
-            fn = os.getenv("USER_HOME","") + f'/tmp/{sym.lower().replace("/","-")}_1d.csv'
+            fn = os.getenv("USER_HOME","") + f'/tmp/{sym.lower().replace("/","-")}_{span.lower()}.csv'
             df.to_csv(fn,index=0)
             print('-- market data saved:', fn)
             df.columns = [s.lower() for s in df.columns ]
