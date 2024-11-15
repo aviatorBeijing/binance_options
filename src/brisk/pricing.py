@@ -121,9 +121,9 @@ def _multicontracts_main(contracts:list):
         fairs += [ func_(smid,K,T/365,sigma,rf) ]
 
         #crng = np.arange( sbid*(1-0.1), sbid*(1+0.1), 200)
-        g = 100  # price gaps (spot)
-        m = (sbid+sask)*.5//g
-        crng = np.arange( (m-15)*g, (m+20)*g, g )
+        g = 100  # percentage
+        m = (sbid+sask)*.5//g # -> %
+        crng = np.arange( (m-50)*g, (m+50)*g, g )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,rf)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
