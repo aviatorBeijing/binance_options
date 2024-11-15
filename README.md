@@ -44,7 +44,7 @@ export USER_HOME=<set_a_tmp_directory_for_data_cache>
 |```./price_ranges_indicated_by_binance_options_market-makers.sh```||prices range indicated by Options market-makers (Note: only mm can sell options on Binance for now)|
 |```python sentiments/active_but_under_priced.py```||check ALL spot market (/USDT) for "high volume" and "low price" candidates, potentially profitable with large margin|
 |```$PYTHON strategy/grid_trading.py --ric DOGE/USDT --nominal=10000 --stop_loss=-0.2 --spans=5m,15m,1d```||Grid trading pseudo-simulation and risk evaluation|
-|``````|```./sgrid.sh```|Real-time grid generator for four pairs: doge,btc,bnb,sol all in /USDT market.|
+|``````|```./sgrid.sh```|Real-time grid generator (and volume stats. for four pairs: doge,btc,bnb,sol all in /USDT market.|
 |``````|||
 |``````|||
 
