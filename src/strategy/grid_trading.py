@@ -72,6 +72,7 @@ def needles( df ):
     df.needle_up = (df.needle_up.rolling(cn).sum()>0).shift(1)
 
     df = df.dropna()
+    df =df[~df.index.duplicated(keep='last')]
     df.loc[df.needle_below & df.volume_nontrivial, 'buy'] = df.buyp
     df.loc[df.needle_up & df.volume_nontrivial, 'sell'] = df.sellp
 

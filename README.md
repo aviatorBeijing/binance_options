@@ -43,6 +43,7 @@ export USER_HOME=<set_a_tmp_directory_for_data_cache>
 |```python spot_trading/kline_trend.py --use_cached --span=1d --period=90```||STL timeseries decomposition to detect trend & seasonal movement|
 |```./price_ranges_indicated_by_binance_options_market-makers.sh```||prices range indicated by Options market-makers (Note: only mm can sell options on Binance for now)|
 |```python sentiments/active_but_under_priced.py```||check ALL spot market (/USDT) for "high volume" and "low price" candidates, potentially profitable with large margin|
+|```$PYTHON strategy/grid_trading.py --ric DOGE/USDT --nominal=10000 --stop_loss=-0.2 --spans=5m,15m,1d```||Grid trading pseudo-simulation and risk evaluation|
 |``````|||
 
 Example#1 (Long straddle):
