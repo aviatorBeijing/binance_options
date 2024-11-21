@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def calculate_price_cross_counts(df, price_step=10, num_levels=10, use_weight=False):
+def calculate_price_cross_counts(df, w=3, price_step=10, num_levels=10, use_weight=False):
     lowest_price = df["low"].min()
     highest_price = df["high"].max()
 
