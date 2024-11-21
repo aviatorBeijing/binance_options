@@ -48,6 +48,14 @@ def calculate_price_cross_counts(df, w=3, price_step=10, num_levels=10, use_weig
         result = pd.DataFrame({"Price": final_counts.index, "Weighted Cross Count": final_counts.values})
     else:
         result = pd.DataFrame({"Price": final_counts.index, "Cross Count": final_counts.values})
+    
+    result = result.sort_values("Price", ascending=False)
+
+    p0 = df.close.iloc[-1]
+    result['_cur'] = result['Price'] - p0
+    result['_cur'] = result['_cur']*result['_cur'].shift()
+    result['Now'] = ''
+    result.loc[result._cur<0, 'Now'] = f'* ${p0}'
 
     return result
 
