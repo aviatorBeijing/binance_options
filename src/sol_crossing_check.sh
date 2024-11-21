@@ -1,1 +1,0 @@
-perp_trading/sol_crossing_check.sh
