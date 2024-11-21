@@ -32,7 +32,9 @@ export USER_HOME=<set_a_tmp_directory_for_data_cache>
 |```./perp_trading/doge/selldown.sh```|```./pd```|("d" stands for "downward") send a order pair: sell at best bid, buy at 50bps below|
 |```./perp_trading/doge/cancel.sh```|```./pc```|cancel orders by order IDs, comma separated.|
 |```./perp_trading/doge/instant_pair.sh```|```./ps```|send an order pair: at 25bps each side|
+|```./perp_trading/sol_crossing_check.sh```|```./sol_crossing_check.sh```|check most frequently crossed SOLUSDT prices in history (i.e. "supports")|
 |``````|||
+
 
 [Spot]:
 | Command  | Shorthand | Function |
