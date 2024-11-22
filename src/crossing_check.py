@@ -56,6 +56,11 @@ def calculate_price_cross_counts(df, w=3, price_step=10, num_levels=10, use_weig
     result['_cur'] = result['_cur']*result['_cur'].shift()
     result['Now'] = ''
     result.loc[result._cur<0, 'Now'] = f'* ${p0}'
+    result['Delta'] = p0-result['Price']
+    result['Delta%'] = result['Delta']/p0*100
+    result['Delta%'] = result['Delta%'].apply(lambda v: f'{v:.1f}%')
+
+    result = result['Cross Count,Now,Delta,Delta%,Price'.split(',')]
 
     return result
 
