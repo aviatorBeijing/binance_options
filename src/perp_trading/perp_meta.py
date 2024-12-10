@@ -306,26 +306,26 @@ class BinancePerp:
             positions = self.ex.fetch_positions()        
             btcusdt_position = next((pos for pos in positions if pos['symbol'] == symbol), None)
             
-            lvl = btcusdt_position['leverage']
-            sz  = float(btcusdt_position['contracts'])
-            is_long = sz > 0
-            entry = btcusdt_position['entryPrice']
-            pnl = btcusdt_position['unrealizedPnl']
-
             if btcusdt_position:
-                pass
+                lvl = btcusdt_position['leverage']
+                sz  = float(btcusdt_position['contracts'])
+                is_long = sz > 0
+                entry = btcusdt_position['entryPrice']
+                pnl = btcusdt_position['unrealizedPnl']
+
+                return { 'symbol': symbol,
+                        'leverage': lvl,
+                        'is_long': is_long,
+                        'sz': sz,
+                        'entry': entry,
+                        'pnl': pnl,
+                        }
             else:
                 print(f"No open position found for {symbol}.")
                 return {}
         except Exception as e:
             print("An error occurred:", str(e))
-        return { 'symbol': symbol,
-                'leverage': lvl,
-                'is_long': is_long,
-                'sz': sz,
-                'entry': entry,
-                'pnl': pnl,
-                }
+            raise e
                 
     def takeprofit(self,roi=0.2):
         assert abs(roi)<1, f'{roi} is NOT < 1, ex.: 0.2 for 20%.'
