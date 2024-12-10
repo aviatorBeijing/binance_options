@@ -488,10 +488,6 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
     elif cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
-    elif tp: 
-        ex.takeprofit(abs(tp))
-    elif sl: 
-        ex.stoploss(abs(sl))
     elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
         bid,ask = adhoc_ticker(ric)
@@ -541,6 +537,10 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
             assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
             pces = split_orders_selldown(rg,splits,bid,ask,ttl)
             print( pces )
+    elif tp: 
+        ex.takeprofit(abs(tp))
+    elif sl: 
+        ex.stoploss(abs(sl))
     else:
         price = float(price)
         qty = float(qty)
