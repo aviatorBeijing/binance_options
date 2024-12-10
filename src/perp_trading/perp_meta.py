@@ -364,8 +364,9 @@ class BinancePerp:
         entry  = pos['entry']
         qty    = abs(pos['sz'])
         is_long = pos['is_long']
+        lvl = float( pos['leverage'] )
         roi = roi if is_long else -roi
-        take_profit_price = entry * (1+roi)
+        take_profit_price = entry * (1+roi/lvl)
         params = {
             "stopPrice": take_profit_price,  # Trigger price for the take-profit
         }
@@ -395,9 +396,10 @@ class BinancePerp:
         entry  = pos['entry']
         qty    = abs(pos['sz'])
         is_long = pos['is_long']
+        lvl = float( pos['leverage'] )
         
         roi = roi if not is_long else -roi
-        stop_price = entry * (1+roi)
+        stop_price = entry * (1+roi/lvl)
         params = {
             "stopPrice": stop_price,
         }
