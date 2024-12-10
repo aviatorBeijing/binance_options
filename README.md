@@ -33,6 +33,8 @@ export USER_HOME=<set_a_tmp_directory_for_data_cache>
 |```./perp_trading/doge/cancel.sh```|```./pc```|cancel orders by order IDs, comma separated.|
 |```./perp_trading/doge/instant_pair.sh```|```./ps```|send an order pair: at 25bps each side|
 |```./perp_trading/sol_crossing_check.sh```|```./sol_crossing_check.sh```|check most frequently crossed SOLUSDT prices in history (i.e. "supports")|
+|```./perp_trading/sol/tp.sh <0.1> ```||make a take-profit MARKET order (notice this is a market order, be aware the fee & slippage!!!) |
+|```./perp_trading/sol/sl.sh <0.1> ```||make a stop-loss MARKET order (notice this is a market order, be aware the fee & slippage!!!) |
 |``````|||
 
 
