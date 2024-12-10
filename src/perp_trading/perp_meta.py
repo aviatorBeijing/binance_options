@@ -303,10 +303,11 @@ class BinancePerp:
         #symbol = "BTC/USDT"
         symbol = self.ric.replace('-','/').upper()
         try:
-            positions = self.ex.fetch_positions()        
-            btcusdt_position = next((pos for pos in positions if pos['symbol'] == symbol), None)
-            
+            positions = self.ex.fetch_positions()       
+            btcusdt_position = list(  filter(lambda e: e['symbol']==f'{symbol}:USDT', positions)  ) # Only support USDT contracts !!!
+
             if btcusdt_position:
+                btcusdt_position = btcusdt_position[0]
                 lvl = btcusdt_position['leverage']
                 sz  = float(btcusdt_position['contracts'])
                 is_long = sz > 0
@@ -370,7 +371,7 @@ class BinancePerp:
         entry  = pos['entry']
         qty    = abs(pos['sz'])
         is_long = pos['is_long']
-
+        
         roi = roi if not is_long else -roi
         stop_price = entry * (1+roi)
         params = {
@@ -472,8 +473,8 @@ def split_orders_selldown(rg,n,bid,ask,ttl):
 @click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
 @click.option('--buyup_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the BUY split configs: total qty, percentage range of split, etc.')
 @click.option('--selldown_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the SELL split configs: total qty, percentage range of split, etc.')
-@click.option('--tp', default=0.2, help="(after holding a position) make a take-profit order, ex.: 0.2 -> 20%")
-@click.option('--sl', default=0.2, help="(after holding a position) make a stop-loss order, ex.: 0.2 -> -20%")
+@click.option('--tp', default=0., help="(after holding a position) make a take-profit order, ex.: 0.2 -> 20%")
+@click.option('--sl', default=0., help="(after holding a position) make a stop-loss order, ex.: 0.2 -> -20%")
 def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,
             buyup,selldown,
             buyup_split,selldown_split,
