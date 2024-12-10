@@ -298,6 +298,98 @@ class BinancePerp:
                 print(f'  -- oid={oid} canceled ok')
                 print(f'  -- oid={oid} filled before cancelation')
 
+
+    def fetch_positions(self):    
+        #symbol = "BTC/USDT"
+        symbol = self.ric.replace('-','/').upper()
+        try:
+            positions = self.ex.fetch_positions()        
+            btcusdt_position = next((pos for pos in positions if pos['symbol'] == symbol), None)
+            
+            lvl = btcusdt_position['leverage']
+            sz  = float(btcusdt_position['contracts'])
+            is_long = sz > 0
+            entry = btcusdt_position['entryPrice']
+            pnl = btcusdt_position['unrealizedPnl']
+
+            if btcusdt_position:
+                pass
+            else:
+                print(f"No open position found for {symbol}.")
+                return {}
+        except Exception as e:
+            print("An error occurred:", str(e))
+        return { 'symbol': symbol,
+                'leverage': lvl,
+                'is_long': is_long,
+                'sz': sz,
+                'entry': entry,
+                'pnl': pnl,
+                }
+                
+    def takeprofit(self,roi=0.2):
+        assert abs(roi)<1, f'{roi} is NOT < 1, ex.: 0.2 for 20%.'
+        
+        symbol = self.ric.replace('-','/').upper()
+        pos =  self.fetch_positions()
+        if not pos:
+            print(f'No position found: {symbol}')
+            return
+        entry  = pos['entry']
+        qty    = abs(pos['sz'])
+        is_long = pos['is_long']
+
+        roi = roi if is_long else -roi
+        take_profit_price = entry * (1+roi)
+        params = {
+            "stopPrice": take_profit_price,  # Trigger price for the take-profit
+        }
+        try:
+            order = self.ex.create_order(
+                symbol=symbol,
+                type="TAKE_PROFIT_MARKET",
+                side='sell' if is_long else 'buy',
+                amount=qty,
+                price=None,                 # TAKE_PROFIT_MARKET doesn't require a limit price
+                params=params
+            )
+        except Exception as e:
+            print("An error occurred:", str(e))
+            print(f"*** request: \n\t is_long={is_long}, symbol={symbol}, entry={entry}, qty={qty}, roi={roi}")
+            raise e
+
+    def stoploss(self,roi=0.2):
+        roi = abs(roi)
+        assert abs(roi)<1, f'{roi} is NOT < 1, ex.: 0.2 for 20%.'
+
+        symbol = self.ric.replace('-','/').upper()
+        pos =  self.fetch_positions()
+        if not pos:
+            print(f'No position found: {symbol}')
+            return
+        entry  = pos['entry']
+        qty    = abs(pos['sz'])
+        is_long = pos['is_long']
+
+        roi = roi if not is_long else -roi
+        stop_price = entry * (1+roi)
+        params = {
+            "stopPrice": stop_price,
+        }
+        try:
+            order = self.ex.create_order(
+                symbol=symbol,
+                type="STOP_MARKET",
+                side='sell' if is_long else 'buy',
+                amount=qty,
+                price=None,                 # TAKE_PROFIT_MARKET doesn't require a limit price
+                params=params
+            )
+        except Exception as e:
+            print("An error occurred:", str(e))
+            print(f"*** request: \n\t is_long={is_long}, symbol={symbol}, entry={entry}, qty={qty}, roi={roi}")
+            raise e
+
 def main_(ex, cbuy,csell,price,qty,sellbest,buybest):
     bid,ask = adhoc_ticker(ex.ric)
     print(f'-- current bid={bid}, ask={ask}; requesting: price={price}, qty={qty}, {"sell" if csell else "buy" if cbuy else "unknown"}')
@@ -380,9 +472,12 @@ def split_orders_selldown(rg,n,bid,ask,ttl):
 @click.option('--selldown', default=0., help='use the best price to sell the quantity, simultaneously buy same qty at 50bps down')
 @click.option('--buyup_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the BUY split configs: total qty, percentage range of split, etc.')
 @click.option('--selldown_split', default=None, help='a yaml file path (ex: configs/split_*.yml): define the SELL split configs: total qty, percentage range of split, etc.')
+@click.option('--tp', default=0.2, help="(after holding a position) make a take-profit order, ex.: 0.2 -> 20%")
+@click.option('--sl', default=0.2, help="(after holding a position) make a stop-loss order, ex.: 0.2 -> -20%")
 def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,centered_pair_dist,
             buyup,selldown,
-            buyup_split,selldown_split):
+            buyup_split,selldown_split,
+            tp,sl):
     print('*'*50, 'Perpetual Trading', '*'*50)
     assert 'USDT' in ric, r'Unsuported: {ric}'
     assert '-' in ric or '/' in ric, r'Unsupported: {ric}, use "-" or "/" in ric name'
@@ -390,10 +485,13 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
 
     if check:
         adhoc_status(ex,ric)
-
     elif cancel:
         for oid in cancel.split(','):
             ex.cancel_order( oid )
+    elif tp: 
+        ex.takeprofit(abs(tp))
+    elif sl: 
+        ex.stoploss(abs(sl))
     elif centered_pair:
         assert qty>0, 'Must provide a qty>0'
         bid,ask = adhoc_ticker(ric)

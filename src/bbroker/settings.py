@@ -1,6 +1,4 @@
-import ccxt,os,datetime
-from tabulate import tabulate
-import pandas as pd 
+import ccxt,os
 
 apikey = os.getenv('BINANCE_MAIN_OPTIONS_APIKEY', None)
 secret = os.getenv('BINANCE_MAIN_OPTIONS_SECRET', None)
