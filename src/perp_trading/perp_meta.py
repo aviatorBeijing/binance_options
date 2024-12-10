@@ -335,7 +335,7 @@ class BinancePerp:
                 btcusdt_position = btcusdt_position[0]
                 lvl = btcusdt_position['leverage']
                 sz  = float(btcusdt_position['contracts'])
-                is_long = sz > 0
+                is_long = btcusdt_position['side'] == 'long'
                 entry = btcusdt_position['entryPrice']
                 pnl = btcusdt_position['unrealizedPnl']
 
@@ -364,7 +364,6 @@ class BinancePerp:
         entry  = pos['entry']
         qty    = abs(pos['sz'])
         is_long = pos['is_long']
-
         roi = roi if is_long else -roi
         take_profit_price = entry * (1+roi)
         params = {
