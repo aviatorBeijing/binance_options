@@ -247,6 +247,31 @@ class BinancePerp:
         #print('--[ trades in 24 hours ]\n',tabulate(df,headers="keys"))
         return df  
 
+    def open_tpsl_orders(self):
+        try:
+            open_orders = self.ex.fetch_open_orders()
+            tp_sl_orders = [
+                order for order in open_orders 
+                if order['type'] in ['TAKE_PROFIT', 'TAKE_PROFIT_MARKET', 'STOP', 'STOP_MARKET']
+                ]
+            if tp_sl_orders:
+                print("Take-Profit and Stop-Loss Orders:")
+                for order in tp_sl_orders:
+                    print(f"ID: {order['id']}")
+                    print(f"Symbol: {order['symbol']}")
+                    print(f"Type: {order['type']}")
+                    print(f"Side: {order['side']}")
+                    print(f"Amount: {order['amount']}")
+                    print(f"Price: {order.get('price', 'N/A')}")
+                    print(f"Stop Price: {order.get('stopPrice', 'N/A')}")
+                    print(f"Timestamp: {self.ex.iso8601(order['timestamp'])}")
+                    print("-" * 40)
+            else:
+                print("No Take-Profit or Stop-Loss orders found.")
+        except Exception as e:
+            print(f"*** {str(e)}")
+            raise e
+
     def buy(self,price,qty,ask):
         """
         @param ask: must pass in the current ask price on order book
