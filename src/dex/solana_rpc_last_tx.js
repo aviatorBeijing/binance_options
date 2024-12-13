@@ -6,8 +6,56 @@ const connection = new Connection('https://api.mainnet-beta.solana.com', 'confir
 
 const PROGRAM_ID = new PublicKey(process.argv[2]);
 
+function calculateBalanceChanges(preTokenBalances, postTokenBalances) {
+    const balanceChanges = [];
+
+    // Create a map for easy lookup of pre balances by account
+    const preBalancesMap = new Map();
+    preTokenBalances.forEach(preBalance => {
+        preBalancesMap.set(preBalance.accountIndex, {
+            amount: Number(preBalance.uiTokenAmount.amount) / Math.pow(10, preBalance.uiTokenAmount.decimals),
+            decimals: preBalance.uiTokenAmount.decimals,
+            mint: preBalance.mint
+        });
+    });
+
+    // Iterate over postTokenBalances to calculate changes
+    postTokenBalances.forEach(postBalance => {
+        const accountIndex = postBalance.accountIndex;
+        const decimals = postBalance.uiTokenAmount.decimals;
+        const postAmount = Number(postBalance.uiTokenAmount.amount) / Math.pow(10, decimals);
+
+        const preBalanceData = preBalancesMap.get(accountIndex) || {
+            amount: 0, decimals, mint: postBalance.mint
+        };
+        const preAmount = preBalanceData.amount;
+
+        const change = postAmount - preAmount;
+
+        // Only include accounts with a non-zero change
+        if (change !== 0) {
+            balanceChanges.push({
+                accountIndex,
+                mint: postBalance.mint,
+                decimals,
+                preAmount,
+                postAmount,
+                change
+            });
+        }
+    });
+
+    // Check if the changes sum up to zero
+    const totalChange = balanceChanges.reduce((sum, entry) => sum + entry.change, 0);
+    if (totalChange !== 0) {
+        console.warn(`Warning: Total balance changes do not sum to zero! Total change: ${totalChange}`);
+    }
+
+    return balanceChanges;
+}
+
 async function getLatestTransaction() {
-    const { latestBlockhash } = await connection.getLatestBlockhash();
+    //const { latestBlockhash } = await connection.getLatestBlockhash();
 
     const signatureInfo = await connection.getSignaturesForAddress(PROGRAM_ID,
         {
@@ -38,9 +86,11 @@ async function getLatestTransaction() {
         console.log('Transaction Details:', transactionDetails);
         console.log()
         console.log( 'fee: ', transactionDetails.meta.fee );
-        for (const fb of transactionDetails.meta.postTokenBalances ){
-            console.log('\t', fb )
-        }
+        //for (const fb of transactionDetails.meta.postTokenBalances ){
+        //    console.log('\t', fb )
+        //}
+        const changes = calculateBalanceChanges(transactionDetails.meta.preTokenBalances, transactionDetails.meta.postTokenBalances);
+        console.log('token changes: ', changes);
         
         //console.log(transactionDetails.transaction.message.compiledInstructions)
         transactionDetails.transaction.message.compiledInstructions.forEach((index,keys,data) => {
@@ -49,7 +99,7 @@ async function getLatestTransaction() {
             //console.log('- Data (Base64):', data);
         });
 
-        const priceDetails = extractPriceInfo(transactionDetails);
+        /*const priceDetails = extractPriceInfo(transactionDetails);
         console.log('Extracted Price Information:', priceDetails);
 
         // Example: If the price information is encoded in the instruction data
@@ -68,57 +118,11 @@ async function getLatestTransaction() {
                 }
             });
         }
+            */
     }
 
 }
 
-// Sample Transaction Details
-const transaction = {
-    // Assuming the provided transaction details are here
-    meta: {
-        logMessages: [
-            // Include logMessages from your provided data
-            'Program log: fee_growth: 368075460682',
-            'Program log: 净利润: 5466',
-            // Add more logs here if needed
-        ]
-    }
-};
-
-// Function to extract price-related data
-function extractPriceInfo(transaction) {
-    const logMessages = transaction.meta.logMessages;
-    const priceInfo = [];
-
-    logMessages.forEach((log) => {
-        const feeGrowthMatch = log.match(/fee_growth:\s(\d+)/);
-        if (feeGrowthMatch) {
-            priceInfo.push({
-                type: 'fee_growth',
-                value: parseInt(feeGrowthMatch[1], 10)
-            });
-        }
-
-        const swapInstructionMatch = log.match(/Instruction:\s(SwapV2|Swap)/);
-        if (swapInstructionMatch) {
-            priceInfo.push({
-                type: 'instruction',
-                value: swapInstructionMatch[1]
-            });
-        }
-    });
-
-    return priceInfo;
-}
-
-// Sample function to decode price (depends on program encoding)
-function parsePriceData(data) {
-    // This function should be customized based on the program's instruction data encoding
-    // Assuming the price is a uint64 value encoded in the first 8 bytes
-    const priceBuffer = Buffer.from(data, 'base64');
-    const price = priceBuffer.readBigUInt64LE(0); // Read as a 64-bit unsigned integer
-    return price.toString(); // Returning price as string for simplicity
-}
 
 // Run the function to get the latest transaction price
 getLatestTransaction().catch(console.error);
