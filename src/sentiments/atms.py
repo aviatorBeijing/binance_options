@@ -95,7 +95,7 @@ def fetch_price_ranges(expiries, odf):
             
             prange = ';'.join(   [ f'{s[0]:,.1f} ~ {s[1]:,.1f}' for s in list(zip(pps,cps)) ] )
             lb = np.max( pps );ub=np.min(cps)
-            bd = f'[{lb:,.1f}, {ub:,.1f}]'
+            bd = f'{lb:,.1f} ~ {ub:,.1f}'
             print( datestr, prange, bd ) 
             
             recs +=[{ "expiry": datestr, "price_range": prange,"oi_qty": crange,"oi_value": drange, "bounds": bd}]
