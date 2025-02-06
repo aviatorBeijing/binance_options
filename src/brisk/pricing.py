@@ -123,7 +123,7 @@ def _multicontracts_main(contracts:list):
         #crng = np.arange( sbid*(1-0.1), sbid*(1+0.1), 200)
         g = 100  # percentage
         m = (sbid+sask)*.5//g # -> %
-        crng = np.arange( (m-50)*g, (m+50)*g, g )
+        crng = np.arange( (m-100)*g, (m+100)*g, g )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,rf)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
