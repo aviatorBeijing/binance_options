@@ -79,8 +79,12 @@ def opricer( contracts : list):
     df['Mkt_CALL'] = df['BS_CALL'] + call_deviation    # shift by the deviation, base on ASK prices of the call/put. 
     df['Mkt_PUT']  = df['BS_PUT'] + put_deviation
 
+    df['Mkt_CALL'] = df['Mkt_CALL'].apply(lambda v: round(v/5)*5)
+    df['Mkt_PUT']  = df['Mkt_PUT'].apply(lambda v: round(v/5)*5)
     
     df['Spot'] = df.index
+    df.loc[ df['Spot']>smid, 'Mkt_CALL' ] = ''
+    df.loc[ df['Spot']<smid, 'Mkt_PUT' ] = ''
     df = df.sort_index(ascending=False)
     df['dp'] = (df['Spot']-sbid)/sbid
     df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']*100
@@ -89,7 +93,7 @@ def opricer( contracts : list):
     df['moneyness'] = df.dp.apply(abs) < 5/1000
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
-    df = df[['moneyness','dp', 'CALL', 'Mkt_CALL', 'BS_CALL','c%','p%','BS_PUT','Mkt_PUT', 'PUT']]
+    df = df[['moneyness', 'CALL', 'dp','Mkt_CALL', 'BS_CALL','c%','p%','BS_PUT','Mkt_PUT','dp','PUT']]
     for col in ['BS_CALL','BS_PUT']:
         df[col] = df[col].apply(lambda v: f'{v:.2f}')
     for col in ['c%','p%']:

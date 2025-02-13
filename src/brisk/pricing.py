@@ -156,6 +156,7 @@ def _multicontracts_main(contracts:list):
 
     print( tabulate(df,headers='keys'))
     
+    # smaller table
     xdf = pd.DataFrame.from_dict({
         'assets': contracts + ['Spot'],
         'bid':    cbids + [sbid],
