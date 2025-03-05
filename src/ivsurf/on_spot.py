@@ -95,7 +95,7 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
             alloc
         )
     print('-- capital shares of orders:', shares)
-    
+
     ttl = np.sum( shares )
     per_c = (call_cap_limit -10.) / ttl 
     per_p = (put_cap_limit -10.) / ttl
@@ -155,7 +155,7 @@ def main(contracts,cap_call,cap_put,alloc):
     """
     if alloc:
         alloc = alloc.split(',')
-        alloc = list(map(lambda s: int(s.strip())))
+        alloc = list(map(lambda s: int(s.strip()),alloc))
         assert len(alloc) == 4, f'{alloc} should be a 4-element integer array.'
     else:
         alloc = []
