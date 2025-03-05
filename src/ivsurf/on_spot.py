@@ -126,7 +126,7 @@ def opricer( contracts : list, cap_call: float, cap_put: float):
         df[col] = df[col].apply(lambda v: f'{v:.1f}')
 
     df.index = list(map(lambda v: f'{v:,.0f}', df.index ))
-    new_row = df[['Cap_CALL($)','Cap_PUT($)']].sum()
+    new_row = df[['Cost_CALL($)','Cost_PUT($)']].sum()
     df.loc['Ttl'] = new_row
     df = df.fillna('_')
 
