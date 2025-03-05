@@ -7,7 +7,7 @@ from butil.butils import ( DATADIR,DEBUG, get_binance_spot, get_underlying )
 from butil.options_calculator import extract_specs,callprice,putprice
 from brisk.bfee import calc_fee
 
-def opricer( contracts : list, cap_call: float, cap_put: float):
+def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     """
     @brief Main purpose of this function is to help 
             placing daily adjusted orders for option contracts.
@@ -85,7 +85,17 @@ def opricer( contracts : list, cap_call: float, cap_put: float):
     # capital allocation strategy
     call_cap_limit = cap_call
     put_cap_limit = cap_put
-    shares = np.array([1,2,6,18]) # Double the sum of all previous orders
+    shares = np.array(
+        [1,2,6,18]
+    ) # Double the sum of all previous orders
+    
+    if alloc:
+        assert len(alloc) == 4, f'{alloc} should be a 4 element integers array.'
+        shares = np.array(
+            alloc
+        )
+    print('-- capital shares of orders:', shares)
+    
     ttl = np.sum( shares )
     per_c = (call_cap_limit -10.) / ttl 
     per_p = (put_cap_limit -10.) / ttl
@@ -137,14 +147,22 @@ import click
 @click.option("--contracts", help="comma-separated contracts", default='BTC-250228-95000-C,BTC-250228-95000-P')
 @click.option('--cap_call', help='capital limit for call options orders', default=500.)
 @click.option('--cap_put', help='capital limit for call options orders', default=500.)
-def main(contracts,cap_call,cap_put):
+@click.option('--alloc', help='comma separate list of integers, must be 4', default='')
+def main(contracts,cap_call,cap_put,alloc):
     """
     Need invoke WSS first, ex.: 
         <USER_HOME>/binance_options/src/ticker.sh BTC-250228-95000-C,BTC-250228-95000-P
     """
+    if alloc:
+        alloc = alloc.split(',')
+        alloc = list(map(lambda s: int(s.strip())))
+        assert len(alloc) == 4, f'{alloc} should be a 4-element integer array.'
+    else:
+        alloc = []
+
     print('-- contracts:',contracts)
     contracts = contracts.upper().split(',')
-    opricer( contracts, cap_call, cap_put)
+    opricer( contracts, cap_call, cap_put, alloc)
 
 if __name__ == '__main__':
     main()
