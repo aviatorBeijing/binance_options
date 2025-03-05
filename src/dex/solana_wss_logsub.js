@@ -38,6 +38,7 @@ ws.on('message', async (data) => {
         if (response.method === "logsNotification") {
             const logs = response.params?.result?.value;
             if(logs.err==null){
+                console.log( response ) // DEBUG 
                 console.log('Transaction Logs:', logs);
             }
             else{

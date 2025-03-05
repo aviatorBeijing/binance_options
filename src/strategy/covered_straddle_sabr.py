@@ -27,7 +27,7 @@ def delta(S, K, T, r, sigma, option_type="call"):
 
 # SABR Model Simulation (with dynamic volatility)
 def simulate_sabr(S0, kappa, alpha, rho, nu, T, steps):
-    dt = T / steps
+    dt = T / steps # ???
     prices = np.zeros(steps + 1)
     volatility = np.zeros(steps + 1)
     prices[0] = S0
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     r = 0.02
     mu = 0.05
     T = 0.25
-    steps = 60
+    steps = 90
     paths = 100
 
     stock_prices, pnl_paths, strangle_pnl_path, call_prices, put_prices, call_deltas, put_deltas = simulate_covered_strangle_parallel(
@@ -177,6 +177,7 @@ if __name__ == "__main__":
             "Final P&L vs Underlying Spot Price"
             "\n(Dynamic Delta)"
         )
+    ax4.legend(['Covered Strangle','Strangle Only'])
 
     plt.tight_layout()
     plt.savefig('covered_straddle_pnl_sabr_vol.png')

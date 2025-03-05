@@ -25,7 +25,7 @@ def delta(S, K, T, r, sigma, option_type="call"):
         return norm.cdf(d1) - 1
 
 def simulate_gbm_with_heston(S0, mu, T, steps, kappa, theta, sigma_0, xi):
-    dt = T / steps
+    dt = T / steps  # ???
     prices = np.zeros(steps + 1)
     volatility = np.zeros(steps + 1)
     prices[0] = S0
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     r = 0.02
     mu = 0.05
     T = 0.25
-    steps = 60
+    steps = 90
     paths = 100
 
     stock_prices, pnl_paths, strangle_pnl_path, call_prices, put_prices = simulate_covered_strangle_parallel(
@@ -154,6 +154,7 @@ if __name__ == "__main__":
             "Final P&L vs Underlying Spot Price"
             "\n(Constant Delta)"
         )
+    ax4.legend(['Covered Strangle','Strangle Only'])
 
     plt.tight_layout()
     plt.savefig('covered_straddle_pnl_heston_vol.png')
