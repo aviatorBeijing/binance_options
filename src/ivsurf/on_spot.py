@@ -140,7 +140,19 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     df.loc['Ttl'] = new_row
     df = df.fillna('_')
 
-    print( tabulate(df,headers='keys'))
+    df['Spot'] = df.index
+    GRAY = "\033[90m"
+    GREEN = "\033[92m"
+    RESET = "\033[0m"  # Reset color to default
+    def colorize_row(row, color):
+        return [f"{color}{cell}{RESET}" for cell in row]
+    colored_rows = [
+        colorize_row(df.iloc[i], GREEN) if i % 2 else list(df.iloc[i])
+        for i in range(len(df))
+    ]
+    print(tabulate(colored_rows, headers=df.columns, tablefmt="plain"))
+
+    #print( tabulate(df,headers='keys'))
 
 import click 
 @click.command()
