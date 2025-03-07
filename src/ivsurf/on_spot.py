@@ -119,8 +119,8 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     # -end-
 
     df['Spot'] = df.index
-    df.loc[ df['Spot']>smid, 'Mkt_CALL' ] = ''
-    df.loc[ df['Spot']<smid, 'Mkt_PUT' ] = ''
+    df.loc[ df['Spot']>smid, 'Mkt_CALL' ] = '-'
+    df.loc[ df['Spot']<smid, 'Mkt_PUT' ] = '-'
     df = df.sort_index(ascending=False)
     df['dp'] = (df['Spot']-sbid)/sbid
     df['c%'] = (df['BS_CALL'] - df['CALL_mid'])/df['CALL_mid']*100
@@ -129,7 +129,7 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     df['moneyness'] = df.dp.apply(abs) < 5/1000
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
-    df = df[['moneyness', 'CALL', 'dp','Mkt_CALL', 'Qty_CALL', 'Cost_CALL($)', 'BS_CALL','c%','p%','BS_PUT','Cost_PUT($)','Qty_PUT','Mkt_PUT','dp','PUT']]
+    df = df[['moneyness', 'Spot','dp','Mkt_CALL', 'Qty_CALL', 'Cost_CALL($)', 'BS_CALL','c%','p%','BS_PUT','Cost_PUT($)','Qty_PUT','Mkt_PUT','dp','Spot']]
     for col in ['BS_CALL','BS_PUT']:
         df[col] = df[col].apply(lambda v: f'{v:.2f}')
     for col in ['c%','p%']:
@@ -140,7 +140,9 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     df.loc['Ttl'] = new_row
     df = df.fillna('_')
 
-    df['Spot'] = df.index
+    for col in ['Qty_CALL','Cost_CALL($)','Qty_PUT','Cost_PUT($)']:
+        df.loc[df[col]==0,col] = '-'
+
     GRAY = "\033[90m"
     GREEN = "\033[92m"
     RESET = "\033[0m"  # Reset color to default
@@ -151,8 +153,7 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
         for i in range(len(df))
     ]
     print(tabulate(colored_rows, headers=df.columns, tablefmt="plain"))
-
-    #print( tabulate(df,headers='keys'))
+    print( contracts )
 
 import click 
 @click.command()
