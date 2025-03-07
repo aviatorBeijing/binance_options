@@ -129,6 +129,7 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     df['moneyness'] = df.dp.apply(abs) < 5/1000
     df.moneyness = df.moneyness.apply(lambda s: '*' if s else '')
     df.dp = df.dp.apply(lambda v: f"{(v*100):.1f}%")
+    df['Spot'] = df['Spot'].apply(lambda v: f'{v:,.0f}')
     df = df[['moneyness', 'Spot','dp','Mkt_CALL', 'Qty_CALL', 'Cost_CALL($)', 'BS_CALL','c%','p%','BS_PUT','Cost_PUT($)','Qty_PUT','Mkt_PUT','dp','Spot']]
     for col in ['BS_CALL','BS_PUT']:
         df[col] = df[col].apply(lambda v: f'{v:.2f}')
