@@ -131,7 +131,7 @@ if __name__ == "__main__":
     mu = 0.05
     T = 0.25
     steps = 90
-    paths = 100
+    paths = 500
 
     stock_prices, pnl_paths, strangle_pnl_path, call_prices, put_prices, call_deltas, put_deltas = simulate_covered_strangle_parallel(
         S0, Kc, Kp, r, kappa, alpha, rho, nu, T, steps, paths
