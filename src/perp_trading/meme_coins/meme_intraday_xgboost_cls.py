@@ -70,7 +70,7 @@ class CryptoStrategyAnalyzer:
     
     def evaluate_model(self):
         """Evaluate model performance on test set"""
-        y_pred = self.model.predict(self.X_test)
+        self.y_pred = y_pred = self.model.predict(self.X_test)
         
         metrics = {
             'F1 Score': f1_score(self.y_test, y_pred),
@@ -135,7 +135,7 @@ class CryptoStrategyAnalyzer:
         _report("Strategy 1: Sell at Close After 30 Steps", strategy1['ret_fixed'])
         _report("Strategy 2: Sell at Max Close in Next 30 Steps", strategy2['ret_max'])
     
-    def plot_results(self, strategy1, strategy2):
+    def plot_results(self, sym, strategy1, strategy2):
         """Visualize the results with volume subplot"""
         # Prepare data for plotting
         strategy1_sorted = strategy1.sort_index().copy()
@@ -153,35 +153,42 @@ class CryptoStrategyAnalyzer:
         # Create figure with 3 subplots
         fig, ax = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
         
-        # Plot 1: Price and classifications
-        self._plot_price_and_classifications(ax[0])
-        
-        # Plot 2: Volume (new subplot)
+        self._plot_price_and_classifications(sym, ax[0])
         self._plot_volume(ax[1])
-        
-        # Plot 3: Strategy performance
         self._plot_strategy_performance(ax[2], strategy1_sorted, strategy2_sorted)
         
+        ax[0].grid()
+        ax[2].grid()
         plt.tight_layout()
-        plt.show()
+
+        fn = os.getenv("USER_HOME","") + "/tmp/meme_intraday_xgboost_cls.pdf"
+        plt.savefig(fn)
+        print('-- Saved:', fn)
     
-    def _plot_price_and_classifications(self, ax):
+    def _plot_price_and_classifications(self, sym, ax):
         """Plot price data with buy/sell signals"""
         ax.plot(self.X_train['datetime'], self.X_train['close'], label='Train Close', alpha=0.5)
         ax.plot(self.X_test['datetime'], self.X_test['close'], label='Test Close', alpha=0.5)
         
         # Plot classifications
         ax.scatter(self.X_train['datetime'][self.y_train == 1], 
-                  self.X_train['close'][self.y_train == 1], 
-                  color='red', s=10, alpha=0.4, label='Train Class 1')
+                  self.X_train['close'][self.y_train == 1]*1.02, 
+                  color='red', s=8, alpha=0.4, label='Train Class 1')
+        
+        # True
         ax.scatter(self.X_test['datetime'][self.y_test == 1], 
-                  self.X_test['close'][self.y_test == 1], 
+                  self.X_test['close'][self.y_test == 1]*0.98, 
                   color='red', s=15, alpha=0.7, label='Test Class 1')
+        
+        # Pred
+        ax.scatter(self.X_test['datetime'][self.y_pred == 1], 
+                  self.X_test['close'][self.y_pred == 1]*1.02, 
+                  color='green', s=15, alpha=0.7, label='Pred Class 1')
         
         # Add split line and formatting
         split_time = self.X_test['datetime'].iloc[0]
         ax.axvline(x=split_time, color='k', linestyle='--', label='Train/Test Split')
-        ax.set_title('Close Price with Classifications')
+        ax.set_title(f'Close Price with Classifications ({sym.upper()} Perp)')
         ax.set_ylabel('Price')
         ax.legend(loc='upper left')
         ax.grid()
@@ -218,9 +225,9 @@ class CryptoStrategyAnalyzer:
         line2 = ax2.plot(strategy2['datetime'], strategy2['cum_return'], 
                          color='green', label='Sell @ Max 20% Profit')
         
-        ax1.set_ylabel('Cumulative Return - Strategy 1 (Left Axis)', color='blue')
-        ax2.set_ylabel('Cumulative Return - Strategy 2 (Right Axis)', color='green')
-        ax1.set_title('Cumulative Returns of Two Strategies')
+        ax1.set_ylabel('Strategy 1 (Left Axis)', color='blue')
+        ax2.set_ylabel('Strategy 2 (Right Axis)', color='green')
+        ax1.set_title('Cumulative Returns')
         ax1.set_xlabel('Time')
         
         lines = line1 + line2
@@ -230,9 +237,10 @@ class CryptoStrategyAnalyzer:
 
 
 def main():
-    # Initialize analyzer
-    analyzer = CryptoStrategyAnalyzer(symbol='flm')  # Can change to other symbols
-    
+    sym = 'flm'
+    analyzer = CryptoStrategyAnalyzer(symbol=sym)  # Can change to other symbols
+    print('-- [Perp] Meme symbol:', sym.upper())
+
     # Execute analysis pipeline
     analyzer.load_data()
     analyzer.prepare_train_test()
@@ -244,7 +252,7 @@ def main():
     analyzer.generate_reports(strategy1, strategy2)
     
     # Visualize results
-    analyzer.plot_results(strategy1, strategy2)
+    analyzer.plot_results(sym, strategy1, strategy2)
 
 
 if __name__ == "__main__":
