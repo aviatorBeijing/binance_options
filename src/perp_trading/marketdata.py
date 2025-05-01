@@ -43,7 +43,7 @@ def get_perp_klines(ric, span)->pd.DataFrame:
     print(f'-- latest volumes: {(rk_last[0]*100):.1f}%, {(rk_last[1]*100):.1f}%, {(rk_last[2]*100):.1f}%, {(rk_last[3]*100):.1f}%, {(rk_last[4]*100):.1f}%')
 
     # cache
-    fn = os.getenv('USER_HOME','/Users/junma')
+    fn = os.getenv('USER_HOME','')
     fn = f'{fn}/tmp/perp_{ric.lower()}_{span}.csv'
     df.to_csv( fn, index=0)
     print('-- saved: ',fn)
