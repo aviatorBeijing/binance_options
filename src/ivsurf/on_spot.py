@@ -55,8 +55,8 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
         fairs += [ func_(smid,K,T/365,sigma,rf) ]
 
         mid = (sbid+sask)*.5
-        crng = mid*(1. + np.array([0.03, 0.05, 0.08, 0.1, 0.,
-                                     -0.03,-0.05,-0.08,-0.1]) )
+        crng = mid*(1. + np.array([0.01,0.02,0.03, 0.05, 0.08, 0.1, 0.,
+                                     -0.01,-0.02,-0.03,-0.05,-0.08,-0.1]) )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,rf)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
