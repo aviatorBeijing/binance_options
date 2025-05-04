@@ -1,3 +1,4 @@
+import ccxt
 import pandas as pd 
 from tabulate import tabulate
 import datetime,os,click
@@ -59,14 +60,31 @@ class BinancePerp:
         self.ric = ric 
         self.ex = ex
         
+        # Find the ndigits of price
         dmap = {}
         fn = os.getenv("USER_HOME","")+"/tmp/binance_perp_ndigits.csv"
         if os.path.exists(fn):
             dmap = {line.split(',')[0]: int(line.split(',')[1]) for line in open(fn,'r') if line.strip()}
         assert dmap, f'{fn} not found. Use binance_perp_ndigits.py to generate.'
         assert ric+':USDT' in dmap, f'{ric} not found in dmap!'
-        
         self.ndigits = dmap[ ric+':USDT' ]
+
+        # Set isolated margin, and 10x
+        try:
+            set_margin_mode_response = self.ex.fapiPrivatePostMarginType({
+                'symbol': ric.replace('/',''),
+                'marginType': 'ISOLATED'
+            })
+            print('Margin mode set response:', set_margin_mode_response)
+        except ccxt.BaseError as _:
+            print('') # Ignore
+
+        # Set leverage to 10x
+        set_leverage_response = self.ex.fapiPrivatePostLeverage({
+            'symbol': ric.replace('/',''),
+            'leverage': 10
+        })
+        print('Leverage set response:', set_leverage_response)
 
     def balance(self)->pd.DataFrame:
         d = self.ex.fetch_balance()
