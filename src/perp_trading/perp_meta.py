@@ -58,17 +58,16 @@ class BinancePerp:
     def __init__(self,ric, ex=None) -> None:
         self.ric = ric 
         self.ex = ex
+        
+        dmap = {}
+        fn = os.getenv("USER_HOME","")+"/tmp/binance_perp_ndigits.csv"
+        if os.path.exists(fn):
+            dmap = {line.split(',')[0]: int(line.split(',')[1]) for line in open(fn,'r') if line.strip()}
+        assert dmap, f'{fn} not found. Use binance_perp_ndigits.py to generate.'
+        assert ric+':USDT' in dmap, f'{ric} not found in dmap!'
+        
+        self.ndigits = dmap[ ric+':USDT' ]
 
-        # valid price digits
-        if ric.startswith('DOGE'): self.ndigits = 5 
-        elif ric.startswith('BTC'): self.ndigits = 2
-        elif ric.startswith('PENDLE'): self.ndigits = 4
-        elif ric.startswith('SOL'): self.ndigits = 2 
-        elif ric.startswith('SEI'): self.ndigits = 4
-        elif ric.startswith('XMR'): self.ndigits = 2
-        else:
-            raise Exception(f'Unsupported ric: {ric}')
-    
     def balance(self)->pd.DataFrame:
         d = self.ex.fetch_balance()
         ttl = d['total'];freed = d['free'];used = d['used']
@@ -532,13 +531,16 @@ def main(ric,check,cbuy,csell,cancel,price,qty,sellbest,buybest,centered_pair,ce
         assert qty>0, f"qty is required"
         main_(ex,False,False,0.,qty,sellbest,buybest)
     elif buyup>0:
-        bid,ask = adhoc_ticker(ric);spread = (ask-bid)/(ask+bid)*2
-        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+        bid,ask = adhoc_ticker(ric)
+        spread = (ask-bid)/(ask+bid)*2
+        if ric.upper() not in ['MOVE/USDT']:
+            assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         ex.buy(bid,buyup,ask)
         ex.sell(ask*(1.+50./10_000),buyup,bid)
     elif selldown>0:
         bid,ask = adhoc_ticker(ric);spread = (ask-bid)/(ask+bid)*2
-        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+        if ric.upper() not in ['MOVE/USDT']:
+            assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
         ex.sell(ask,selldown,bid)
         ex.buy(bid*(1.-50./10_000),selldown,ask)
     elif buyup_split:

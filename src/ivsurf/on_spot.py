@@ -55,8 +55,8 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
         fairs += [ func_(smid,K,T/365,sigma,rf) ]
 
         mid = (sbid+sask)*.5
-        crng = mid*(1. + np.array([0.01,0.02,0.03, 0.05, 0.08, 0.1, 0.,
-                                     -0.01,-0.02,-0.03,-0.05,-0.08,-0.1]) )
+        crng = mid*(1. + np.array([0.02,0.03, 0.05, 0.08, 0.1, 0.,
+                                     -0.02,-0.03,-0.05,-0.08,-0.1]) )
         for S in crng:
             option_price = func_(S,K,T/365,sigma,rf)
             recs += [ [S,option_price,contract, (bid +ask)*.5 ] ]
@@ -86,11 +86,11 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     call_cap_limit = cap_call
     put_cap_limit = cap_put
     shares = np.array(
-        [1,2,6,18]
+        [1,1,2,6,18]
     ) # Double the sum of all previous orders
     
     if alloc:
-        assert len(alloc) == 4, f'{alloc} should be a 4 element integers array.'
+        assert len(alloc) == 5, f'{alloc} should be a 5 element integers array.'
         shares = np.array(
             alloc
         )
@@ -101,13 +101,13 @@ def opricer( contracts : list, cap_call: float, cap_put: float, alloc=[]):
     per_p = (put_cap_limit -10.) / ttl
     
     df['Qty_CALL'] = 0
-    df.loc[df.index[-4:], 'Qty_CALL']  = per_c * shares
+    df.loc[df.index[-5:], 'Qty_CALL']  = per_c * shares
     df['Qty_CALL'] /= df['Mkt_CALL']
     df['Qty_CALL'] = df['Qty_CALL'].apply(lambda v: np.floor(v*100)/100.)
     df['Cost_CALL($)'] = df['Qty_CALL'] * df['Mkt_CALL']
 
     df['Qty_PUT'] = 0
-    df.loc[df.index[:4], 'Qty_PUT']  = per_p * shares 
+    df.loc[df.index[:5], 'Qty_PUT']  = per_p * shares 
     df['Qty_PUT'] /= df['Mkt_PUT']
     df['Qty_PUT'] = df['Qty_PUT'].apply(lambda v: np.floor(v*100)/100.)
     df['Cost_PUT($)'] = df['Qty_PUT'] * df['Mkt_PUT']
@@ -170,7 +170,7 @@ def main(contracts,cap_call,cap_put,alloc):
     if alloc:
         alloc = alloc.split(',')
         alloc = list(map(lambda s: int(s.strip()),alloc))
-        assert len(alloc) == 4, f'{alloc} should be a 4-element integer array.'
+        assert len(alloc) == 5, f'{alloc} should be a 5-element integer array.'
     else:
         alloc = []
 

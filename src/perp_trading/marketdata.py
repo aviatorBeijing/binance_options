@@ -12,7 +12,8 @@ def adhoc_ticker(symbol='BTC/USDT')->tuple:
     ask = float(ask)
 
     spread = (ask-bid)/(ask+bid)*2
-    assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
+    if symbol not in ['MOVE/USDT']:
+        assert spread< 5./10_000, f'spread is too wide: {spread} (bid:{bid},ask:{ask})'
 
     return float(bid),float(ask)
 
