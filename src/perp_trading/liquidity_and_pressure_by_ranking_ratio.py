@@ -94,8 +94,7 @@ def main(syms, market):
         tz = pytz.timezone("Asia/Shanghai")
         current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-        print(f"\n--- RANK RATIOS @ {current_time} --- (for {symbol})")
-        print(f"{symbol} | Return Rank: {return_rank*100:.1f}% ({ret*100:.2f}%) | Volume Rank: {volume_rank*100:.1f}% | Ratio: {ratio:.2f}")
+        print(f"{current_time} {symbol:15s} | Return Rank: {return_rank*100:6.1f}% ({ret*1e4:6.1f} bps) | Volume Rank: {volume_rank*100:6.1f}% | Ratio: {ratio:6.2f}")
 
     async def websocket_loop():
         fetch_initial_klines()
