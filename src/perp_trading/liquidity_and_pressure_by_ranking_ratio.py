@@ -7,98 +7,110 @@ import ccxt
 from collections import deque
 from datetime import datetime
 import pytz
+import click
 
 # --- Configurable ---
 MARKET_TYPE = 'perp'  # 'spot' or 'perp'
 INTERVAL = '1m'
 ROLLING_WINDOW = 100  # 99 from REST + 1 from WebSocket
 
-# Base symbols (no caps)
-BASE_SYMBOLS = ['btcusdt', 'moveusdt', 'layerusdt']
+# --- Fetch input symbols from command line ---
+@click.command()
+@click.option('--syms', default='btcusdt,moveusdt,layerusdt', help='Comma-separated list of symbols')
+@click.option('--market', default='perp', type=click.Choice(['spot', 'perp']), help="Market type: 'spot' or 'perp'")
+def main(syms, market):
+    # Parse the symbols from the command line
+    BASE_SYMBOLS = syms.split(',')
+    BASE_SYMBOLS = list(
+            map(lambda s: s.lower() if 'usdt' in s.lower() else f'{s.lower()}usdt', 
+                BASE_SYMBOLS
+                ))
 
-# Adjust for market type
-if MARKET_TYPE == 'spot':
-    SYMBOLS = BASE_SYMBOLS
-    stream_format = lambda sym: f"{sym}@kline_{INTERVAL}"
-    WS_BASE = "wss://stream.binance.com:9443/stream"
-    EXCHANGE = ccxt.binance()
-elif MARKET_TYPE == 'perp':
-    SYMBOLS = [s.upper() for s in BASE_SYMBOLS]
-    stream_format = lambda sym: f"{sym.lower()}@kline_{INTERVAL}"
-    WS_BASE = "wss://fstream.binance.com/stream"
-    EXCHANGE = ccxt.binanceusdm()
-else:
-    raise ValueError("MARKET_TYPE must be 'spot' or 'perp'")
+    # Adjust for market type
+    if market == 'spot':
+        SYMBOLS = BASE_SYMBOLS
+        stream_format = lambda sym: f"{sym}@kline_{INTERVAL}"
+        WS_BASE = "wss://stream.binance.com:9443/stream"
+        EXCHANGE = ccxt.binance()
+    elif market == 'perp':
+        SYMBOLS = [s.upper() for s in BASE_SYMBOLS]
+        stream_format = lambda sym: f"{sym.lower()}@kline_{INTERVAL}"
+        WS_BASE = "wss://fstream.binance.com/stream"
+        EXCHANGE = ccxt.binanceusdm()
+    else:
+        raise ValueError("MARKET_TYPE must be 'spot' or 'perp'")
 
-stream_names = [stream_format(symbol) for symbol in SYMBOLS]
-stream_url = f"{WS_BASE}?streams={'/'.join(stream_names)}"
+    # Prepare WebSocket stream
+    stream_names = [stream_format(symbol) for symbol in SYMBOLS]
+    stream_url = f"{WS_BASE}?streams={'/'.join(stream_names)}"
 
-# --- Global state ---
-kline_data = {}
-last_rest_ts = {}
+    # --- Global state ---
+    kline_data = {}
+    last_rest_ts = {}
 
-# --- Fetch historical data ---
-def fetch_initial_klines():
-    print("Fetching historical data...")
-    for symbol in SYMBOLS:
-        ohlcv = EXCHANGE.fetch_ohlcv(symbol, timeframe=INTERVAL, limit=ROLLING_WINDOW - 1)
-        deque_data = deque(maxlen=ROLLING_WINDOW)
-        for o in ohlcv:
-            ts, open_, high, low, close, volume = o
-            ret = (close - open_) / open_
-            deque_data.append({'return': ret, 'volume': volume, 'ts': ts})
-        kline_data[symbol] = deque_data
-        last_rest_ts[symbol] = ohlcv[-1][0]  # Last bar's timestamp (ms)
-    print("Historical data loaded.")
+    # --- Fetch historical data ---
+    def fetch_initial_klines():
+        print("Fetching historical data...")
+        for symbol in SYMBOLS:
+            ohlcv = EXCHANGE.fetch_ohlcv(symbol, timeframe=INTERVAL, limit=ROLLING_WINDOW - 1)
+            deque_data = deque(maxlen=ROLLING_WINDOW)
+            for o in ohlcv:
+                ts, open_, high, low, close, volume = o
+                ret = (close - open_) / open_
+                deque_data.append({'return': ret, 'volume': volume, 'ts': ts})
+            kline_data[symbol] = deque_data
+            last_rest_ts[symbol] = ohlcv[-1][0]  # Last bar's timestamp (ms)
+        print("Historical data loaded.")
 
-# --- Process new kline ---
-async def process_kline(symbol, kline):
-    kline_ts = int(kline['t'])  # Candle open time in ms
+    # --- Process new kline ---
+    async def process_kline(symbol, kline):
+        kline_ts = int(kline['t'])  # Candle open time in ms
 
-    # Avoid duplicate processing
-    if kline_ts == last_rest_ts.get(symbol):
-        return
+        # Avoid duplicate processing
+        if kline_ts == last_rest_ts.get(symbol):
+            return
 
-    close = float(kline['c'])
-    open_ = float(kline['o'])
-    volume = float(kline['v'])
-    ret = (close - open_) / open_
+        close = float(kline['c'])
+        open_ = float(kline['o'])
+        volume = float(kline['v'])
+        ret = (close - open_) / open_
 
-    kline_data[symbol].append({'return': ret, 'volume': volume, 'ts': kline_ts})
+        # Append new data
+        kline_data[symbol].append({'return': ret, 'volume': volume, 'ts': kline_ts})
 
-    # Prepare rank data
-    latest_returns = {s: d[-1]['return'] for s, d in kline_data.items()}
-    latest_volumes = {s: d[-1]['volume'] for s, d in kline_data.items()}
+        # Extract returns and volumes for this symbol
+        symbol_returns = pd.Series([item['return'] for item in kline_data[symbol]])
+        symbol_volumes = pd.Series([item['volume'] for item in kline_data[symbol]])
 
-    returns_series = pd.Series(latest_returns)
-    volumes_series = pd.Series(latest_volumes)
+        # Use absolute return for ranking
+        abs_returns = symbol_returns.abs()
 
-    return_ranks = returns_series.apply(abs).rank(pct=True)
-    volume_ranks = volumes_series.rank(pct=True)
-    ratio = return_ranks / volume_ranks
+        # Rank latest return and volume among this symbol's history
+        return_rank = abs_returns.rank(pct=True).iloc[-1]
+        volume_rank = symbol_volumes.rank(pct=True).iloc[-1]
+        ratio = return_rank / volume_rank if volume_rank != 0 else float('inf')
 
-    # Timestamp with timezone
-    tz = pytz.timezone("Asia/Shanghai")  # Change as needed
-    current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
+        # Timestamp with timezone
+        tz = pytz.timezone("Asia/Shanghai")
+        current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-    sorted_ratio = ratio.sort_values(ascending=False)
+        print(f"\n--- RANK RATIOS @ {current_time} --- (for {symbol})")
+        print(f"{symbol} | Return Rank: {return_rank*100:.1f}% ({ret*100:.2f}%) | Volume Rank: {volume_rank*100:.1f}% | Ratio: {ratio:.2f}")
 
-    print(f"\n--- RANK RATIOS @ {current_time} --- (sorted by ratio)")
-    for sym in sorted_ratio.index:
-        print(f"{sym} | Return Rank: {return_ranks[sym]*100:.1f}% | Volume Rank: {volume_ranks[sym]*100:.1f}% | Ratio: {sorted_ratio[sym]:.2f}")
+    async def websocket_loop():
+        fetch_initial_klines()
+        async with websockets.connect(stream_url) as websocket:
+            while True:
+                msg = await websocket.recv()
+                data = json.loads(msg)
 
-# --- WebSocket loop ---
-async def main():
-    fetch_initial_klines()
-    async with websockets.connect(stream_url) as websocket:
-        while True:
-            msg = await websocket.recv()
-            data = json.loads(msg)
+                payload = data['data']
+                symbol = payload['s']
+                if payload['k']['x']:  # Closed kline
+                    await process_kline(symbol, payload['k'])
 
-            payload = data['data']
-            symbol = payload['s']
-            if payload['k']['x']:  # Closed kline
-                await process_kline(symbol, payload['k'])
+    asyncio.run(websocket_loop())
 
-asyncio.run(main())
+if __name__ == "__main__":
+    main()
 
