@@ -14,7 +14,7 @@ INTERVAL = '1m'
 ROLLING_WINDOW = 100  # 99 from REST + 1 from WebSocket
 
 # Base symbols (no caps)
-BASE_SYMBOLS = ['btcusdt', 'ethusdt', 'bnbusdt', 'solusdt']
+BASE_SYMBOLS = ['btcusdt', 'moveusdt', 'layerusdt']
 
 # Adjust for market type
 if MARKET_TYPE == 'spot':
@@ -73,17 +73,19 @@ async def process_kline(symbol, kline):
     returns_series = pd.Series(latest_returns)
     volumes_series = pd.Series(latest_volumes)
 
-    return_ranks = returns_series.rank()
-    volume_ranks = volumes_series.rank()
+    return_ranks = returns_series.apply(abs).rank(pct=True)
+    volume_ranks = volumes_series.rank(pct=True)
     ratio = return_ranks / volume_ranks
 
     # Timestamp with timezone
     tz = pytz.timezone("Asia/Shanghai")  # Change as needed
     current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-    print(f"\n--- RANK RATIOS @ {current_time} ---")
-    for sym in SYMBOLS:
-        print(f"{sym} | Return Rank: {return_ranks[sym]:.1f} | Volume Rank: {volume_ranks[sym]:.1f} | Ratio: {ratio[sym]:.3f}")
+    sorted_ratio = ratio.sort_values(ascending=False)
+
+    print(f"\n--- RANK RATIOS @ {current_time} --- (sorted by ratio)")
+    for sym in sorted_ratio.index:
+        print(f"{sym} | Return Rank: {return_ranks[sym]*100:.1f}% | Volume Rank: {volume_ranks[sym]*100:.1f}% | Ratio: {sorted_ratio[sym]:.2f}")
 
 # --- WebSocket loop ---
 async def main():
