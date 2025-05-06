@@ -79,10 +79,12 @@ def main(syms, market):
         kline_data[symbol].append({'return': ret, 'volume': volume, 'ts': kline_ts})
 
         # Volatility
-        rtns = kline_data[symbol]['return']
-        std = rtns.std()
-        mu = rtns.mean()
-        zval = ( rtns.iloc[-1] - mu ) / std if std>0 else 0.
+        symbol_returns = pd.Series([item['return'] for item in kline_data[symbol]])
+        symbol_volumes = pd.Series([item['volume'] for item in kline_data[symbol]])
+
+        mu = symbol_returns.mean()
+        std = symbol_returns.std()
+        zval = (symbol_returns.iloc[-1] - mu) / std if std > 0 else 0.
 
         # Extract returns and volumes for this symbol
         symbol_returns = pd.Series([item['return'] for item in kline_data[symbol]])
@@ -103,7 +105,8 @@ def main(syms, market):
         print(f"{current_time} {symbol:15s} "
                 f"| Return Rank: {return_rank*100:6.1f}% ({ret*1e4:6.1f} bps) "
                 f"| Volume Rank: {volume_rank*100:6.1f}% | Ratio: {ratio:6.2f} "
-                f"| Mean Return & Z-Value: {mu:6.2f} {zval:6.2f}"
+                f"| Mean Return & Z-Value: {mu*1e4:6.1f} bps {zval:6.2f} "
+                f"| {(symbol if np.abs(zval)>1 else ''):15s}"
             )
 
     async def websocket_loop():
