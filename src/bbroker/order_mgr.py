@@ -117,7 +117,7 @@ def cancel_(symbol, oid):
 def main( action,contract, price, qty, cancel_order_id, execute ):
     action = action.lower()
     contract = contract.upper()
-    assert len(contract) == len('BTC-240329-70000-C'), 'Wrong contract.'
+    assert len(contract) == len('BTC-240329-70000-C') or len(contract) == len('BTC-240329-70000-C')+1, 'Wrong contract.'
     assert contract.split('-')[0] == 'BTC', 'Only support BTC contracts.'
     
     # Cancel order
