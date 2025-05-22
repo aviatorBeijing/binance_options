@@ -10,6 +10,7 @@ ex = ccxt.binance({
         'defaultType': 'option',
     }
 })
+print('-- Loading markets')
 _ = ex.load_markets()
 
 spot_ex = ccxt.binance({
