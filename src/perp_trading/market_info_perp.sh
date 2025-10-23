@@ -1,0 +1,1 @@
+../market_info_perp.sh
