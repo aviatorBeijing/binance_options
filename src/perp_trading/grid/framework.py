@@ -28,7 +28,8 @@ class GridConfig:
     def __init__(self):
         # --- CORE TRADING PARAMETERS ---
         # List of symbols to track klines for (used for multi-asset volatility calculation)
-        self.SYMBOLS = ["BTCUSDT", "ETHUSDT"] 
+        self.SYMBOLS = ["SYSUSDT", "BTCUSDT", "ETHUSDT"] 
+        # NOTE: Changing TRADING_SYMBOL must be reflected in LOCAL_CACHE_FILENAME
         self.MARKET_TYPE = 'perp'           # 'spot' or 'perp' (using Binance USDM futures)
         self.INTERVAL = '1m'                # Kline interval for volatility calculation
         self.ROLLING_WINDOW = 240           # 4 hours of 1m klines for volatility lookback
@@ -48,6 +49,7 @@ class GridConfig:
         # Options: 'LOCAL_CACHE' (default for safety/sim) or 'FIREBASE'
         self.PERSISTENCE_MODE = "LOCAL_CACHE"
         self.LOCAL_CACHE_DIR = "/tmp/binance_hft"
+        # Adjusted filename to dynamically use the TRADING_SYMBOL
         self.LOCAL_CACHE_FILENAME = f"{self.TRADING_SYMBOL.lower()}_grid_state.json"
         
         # --- GRID GEOMETRY OPTIONS ---
@@ -55,17 +57,28 @@ class GridConfig:
         self.PRICE_RANGE_PERCENT = 0.02   # Fallback range if volatility is zero
 
         # --- RISK & SIZING ---
-        self.BASE_QTY_USD = 100 
+        self.BASE_QTY_USD = 100 # Base USD value for each grid order
         self.HARD_STOP_LOSS_PRICE = self.INITIAL_PRICE * 0.95 
+
+        # --- NEW CAPITAL MANAGEMENT PARAMETERS ---
+        self.TOTAL_AVAILABLE_CAPITAL_USD = 10000.0 # Total account equity (assumed for risk calc)
+        # Maximum fraction of capital allowed to be used (notional, including leverage)
+        self.MAX_CAPITAL_ALLOCATION_PERCENT = 0.50 # 50% max allocation
+        
+        # Absolute maximum notional USD value for the open position (inventory * price * leverage)
+        self.MAX_POSITION_USD = self.TOTAL_AVAILABLE_CAPITAL_USD * self.MAX_CAPITAL_ALLOCATION_PERCENT 
+        # ----------------------------------------------------------------------------------
 
         # --- DYNAMIC VOLATILITY ADJUSTMENT ---
         self.USE_DYNAMIC_VOLATILITY = True
-        self.VOLATILITY_SCALING_FACTOR = 1.5 # Multiplies volatility (sigma) to set grid step size
+        self.VOLATILITY_SCALING_FACTOR = 1.5 # Multiplies sigma to set grid step size
 
         # --- VOLATILITY-ADJUSTED SIZING ---
         self.USE_VOLATILITY_SIZING = True
         self.MIN_VOLATILITY_FOR_SIZING = 0.0001
-        self.VOLATILITY_SIZE_FACTOR = 1000 # Scaling factor for dynamic position sizing
+        # Factor used to normalize volatility for sizing. Tune this based on expected sigma magnitude.
+        # Example: If sigma is 0.0001, a factor of 1000 makes the ratio 1.0.
+        self.VOLATILITY_SIZE_FACTOR = 1000.0 
 
         # --- INVENTORY CONTROL ---
         self.USE_INVENTORY_CONTROL = True
@@ -220,7 +233,10 @@ class GridTradingFramework:
             self._save_state_firebase()
 
     def _load_state_local(self):
-        """Loads persistent state from the local JSON cache."""
+        """
+        Loads persistent state from the local JSON cache and includes sanitization
+        for corrupted/massive inventory and P&L data.
+        """
         print(f"Attempting to load state from local file: {self.cache_filepath}...")
         try:
             with open(self.cache_filepath, 'r') as f:
@@ -228,12 +244,44 @@ class GridTradingFramework:
                 self.grid_levels = state.get('grid_levels', [])
                 self.active_orders = state.get('active_orders', {})
                 self.is_active = state.get('is_active', True)
-                self.inventory = state.get('inventory', 0.0)
-                # NEW: Load P&L state
-                self.cost_basis_usd = state.get('cost_basis_usd', 0.0)
+                
+                # --- START SANITIZATION LOGIC (Addressing the log anomalies) ---
+                
+                # Use a small threshold (e.g., 10000 units) to flag corrupted inventory 
+                # This assumes your trading quantity is usually much less than 10k units.
+                MAX_SANITY_QTY = 10000.0
+                
+                # 1. Sanitize Inventory
+                loaded_inventory = state.get('inventory', 0.0)
+                if abs(loaded_inventory) > MAX_SANITY_QTY:
+                    print(f"!!! WARNING: Loaded inventory ({loaded_inventory:.4f}) is massive. RESETTING to 0.0")
+                    self.inventory = 0.0
+                    self.cost_basis_usd = 0.0
+                else:
+                    self.inventory = loaded_inventory
+                    # 2. Sanitize Cost Basis (must be loaded along with inventory)
+                    self.cost_basis_usd = state.get('cost_basis_usd', 0.0)
+
+                # 3. Sanitize Filled Orders (check for non-numeric/corrupted entries that caused crash)
+                loaded_filled_orders = state.get('filled_orders', [])
+                sanitized_filled_orders = []
+                for order in loaded_filled_orders:
+                    try:
+                        # Attempt to convert key numerical fields to float, discarding corrupted ones
+                        order['price'] = float(order.get('price', 0.0))
+                        order['qty'] = float(order.get('qty', 0.0))
+                        order['fee'] = float(order.get('fee', 0.0))
+                        sanitized_filled_orders.append(order)
+                    except (ValueError, TypeError):
+                        print("!!! WARNING: Skipping corrupted order history entry.")
+                        continue
+                self.filled_orders = sanitized_filled_orders
+                
+                # 4. Load P&L and fees after sanitizing filled orders
                 self.total_pnl_usd = state.get('total_pnl_usd', 0.0)
                 self.total_fees_usd = state.get('total_fees_usd', 0.0)
-                self.filled_orders = state.get('filled_orders', [])
+                
+                # --- END SANITIZATION LOGIC ---
                 
                 self.current_volatility = state.get('volatility', 0.0)
             print("Local state loaded successfully.")
@@ -327,22 +375,51 @@ class GridTradingFramework:
 
     def calculate_order_qty(self, side: str, price: float) -> float:
         """
-        Calculates the quantity applying Volatility-Adjusted Sizing and Inventory Skew.
+        Calculates the quantity applying Volatility-Adjusted Sizing and Inventory Skew,
+        and enforces the MAX_POSITION_USD capital limit.
         """
         P_mid = price
         
         # 1. Volatility-Adjusted Base Size (in USD)
         base_qty_usd = self.config.BASE_QTY_USD
-        if self.config.USE_VOLATILITY_SIZING and self.current_volatility > self.config.MIN_VOLATILITY_FOR_SIZING:
-            # Sizing logic: Increase size in low volatility, decrease in high volatility
-            volatility_factor = self.config.VOLATILITY_SIZE_FACTOR / (self.current_volatility * P_mid)
-            base_qty_usd = max(self.config.BASE_QTY_USD, volatility_factor)
         
+        if self.config.USE_VOLATILITY_SIZING and self.current_volatility > self.config.MIN_VOLATILITY_FOR_SIZING:
+            # --- FIX APPLIED HERE ---
+            # The calculation was replacing base_qty_usd with the factor, leading to exponential numbers.
+            # FIX: Use the volatility calculation as a multiplier (scaling factor) for the BASE_QTY_USD.
+            
+            # The scaling ratio: (Target Volatility / Current Volatility) 
+            # We use the VOLATILITY_SIZE_FACTOR * Price to create a stable, unit-less target.
+            
+            # Example: If sigma is 0.0001 (low) and price is 100, the divisor is 0.01.
+            # If Factor is 1000, ratio is 1000 / 0.01 = 100, which is too aggressive.
+            
+            # Let's adjust the formula to create a simple inverse scaling:
+            # We want size to INCREASE as volatility DECREASES.
+            
+            # Calculate a stable target volatility reference.
+            target_vol_ref = self.config.VOLATILITY_SIZE_FACTOR / P_mid
+            
+            # Scaling Factor: If current_volatility is low (e.g., 0.0001), the factor is high.
+            # We normalize against a small target volatility reference.
+            scaling_factor = target_vol_ref / self.current_volatility
+            
+            # Cap the scaling factor to prevent massive order sizes during extreme low volatility
+            MAX_SCALING_FACTOR = 3.0 
+            scaling_factor = min(scaling_factor, MAX_SCALING_FACTOR)
+            
+            # Apply the scaling factor to the base USD quantity
+            base_qty_usd *= scaling_factor
+            
+            print(f"    [SIZE ADJUST] Volatility Scaling Factor: {scaling_factor:.2f}. New Base USD: ${base_qty_usd:.2f}")
+
+
         # 2. Inventory Sizing Skew (Adjusts size based on current net position)
         skew_factor = 1.0
         if self.config.USE_INVENTORY_CONTROL and abs(self.inventory) > 0.0:
-            # Normalize inventory against max threshold 
-            inventory_norm = min(abs(self.inventory) / (self.config.MAX_INVENTORY_THRESHOLD / P_mid), 1.0)
+            # Normalize inventory against max threshold (must convert MAX_INVENTORY_THRESHOLD from USD to QTY)
+            max_inventory_qty = self.config.MAX_INVENTORY_THRESHOLD / P_mid 
+            inventory_norm = min(abs(self.inventory) / max_inventory_qty, 1.0)
             
             if (self.inventory > 0 and side == 'BUY') or \
                (self.inventory < 0 and side == 'SELL'):
@@ -355,15 +432,57 @@ class GridTradingFramework:
         
         final_qty_usd = base_qty_usd * skew_factor
         
-        # Quantity calculation: USD Value * Leverage / Price
-        qty = final_qty_usd / P_mid * self.config.LEVERAGE
+        # Quantity calculation: USD Value * Leverage / Price (This is the desired quantity)
+        desired_qty = final_qty_usd / P_mid * self.config.LEVERAGE
         
+        # --- NEW: CAPITAL/MAX POSITION LIMIT CHECK ---
+        
+        # Calculate the current notional exposure (absolute value)
+        current_notional = abs(self.inventory * P_mid * self.config.LEVERAGE)
+        max_notional = self.config.MAX_POSITION_USD
+        
+        # 1. Determine if the new order is aggressive (adds to the current position's magnitude)
+        is_aggressive_side = (self.inventory >= 0 and side == 'BUY') or \
+                             (self.inventory <= 0 and side == 'SELL')
+
+        qty = desired_qty # Start with the desired quantity
+
+        if is_aggressive_side:
+            # 2. Calculate the capacity remaining in USD notional
+            # Note: We are using math.copysign for consistency with inventory sign, 
+            # but since we use abs(inventory) for current_notional, this is simplified.
+            capacity_remaining_notional = max(0.0, max_notional - current_notional)
+            
+            # 3. Convert remaining notional capacity to quantity
+            # Max quantity we can place without exceeding the limit: Notional / (Price * Leverage)
+            # Safe division check (in case Price or Leverage is zero, though unlikely)
+            divisor = (P_mid * self.config.LEVERAGE)
+            max_add_qty_allowed = capacity_remaining_notional / divisor if divisor else 0.0
+            
+            # 4. Cap the desired quantity
+            qty = min(desired_qty, max_add_qty_allowed)
+            
+            if qty < desired_qty:
+                # The logged message was missing the TRADING_SYMBOL
+                print(f"    [CAPITAL LIMIT] Capping {side} order from {desired_qty:.4f} qty to {qty:.4f} qty due to MAX_POSITION_USD limit.")
+        
+        # Final check for minimum quantity
         min_qty = 0.0001
-        return max(qty, min_qty)
+        # If the capped quantity is less than the min_qty, it means we cannot place a meaningful order 
+        # without violating the capital limit, so we return 0.0 to signal skipping the order.
+        if qty < min_qty:
+            return 0.0
+            
+        return qty # Return the capped, non-zero quantity
 
     async def place_order(self, side: str, price: float):
         """Simulates async order placement. Uses CCXT if PAPER_TRADE is False."""
         qty = self.calculate_order_qty(side, price)
+        # Prevent placing an order if quantity is effectively zero due to the cap
+        if qty == 0.0:
+            print(f"  [EXECUTION] Skipped {side} order at ${price:,.2f}. Quantity too low (capped to zero).")
+            return
+
         order_id = f"ORDER_{side}_{int(time.time() * 1000)}"
         
         print(f"  [EXECUTION {'PAPER' if self.config.PAPER_TRADE else 'LIVE'}] Placing {side} order ID {order_id} at ${price:,.2f} (Qty: {qty:.4f} {self.config.TRADING_SYMBOL[:3]})")
@@ -401,7 +520,7 @@ class GridTradingFramework:
             
             # Update cost basis using weighted average (assuming the trade is fully opening/adding)
             if filled_side == 'BUY':
-                # New cost basis = (Old cost + New USD value) / (Old qty + New qty)
+                # New cost basis = (Old cost + New USD value)
                 self.cost_basis_usd += trade_usd_value
                 self.inventory += fill_qty
             else: # SELL (adding to short position - cost basis decreases in magnitude)
@@ -419,7 +538,12 @@ class GridTradingFramework:
             
             # Long position being reduced by a SELL
             if self.inventory > 0 and filled_side == 'SELL':
-                avg_entry_price = self.cost_basis_usd / self.inventory
+                # Check for zero inventory before division (safety)
+                if abs(self.inventory) < 0.000001:
+                    avg_entry_price = 0.0
+                else:
+                    avg_entry_price = self.cost_basis_usd / self.inventory
+                    
                 # PnL = (Exit Price - Entry Price) * Quantity
                 realized_pnl = (fill_price - avg_entry_price) * fill_qty
                 
@@ -430,8 +554,13 @@ class GridTradingFramework:
                 
             # Short position being reduced by a BUY
             elif self.inventory < 0 and filled_side == 'BUY':
-                # Avg cost basis for short is negative (USD received) / negative qty
-                avg_entry_price = abs(self.cost_basis_usd / self.inventory)
+                # Check for zero inventory before division (safety)
+                if abs(self.inventory) < 0.000001:
+                    avg_entry_price = 0.0
+                else:
+                    # Avg cost basis for short is negative (USD received) / negative qty
+                    avg_entry_price = abs(self.cost_basis_usd / self.inventory)
+                    
                 # PnL = (Entry Price - Exit Price) * Quantity
                 realized_pnl = (avg_entry_price - fill_price) * fill_qty
 
@@ -464,6 +593,7 @@ class GridTradingFramework:
                         (order['side'] == 'SELL' and last_trade_price >= order['price'])
             
             if is_filled:
+                # Use the order's price and quantity for the fill
                 fill_price = order['price']
                 fill_qty = order['qty']
                 
@@ -486,7 +616,13 @@ class GridTradingFramework:
         # --- Hard SL Check ---
         # Note: inventory < 0 means net short position. We check if the price dumps (goes lower)
         if self.inventory < 0 and filled_price < self.config.HARD_STOP_LOSS_PRICE: 
-            print(f"!!! HARD STOP LOSS TRIGGERED at ${filled_price:,.2f} !!!")
+            print(f"!!! HARD STOP LOSS TRIGGERED (Short position vs low price) at ${filled_price:,.2f} !!!")
+            await self.cancel_all_orders()
+            self.is_active = False
+            return
+        # Also check for long position vs price drop
+        elif self.inventory > 0 and filled_price < self.config.HARD_STOP_LOSS_PRICE:
+            print(f"!!! HARD STOP LOSS TRIGGERED (Long position vs low price) at ${filled_price:,.2f} !!!")
             await self.cancel_all_orders()
             self.is_active = False
             return
@@ -523,12 +659,26 @@ class GridTradingFramework:
         print(f"--- P&L REPORT ---")
         print(f"REALIZED P&L: ${self.total_pnl_usd:,.2f}")
         print(f"TOTAL FEES: ${self.total_fees_usd:,.2f}")
-        if self.inventory != 0:
-            # Safe division check, although inventory should not be zero if executed here
+        
+        # Check if we have an open position before calculating U-PnL
+        if abs(self.inventory) > 0.000001:
+            # Safe division check
             avg_price = self.cost_basis_usd / self.inventory if abs(self.inventory) > 0.000001 else 0.0
-            unrealized_pnl = (current_price - avg_price) * self.inventory
-            print(f"OPEN POSITION: {self.inventory:.4f} @ ${avg_price:,.2f}")
+            
+            # Unrealized P&L calculation
+            # For LONG (inventory > 0): (Current Price - Avg Price) * Quantity
+            # For SHORT (inventory < 0): (Avg Price - Current Price) * |Quantity|
+            if self.inventory > 0:
+                unrealized_pnl = (current_price - avg_price) * self.inventory
+            else:
+                unrealized_pnl = (abs(avg_price) - current_price) * abs(self.inventory)
+
+            print(f"OPEN POSITION: {self.inventory:.4f} @ ${abs(avg_price):,.2f}")
             print(f"UNREALIZED P&L: ${unrealized_pnl:,.2f}")
+        else:
+             print(f"OPEN POSITION: 0.0000 @ $0.00")
+             print(f"UNREALIZED P&L: $0.00")
+             
         print("------------------")
         
         await self.cancel_all_orders()
