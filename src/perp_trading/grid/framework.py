@@ -25,15 +25,16 @@ _INITIAL_AUTH_TOKEN = "some-jwt-token-if-available"
 # --- 1. CONFIGURATION AND PARAMETERS ---
 class GridConfig:
     """Stores all configurable parameters for the Live Grid Trading Framework."""
-    def __init__(self):
+    def __init__(self, trading_symbol):
         # --- CORE TRADING PARAMETERS ---
         # List of symbols to track klines for (used for multi-asset volatility calculation)
-        self.SYMBOLS = ["SYSUSDT", "BTCUSDT", "ETHUSDT"] 
+        self.SYMBOLS = ["BTCUSDT", "ETHUSDT"] + [trading_symbol.upper()]
+        self.SYMBOLS = list(set(self.SYMBOLS))
         # NOTE: Changing TRADING_SYMBOL must be reflected in LOCAL_CACHE_FILENAME
         self.MARKET_TYPE = 'perp'           # 'spot' or 'perp' (using Binance USDM futures)
         self.INTERVAL = '1m'                # Kline interval for volatility calculation
         self.ROLLING_WINDOW = 240           # 4 hours of 1m klines for volatility lookback
-        self.TRADING_SYMBOL = self.SYMBOLS[0] # The specific symbol the bot will trade (BTCUSDT)
+        self.TRADING_SYMBOL = trading_symbol.upper() # The specific symbol the bot will trade (BTCUSDT)
         
         self.LEVERAGE = 5.0
         self.MARGIN_MODE = "ISOLATED"
@@ -795,10 +796,10 @@ class GridTradingFramework:
             reconnect_delay = min(reconnect_delay * 2, 60) # Exponential backoff up to 60s
 
 
-async def start_bot():
+async def start_bot( symbol ):
     """Starts the asynchronous trading bot lifecycle."""
     
-    config = GridConfig()
+    config = GridConfig( symbol)
     framework = GridTradingFramework(config)
 
     # 1. Load previous state
@@ -813,12 +814,14 @@ async def start_bot():
     # 4. Start the real-time WebSocket loop
     await framework.websocket_loop()
 
-
-if __name__ == "__main__":
+import click 
+@click.command()
+@click.option('--symbol',default="BTCUSDT")
+def main( symbol ):
     try:
         # Standard way to run asynchronous code
         if hasattr(asyncio, 'run'):
-            asyncio.run(start_bot())
+            asyncio.run(start_bot( symbol ))
         else:
             # Fallback for older versions 
             loop = asyncio.get_event_loop()
@@ -828,3 +831,6 @@ if __name__ == "__main__":
         # Note: Proper state saving on interrupt would require a handler accessing the framework instance
     except Exception as e:
         print(f"\nAn unhandled error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
