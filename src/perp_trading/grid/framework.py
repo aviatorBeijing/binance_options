@@ -5,6 +5,7 @@ import os
 import asyncio
 from typing import List, Dict, Any
 from collections import deque
+from asyncio import get_event_loop
 
 # --- EXTERNAL LIBRARIES (Assumed installed for live operation) ---
 import websockets
@@ -14,7 +15,7 @@ import numpy as np
 # ----------------------------------------------------------------
 
 # --- GLOBAL FIREBASE/ENV VARIABLES (MANDATORY INSTRUCTION for FIREBASE mode) ---
-__app_id = "quant-grid-btc-usdt"
+_app_id = "quant-grid-btc-usdt"
 __firebase_config = '{"apiKey": "AIzaSy...", "authDomain": "...", "projectId": "..."}'
 __initial_auth_token = "some-jwt-token-if-available"
 # -----------------------------------------------------------------------------
@@ -69,7 +70,7 @@ class GridConfig:
         self.VELOCITY_CHECK_PERIOD = 3
 
         # --- FIREBASE & PERSISTENCE (Production Only) ---
-        self.APP_ID = __app_id
+        self.APP_ID = _app_id
         self.COLLECTION_NAME = "grid_states"
 
     def to_dict(self):
@@ -265,8 +266,15 @@ class GridTradingFramework:
 
         for symbol in self.config.SYMBOLS:
             try:
-                # Use asyncio.to_thread to run the synchronous CCXT call
-                ohlcv = await asyncio.to_thread(sync_fetch, symbol)
+                # --- MODIFIED LINE START ---
+                # Get the current running event loop
+                loop = get_event_loop()
+                # Use loop.run_in_executor to run the blocking sync_fetch in a thread pool
+                ohlcv = await loop.run_in_executor(None, sync_fetch, symbol)
+                # --- MODIFIED LINE END ---
+
+                # python>=3.9 Use asyncio.to_thread to run the synchronous CCXT call
+                #ohlcv = await asyncio.to_thread(sync_fetch, symbol)
                 
                 deque_data = deque(maxlen=self.config.ROLLING_WINDOW)
                 for o in ohlcv:
