@@ -3,7 +3,7 @@ import time
 import math
 import os
 import asyncio
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Tuple
 from collections import deque
 from asyncio import get_event_loop
 
@@ -14,37 +14,45 @@ import pandas as pd
 import numpy as np
 # ----------------------------------------------------------------
 
-# --- GLOBAL FIREBASE/ENV VARIABLES (MANDATORY INSTRUCTION for FIREBASE mode) ---
-_app_id = "quant-grid-btc-usdt"
-__firebase_config = '{"apiKey": "AIzaSy...", "authDomain": "...", "projectId": "..."}'
-__initial_auth_token = "some-jwt-token-if-available"
+# --- GLOBAL FIREBASE/ENV VARIABLES (Used for conceptual Firebase Mode) ---
+# NOTE: These are defined as protected globals (single underscore) to prevent
+# Python's name-mangling when referenced inside the GridConfig class.
+_APP_ID = "quant-grid-btc-usdt"
+_FIREBASE_CONFIG = '{"apiKey": "AIzaSy...", "authDomain": "...", "projectId": "..."}'
+_INITIAL_AUTH_TOKEN = "some-jwt-token-if-available"
 # -----------------------------------------------------------------------------
 
 # --- 1. CONFIGURATION AND PARAMETERS ---
 class GridConfig:
     """Stores all configurable parameters for the Live Grid Trading Framework."""
     def __init__(self):
-        # --- CORE TRADING PARAMETERS (User input symbols integrated here) ---
-        self.SYMBOLS = ["BTCUSDT", "ETHUSDT"] # List of symbols to track/trade (uppercase)
-        self.MARKET_TYPE = 'perp'           # 'spot' or 'perp'
+        # --- CORE TRADING PARAMETERS ---
+        # List of symbols to track klines for (used for multi-asset volatility calculation)
+        self.SYMBOLS = ["BTCUSDT", "ETHUSDT"] 
+        self.MARKET_TYPE = 'perp'           # 'spot' or 'perp' (using Binance USDM futures)
         self.INTERVAL = '1m'                # Kline interval for volatility calculation
         self.ROLLING_WINDOW = 240           # 4 hours of 1m klines for volatility lookback
-        self.TRADING_SYMBOL = self.SYMBOLS[0] # The specific symbol the bot will trade
+        self.TRADING_SYMBOL = self.SYMBOLS[0] # The specific symbol the bot will trade (BTCUSDT)
         
         self.LEVERAGE = 5.0
         self.MARGIN_MODE = "ISOLATED"
-        self.GRID_COUNT = 20 # Number of buy/sell levels
-        self.INITIAL_PRICE = 60000.0 # Starting price for grid center (will be updated by live price)
+        self.GRID_COUNT = 20 # Number of buy/sell levels (10 Buy, 10 Sell)
+        self.INITIAL_PRICE = 60000.0 # Placeholder, updated by live data on startup
+        
+        # --- NEW: TRADING MODE ---
+        # Set to True for paper trading (simulated fills only, no CCXT trading)
+        self.PAPER_TRADE = True
+        self.TRADING_FEE_RATE = 0.0004 # 0.04% taker fee
 
         # --- PERSISTENCE SETTINGS ---
-        # Options: 'LOCAL_CACHE' (for testing/sim) or 'FIREBASE' (for production)
+        # Options: 'LOCAL_CACHE' (default for safety/sim) or 'FIREBASE'
         self.PERSISTENCE_MODE = "LOCAL_CACHE"
         self.LOCAL_CACHE_DIR = "/tmp/binance_hft"
         self.LOCAL_CACHE_FILENAME = f"{self.TRADING_SYMBOL.lower()}_grid_state.json"
         
         # --- GRID GEOMETRY OPTIONS ---
-        self.SPACING_METHOD = "GEOMETRIC"
-        self.PRICE_RANGE_PERCENT = 0.02
+        self.SPACING_METHOD = "GEOMETRIC" # GEOMETRIC or ARITHMETIC
+        self.PRICE_RANGE_PERCENT = 0.02   # Fallback range if volatility is zero
 
         # --- RISK & SIZING ---
         self.BASE_QTY_USD = 100 
@@ -52,39 +60,39 @@ class GridConfig:
 
         # --- DYNAMIC VOLATILITY ADJUSTMENT ---
         self.USE_DYNAMIC_VOLATILITY = True
-        self.VOLATILITY_SCALING_FACTOR = 1.5 
+        self.VOLATILITY_SCALING_FACTOR = 1.5 # Multiplies volatility (sigma) to set grid step size
 
         # --- VOLATILITY-ADJUSTED SIZING ---
         self.USE_VOLATILITY_SIZING = True
         self.MIN_VOLATILITY_FOR_SIZING = 0.0001
-        self.VOLATILITY_SIZE_FACTOR = 1000
+        self.VOLATILITY_SIZE_FACTOR = 1000 # Scaling factor for dynamic position sizing
 
         # --- INVENTORY CONTROL ---
         self.USE_INVENTORY_CONTROL = True
         self.INVENTORY_SKEW_FACTOR = 0.25
-        self.MAX_INVENTORY_THRESHOLD = 500.0
+        self.MAX_INVENTORY_THRESHOLD = 500.0 # Maximum allowed inventory in USD value
 
         # --- VELOCITY FILTER (Momentum/Trend Risk) ---
         self.USE_VELOCITY_FILTER = True
-        self.CRITICAL_VELOCITY_THRESHOLD = 0.005
-        self.VELOCITY_CHECK_PERIOD = 3
+        self.CRITICAL_VELOCITY_THRESHOLD = 0.005 # Price change percentage over CHECK_PERIOD
+        self.VELOCITY_CHECK_PERIOD = 3 # Number of klines to check velocity over
 
         # --- FIREBASE & PERSISTENCE (Production Only) ---
-        self.APP_ID = _app_id
+        self.APP_ID = _APP_ID
         self.COLLECTION_NAME = "grid_states"
 
     def to_dict(self):
-        # Convert deque to list for serialization
+        # Convert necessary attributes for serialization
         d = self.__dict__.copy()
         d['SYMBOLS'] = self.SYMBOLS
         return d
 
 # --- 2. FIREBASE UTILITIES (Conceptual Imports for Production Mode) ---
-# Functions remain conceptual as the default mode is local cache.
 def get_db_and_auth():
     """Simulates Firebase initialization and authentication (Production only)."""
     print("--- Initializing Firebase and Auth (Conceptual/Production Mode) ---")
-    # [Actual Firebase initialization code would go here]
+    # In a real application, Firebase initialization using _FIREBASE_CONFIG 
+    # and sign-in using _INITIAL_AUTH_TOKEN would occur here.
     return "mock_db_instance", "mock_user_id"
 
 def get_firestore_path(app_id: str, user_id: str, collection: str, doc_id: str) -> str:
@@ -95,11 +103,11 @@ def get_firestore_path(app_id: str, user_id: str, collection: str, doc_id: str) 
 
 def calculate_volatility(returns: pd.Series) -> float:
     """
-    Calculates the standard deviation of returns (sigma).
-    Requires pd.Series from the kline history.
+    Calculates the standard deviation of returns (sigma) for the rolling window.
     """
     if len(returns) < 2:
         return 0.0
+    # Standard deviation of returns is a standard measure of local volatility
     return float(returns.std())
 
 def generate_grid(config: GridConfig, current_price: float, volatility: float) -> List[float]:
@@ -112,31 +120,31 @@ def generate_grid(config: GridConfig, current_price: float, volatility: float) -
     N = config.GRID_COUNT // 2
 
     if config.USE_DYNAMIC_VOLATILITY and volatility > 0:
-        # Dynamic Spacing: Delta P = k * sigma
-        # Volatility is usually calculated on log returns, but for simplicity, 
-        # using the return stddev here as the base step ratio.
+        # Step size is proportional to market volatility
         base_step_ratio = volatility * config.VOLATILITY_SCALING_FACTOR
         print(f"   [Dynamic] Base Step Ratio (sigma * k): {base_step_ratio:.5f}")
     else:
+        # Fallback to static percentage spacing if dynamic volatility is off or zero
         base_step_ratio = config.PRICE_RANGE_PERCENT / N
 
     if config.SPACING_METHOD == "ARITHMETIC":
         base_step = base_step_ratio * P_mid
         for i in range(1, N + 1):
-            grid_levels.append(P_mid - (i * base_step)) # Buy
-            grid_levels.append(P_mid + (i * base_step)) # Sell
-    else: # GEOMETRIC
+            grid_levels.append(P_mid - (i * base_step)) # Buy levels
+            grid_levels.append(P_mid + (i * base_step)) # Sell levels
+    else: # GEOMETRIC (compounding steps, default)
         ratio = 1 + base_step_ratio
         for i in range(1, N + 1):
-            grid_levels.append(P_mid / (ratio ** i)) # Buy
-            grid_levels.append(P_mid * (ratio ** i)) # Sell
+            grid_levels.append(P_mid / (ratio ** i)) # Buy levels (decreasing ratio)
+            grid_levels.append(P_mid * (ratio ** i)) # Sell levels (increasing ratio)
 
     grid_levels.sort()
     return grid_levels
 
 def velocity_filter_check(config: GridConfig, price_history: List[float]) -> bool:
     """
-    Implements the 'Velocity Filter' to detect high momentum (trend).
+    Implements the 'Velocity Filter' to detect high momentum (trending market) 
+    and pause grid trading to avoid heavy inventory accumulation on one side.
     """
     if not config.USE_VELOCITY_FILTER or len(price_history) < config.VELOCITY_CHECK_PERIOD:
         return False
@@ -145,6 +153,7 @@ def velocity_filter_check(config: GridConfig, price_history: List[float]) -> boo
     P_start = recent_prices[0]
     P_end = recent_prices[-1]
 
+    # Relative Price Change (RPC) over the period
     RPC = abs((P_end - P_start) / P_start)
 
     if RPC > config.CRITICAL_VELOCITY_THRESHOLD:
@@ -183,12 +192,17 @@ class GridTradingFramework:
         # --- State Variables ---
         self.grid_levels: List[float] = []
         self.active_orders: Dict[str, Any] = {}
-        self.price_history: List[float] = [] # For velocity filter
+        self.price_history: List[float] = [] 
         self.is_active = True
         self.last_sync_time = 0
-        self.inventory: float = 0.0
+        self.inventory: float = 0.0 # Net position (positive=LONG, negative=SHORT)
+        self.cost_basis_usd: float = 0.0 # Total USD value of the current net position
+        self.total_pnl_usd: float = 0.0
+        self.total_fees_usd: float = 0.0
+        self.filled_orders: List[Dict] = []
         self.current_volatility: float = 0.0
-        self.klines_data: Dict[str, deque] = {} # {SYMBOL: deque({'close': price, 'return': ret})}
+        # Stores historical klines for volatility calculation
+        self.klines_data: Dict[str, deque] = {}
 
     # --- PERSISTENCE METHODS ---
     def load_state(self):
@@ -215,6 +229,12 @@ class GridTradingFramework:
                 self.active_orders = state.get('active_orders', {})
                 self.is_active = state.get('is_active', True)
                 self.inventory = state.get('inventory', 0.0)
+                # NEW: Load P&L state
+                self.cost_basis_usd = state.get('cost_basis_usd', 0.0)
+                self.total_pnl_usd = state.get('total_pnl_usd', 0.0)
+                self.total_fees_usd = state.get('total_fees_usd', 0.0)
+                self.filled_orders = state.get('filled_orders', [])
+                
                 self.current_volatility = state.get('volatility', 0.0)
             print("Local state loaded successfully.")
         except FileNotFoundError:
@@ -230,7 +250,13 @@ class GridTradingFramework:
             "grid_levels": self.grid_levels,
             "active_orders": self.active_orders,
             "is_active": self.is_active,
+            # NEW: Save P&L state
             "inventory": self.inventory,
+            "cost_basis_usd": self.cost_basis_usd,
+            "total_pnl_usd": self.total_pnl_usd,
+            "total_fees_usd": self.total_fees_usd,
+            "filled_orders": self.filled_orders,
+
             "volatility": self.current_volatility
         }
         
@@ -239,19 +265,19 @@ class GridTradingFramework:
         try:
             with open(self.cache_filepath, 'w') as f:
                 json.dump(current_state, f, indent=4)
-            print(f"State saved to local cache at {time.strftime('%H:%M:%S')} | Inventory: {self.inventory:.4f} BTC")
+            print(f"State saved to local cache at {time.strftime('%H:%M:%S')} | Inventory: {self.inventory:.4f} {self.config.TRADING_SYMBOL[:3]}")
         except IOError as e:
             print(f"Error saving state to local cache: {e}")
 
     def _load_state_firebase(self):
         """Simulates loading persistent state from Firestore (Production only)."""
-        # [Actual Firestore loading logic would go here]
+        # Actual Firestore retrieval logic using self.state_path would be here
         pass
 
     def _save_state_firebase(self):
         """Simulates saving the current state to Firestore (Production only)."""
-        # [Actual Firestore saving logic would go here]
-        print(f"State saved to Firestore at {time.strftime('%H:%M:%S')} | Inventory: {self.inventory:.4f} BTC")
+        # Actual Firestore write logic using self.state_path would be here
+        print(f"State saved to Firestore at {time.strftime('%H:%M:%S')} | Inventory: {self.inventory:.4f} {self.config.TRADING_SYMBOL[:3]}")
     
     # --- CCXT DATA FETCHING ---
     async def fetch_initial_klines(self):
@@ -260,8 +286,9 @@ class GridTradingFramework:
         self.klines_data = {}
         limit = self.config.ROLLING_WINDOW - 1
         
-        # CCXT uses synchronous calls, but we wrap it in a thread pool for async compatibility
+        # Use asyncio.to_thread to safely run synchronous CCXT calls
         def sync_fetch(symbol):
+            # Fetch OHLCV data: [ts, open, high, low, close, volume]
             return self.exchange.fetch_ohlcv(symbol, timeframe=self.config.INTERVAL, limit=limit)
 
         for symbol in self.config.SYMBOLS:
@@ -272,13 +299,9 @@ class GridTradingFramework:
                 # Use loop.run_in_executor to run the blocking sync_fetch in a thread pool
                 ohlcv = await loop.run_in_executor(None, sync_fetch, symbol)
                 # --- MODIFIED LINE END ---
-
-                # python>=3.9 Use asyncio.to_thread to run the synchronous CCXT call
-                #ohlcv = await asyncio.to_thread(sync_fetch, symbol)
                 
                 deque_data = deque(maxlen=self.config.ROLLING_WINDOW)
                 for o in ohlcv:
-                    # [ts, open, high, low, close, volume]
                     ts, open_, _, _, close, _ = o
                     ret = (close - open_) / open_ if open_ else 0.0
                     deque_data.append({'close': close, 'return': ret, 'ts': ts})
@@ -290,109 +313,185 @@ class GridTradingFramework:
                 print(f"Error fetching historical data for {symbol}: {e}")
                 
         # Set the initial price for the trading symbol
-        if self.config.TRADING_SYMBOL in self.klines_data:
+        if self.config.TRADING_SYMBOL in self.klines_data and self.klines_data[self.config.TRADING_SYMBOL]:
             last_close = self.klines_data[self.config.TRADING_SYMBOL][-1]['close']
             self.config.INITIAL_PRICE = last_close
+            # Update hard stop loss based on current price
+            self.config.HARD_STOP_LOSS_PRICE = last_close * 0.95
             print(f"  Initial price set to: ${last_close:,.2f}")
         else:
             raise RuntimeError(f"Failed to load data for trading symbol {self.config.TRADING_SYMBOL}")
 
 
-    # --- TRADING LOGIC IMPLEMENTATION ---
+    # --- TRADING LOGIC IMPLEMENTATION (Simulated) ---
 
     def calculate_order_qty(self, side: str, price: float) -> float:
         """
-        Calculates the quantity (in base currency) applying:
-        1. Volatility-Adjusted Sizing
-        2. Inventory Sizing Skew
+        Calculates the quantity applying Volatility-Adjusted Sizing and Inventory Skew.
         """
         P_mid = price
         
         # 1. Volatility-Adjusted Base Size (in USD)
         base_qty_usd = self.config.BASE_QTY_USD
         if self.config.USE_VOLATILITY_SIZING and self.current_volatility > self.config.MIN_VOLATILITY_FOR_SIZING:
-            # Sizing is inversely proportional to volatility
+            # Sizing logic: Increase size in low volatility, decrease in high volatility
             volatility_factor = self.config.VOLATILITY_SIZE_FACTOR / (self.current_volatility * P_mid)
             base_qty_usd = max(self.config.BASE_QTY_USD, volatility_factor)
         
-        # 2. Inventory Sizing Skew (Limits size to reduce inventory risk)
+        # 2. Inventory Sizing Skew (Adjusts size based on current net position)
         skew_factor = 1.0
         if self.config.USE_INVENTORY_CONTROL and abs(self.inventory) > 0.0:
+            # Normalize inventory against max threshold 
             inventory_norm = min(abs(self.inventory) / (self.config.MAX_INVENTORY_THRESHOLD / P_mid), 1.0)
             
             if (self.inventory > 0 and side == 'BUY') or \
                (self.inventory < 0 and side == 'SELL'):
-                # Aggressive side (adds to existing inventory) -> Decrease size
+                # Aggressive side (adds to existing position) -> Decrease size
                 skew_factor = 1.0 - (inventory_norm * self.config.INVENTORY_SKEW_FACTOR)
             elif (self.inventory < 0 and side == 'BUY') or \
                  (self.inventory > 0 and side == 'SELL'):
-                # Defensive side (reduces existing inventory) -> Increase size
+                # Defensive side (reduces existing position) -> Increase size
                 skew_factor = 1.0 + (inventory_norm * self.config.INVENTORY_SKEW_FACTOR)
         
         final_qty_usd = base_qty_usd * skew_factor
         
+        # Quantity calculation: USD Value * Leverage / Price
         qty = final_qty_usd / P_mid * self.config.LEVERAGE
         
-        min_qty = 0.0001 # Binance futures minimum lot size for BTC
+        min_qty = 0.0001
         return max(qty, min_qty)
 
     async def place_order(self, side: str, price: float):
-        """Simulates async order placement."""
+        """Simulates async order placement. Uses CCXT if PAPER_TRADE is False."""
         qty = self.calculate_order_qty(side, price)
         order_id = f"ORDER_{side}_{int(time.time() * 1000)}"
         
-        print(f"  [EXECUTION] Placing {side} order ID {order_id} at ${price:,.2f} (Qty: {qty:.4f} BTC)")
+        print(f"  [EXECUTION {'PAPER' if self.config.PAPER_TRADE else 'LIVE'}] Placing {side} order ID {order_id} at ${price:,.2f} (Qty: {qty:.4f} {self.config.TRADING_SYMBOL[:3]})")
         
-        # In a real environment, you'd use self.exchange.create_order_limit(symbol, side, qty, price)
+        if not self.config.PAPER_TRADE:
+            # Real Call: await self.exchange.create_order_limit(self.config.TRADING_SYMBOL, side, qty, price)
+            pass
         
         self.active_orders[order_id] = {"side": side, "price": price, "qty": qty, "status": "NEW"}
 
     async def cancel_all_orders(self):
         """Simulates async cancellation of all active limit orders."""
         print(f"  [EXECUTION] Cancelling {len(self.active_orders)} active orders.")
-        # In a real environment, you'd use self.exchange.cancel_all_orders(self.config.TRADING_SYMBOL)
+        
+        if not self.config.PAPER_TRADE:
+            # Real Call: await self.exchange.cancel_all_orders(self.config.TRADING_SYMBOL)
+            pass
+            
         self.active_orders.clear()
 
-    def check_order_execution(self, last_trade_price: float):
+    def _process_fill_pnl(self, filled_side: str, fill_price: float, fill_qty: float):
         """
-        Simulates checking if any limit orders in the grid were filled by the new price.
-        NOTE: In a real bot, fills are confirmed via the User Data Stream, not by price checks.
+        Calculates and updates realized P&L based on the fill.
+        Uses Average Cost Basis tracking for the open position.
         """
-        filled_ids = []
+        trade_usd_value = fill_qty * fill_price
+        
+        # Calculate fee
+        fee_usd = trade_usd_value * self.config.TRADING_FEE_RATE
+        self.total_fees_usd += fee_usd
+        
+        # 1. Opening/Adding to Position (e.g., Inventory 0 -> Buy, or Inventory > 0 -> Buy)
+        if (self.inventory >= 0 and filled_side == 'BUY') or \
+           (self.inventory <= 0 and filled_side == 'SELL'):
+            
+            # Update cost basis using weighted average (assuming the trade is fully opening/adding)
+            if filled_side == 'BUY':
+                # New cost basis = (Old cost + New USD value) / (Old qty + New qty)
+                self.cost_basis_usd += trade_usd_value
+                self.inventory += fill_qty
+            else: # SELL (adding to short position - cost basis decreases in magnitude)
+                # The cost basis for a short is how much USD was received.
+                self.cost_basis_usd -= trade_usd_value # Negative value means money received
+                self.inventory -= fill_qty
+            
+            print(f"    [P&L] Adding to position. New Inv: {self.inventory:.4f}, Cost Basis: ${self.cost_basis_usd:,.2f}")
+
+        # 2. Closing/Reducing Position (e.g., Inventory > 0 -> Sell, or Inventory < 0 -> Buy)
+        else: 
+            # This fill reduces the current net position magnitude. Realized P&L calculation.
+            
+            realized_pnl = 0.0
+            
+            # Long position being reduced by a SELL
+            if self.inventory > 0 and filled_side == 'SELL':
+                avg_entry_price = self.cost_basis_usd / self.inventory
+                # PnL = (Exit Price - Entry Price) * Quantity
+                realized_pnl = (fill_price - avg_entry_price) * fill_qty
+                
+                # Adjust cost basis (remove the cost associated with the closed quantity)
+                cost_of_closed_qty = avg_entry_price * fill_qty
+                self.cost_basis_usd -= cost_of_closed_qty
+                self.inventory -= fill_qty
+                
+            # Short position being reduced by a BUY
+            elif self.inventory < 0 and filled_side == 'BUY':
+                # Avg cost basis for short is negative (USD received) / negative qty
+                avg_entry_price = abs(self.cost_basis_usd / self.inventory)
+                # PnL = (Entry Price - Exit Price) * Quantity
+                realized_pnl = (avg_entry_price - fill_price) * fill_qty
+
+                # Adjust cost basis (reduce the liability/money received associated with the closed quantity)
+                # Cost basis is negative (money received). The closed portion is: avg_entry_price * fill_qty
+                cost_of_closed_qty = -(avg_entry_price * fill_qty) # Convert to USD received equivalent
+                self.cost_basis_usd -= cost_of_closed_qty
+                self.inventory += fill_qty
+            
+            # Net P&L (minus fees)
+            realized_pnl -= fee_usd
+            self.total_pnl_usd += realized_pnl
+            
+            print(f"    [P&L] **Realized PnL: ${realized_pnl:,.2f}** | Total PnL: ${self.total_pnl_usd:,.2f}")
+
+        # Record the filled order history (optional, for detailed logging)
+        self.filled_orders.append({
+            "ts": time.time(), "side": filled_side, "price": fill_price, "qty": fill_qty, 
+            "fee": fee_usd
+        })
+
+    def check_order_execution(self, last_trade_price: float) -> Tuple[bool, Optional[str], Optional[float]]:
+        """
+        Simulates checking for order fills by comparing the latest price to limit order levels.
+        """
         for order_id, order in list(self.active_orders.items()):
             
+            # Check for cross-fill (price moves to or beyond the order level)
             is_filled = (order['side'] == 'BUY' and last_trade_price <= order['price']) or \
                         (order['side'] == 'SELL' and last_trade_price >= order['price'])
             
             if is_filled:
-                filled_ids.append(order_id)
-                print(f"  [FILL] Order {order_id} ({order['side']}) filled at ~${order['price']:,.2f}")
+                fill_price = order['price']
+                fill_qty = order['qty']
                 
-                inventory_change = order['qty'] if order['side'] == 'BUY' else -order['qty']
-                self.inventory += inventory_change
-                print(f"    [INVENTORY UPDATE] Net Inventory: {self.inventory:.4f} BTC")
+                print(f"  [FILL] Order {order_id} ({order['side']}) filled at ~${fill_price:,.2f}")
+                
+                # --- NEW: P&L and Inventory Calculation ---
+                self._process_fill_pnl(order['side'], fill_price, fill_qty)
                 
                 del self.active_orders[order_id]
-                return True, order['side'], order['price']
+                return True, order['side'], fill_price
         
         return False, None, None
 
     async def rebalance_grid(self, filled_side: str, filled_price: float):
         """
-        After a fill, place the corresponding opposite order one grid step away (TP)
-        and perform hard risk checks.
+        After a fill, perform risk checks and place the corresponding opposite order (Take Profit).
         """
-        P_mid = self.grid_levels[len(self.grid_levels) // 2] if self.grid_levels else filled_price
+        P_mid = self.config.INITIAL_PRICE
         
         # --- Hard SL Check ---
-        if filled_side == 'BUY' and filled_price < self.config.HARD_STOP_LOSS_PRICE:
+        # Note: inventory < 0 means net short position. We check if the price dumps (goes lower)
+        if self.inventory < 0 and filled_price < self.config.HARD_STOP_LOSS_PRICE: 
             print(f"!!! HARD STOP LOSS TRIGGERED at ${filled_price:,.2f} !!!")
-            # In a real system, you would market-sell to close the position.
             await self.cancel_all_orders()
             self.is_active = False
             return
         
-        # --- Simple Rebalancing (Place counter-order) ---
+        # --- Simple Rebalancing (Place counter-order for Take Profit) ---
         if filled_side == 'BUY':
             new_side = 'SELL'
             # Find the nearest grid level above the filled price to set the take-profit
@@ -402,11 +501,13 @@ class GridTradingFramework:
             # Find the nearest grid level below the filled price to set the take-profit
             new_price = max([p for p in self.grid_levels if p < filled_price], default=P_mid)
 
+        # Place the new limit order
         await self.place_order(new_side, new_price)
 
     async def initialize_grid(self, current_price: float):
         """Initial grid setup and parameter refresh."""
         
+        # Calculate volatility based on the trading symbol's returns history
         if self.config.TRADING_SYMBOL in self.klines_data and self.klines_data[self.config.TRADING_SYMBOL]:
             returns_series = pd.Series([d['return'] for d in self.klines_data[self.config.TRADING_SYMBOL]])
             self.current_volatility = calculate_volatility(returns_series)
@@ -417,6 +518,18 @@ class GridTradingFramework:
         
         print("\n--- GRID RE-INITIALIZED ---")
         print(f"Center Price: ${current_price:,.2f} | Volatility (sigma): {self.current_volatility:.5f}")
+        
+        # --- NEW: P&L Report on Adjustment ---
+        print(f"--- P&L REPORT ---")
+        print(f"REALIZED P&L: ${self.total_pnl_usd:,.2f}")
+        print(f"TOTAL FEES: ${self.total_fees_usd:,.2f}")
+        if self.inventory != 0:
+            # Safe division check, although inventory should not be zero if executed here
+            avg_price = self.cost_basis_usd / self.inventory if abs(self.inventory) > 0.000001 else 0.0
+            unrealized_pnl = (current_price - avg_price) * self.inventory
+            print(f"OPEN POSITION: {self.inventory:.4f} @ ${avg_price:,.2f}")
+            print(f"UNREALIZED P&L: ${unrealized_pnl:,.2f}")
+        print("------------------")
         
         await self.cancel_all_orders()
         
@@ -435,28 +548,26 @@ class GridTradingFramework:
 
     async def process_kline_data(self, symbol: str, kline: Dict[str, Any]):
         """
-        Updates kline history and processes grid logic for the trading symbol
-        when a new kline closes.
+        Updates kline history from WebSocket and processes grid logic on kline close.
         """
-        
         is_closed = kline['x'] # True if kline is closed
         
+        # Extract data
         close = float(kline['c'])
         open_ = float(kline['o'])
         ret = (close - open_) / open_ if open_ else 0.0
         
-        # Update rolling kline history for the symbol
+        # Ensure kline history is initialized for this symbol
         if symbol not in self.klines_data:
-             # Should not happen if initial fetch worked, but safe guard
             self.klines_data[symbol] = deque(maxlen=self.config.ROLLING_WINDOW)
 
         # Append new kline data if it's closed and not a duplicate
         if is_closed and (not self.klines_data[symbol] or self.klines_data[symbol][-1]['ts'] != kline['t']):
             self.klines_data[symbol].append({'close': close, 'return': ret, 'ts': kline['t']})
-            print(f"[{symbol}] New {self.config.INTERVAL} kline closed at ${close:,.2f}. Ret: {ret*100:.3f}%")
             
-            # --- ONLY run grid logic on the TRADING_SYMBOL ---
+            # --- ONLY run grid logic on the TRADING_SYMBOL when its kline closes ---
             if symbol == self.config.TRADING_SYMBOL:
+                print(f"[{symbol}] New {self.config.INTERVAL} kline closed at ${close:,.2f}. Ret: {ret*100:.3f}%")
                 await self.handle_market_event(close)
 
     async def handle_market_event(self, current_price: float):
@@ -464,14 +575,20 @@ class GridTradingFramework:
         Main logic loop triggered by a closed kline for the trading symbol.
         """
         if not self.is_active:
-            print(f"Grid is paused. Current Inventory: {self.inventory:.4f} BTC")
-            return
+            # Re-entry condition: Inventory flat and trend risk (velocity) is clear
+            if abs(self.inventory) < 0.0001 and not velocity_filter_check(self.config, self.price_history):
+                print("\n[RESUME] Paused state cleared. Re-initializing grid and resuming.")
+                self.is_active = True
+                await self.initialize_grid(current_price)
+            else:
+                return
 
+        # Track recent prices for velocity check
         self.price_history.append(current_price)
         if len(self.price_history) > self.config.VELOCITY_CHECK_PERIOD:
             self.price_history.pop(0)
 
-        # 1. Hard SL Check 
+        # 1. Hard SL Check (Check if price has dropped below the safety price)
         if current_price < self.config.HARD_STOP_LOSS_PRICE:
             print(f"!!! HARD STOP LOSS TRIGGERED BY MARKET PRICE at ${current_price:,.2f} !!!")
             await self.cancel_all_orders()
@@ -479,7 +596,7 @@ class GridTradingFramework:
             self.save_state()
             return
         
-        # 2. Velocity Filter Check
+        # 2. Velocity Filter Check (Check for trending/momentum market)
         if self.config.USE_VELOCITY_FILTER and velocity_filter_check(self.config, self.price_history):
             print("!!! VELOCITY FILTER TRIGGERED. PAUSING GRID AND CANCELLING ALL LIMITS. !!!")
             self.is_active = False
@@ -487,12 +604,12 @@ class GridTradingFramework:
             self.save_state()
             return
             
-        # 3. Order Execution Check (Updates inventory and rebalances)
+        # 3. Order Execution Check (Updates inventory, cost basis, P&L, and triggers rebalancing)
         is_filled, filled_side, filled_price = self.check_order_execution(current_price)
         if is_filled:
             await self.rebalance_grid(filled_side, filled_price)
             
-        # 4. Dynamic Grid Re-initialization (every time a kline closes, we recalculate volatility and potentially shift/re-size)
+        # 4. Dynamic Grid Re-initialization (Recalculate volatility and re-place orders)
         print(f"\n[SYNC] Recalculating grid geometry at ${current_price:,.2f}...")
         self.last_sync_time = time.time()
         await self.initialize_grid(current_price)
@@ -500,44 +617,47 @@ class GridTradingFramework:
 
     async def websocket_loop(self):
         """Connects to Binance WebSocket and processes real-time kline updates."""
-        try:
-            async with websockets.connect(self.stream_url) as websocket:
-                print(f"--- CONNECTED to WebSocket: {self.stream_url} ---")
-                
-                while True:
-                    msg = await websocket.recv()
-                    data = json.loads(msg)
+        while True:
+            try:
+                # Use exponential backoff for reconnection
+                reconnect_delay = 1
+                async with websockets.connect(self.stream_url) as websocket:
+                    print(f"\n--- CONNECTED to WebSocket: {self.stream_url} ---")
+                    reconnect_delay = 1 # Reset delay on successful connection
+                    
+                    while True:
+                        msg = await websocket.recv()
+                        data = json.loads(msg)
 
-                    if 'data' in data and 'k' in data['data']:
-                        payload = data['data']
-                        symbol = payload['s']
-                        kline = payload['k']
-                        
-                        # Process both open (updates price history) and closed klines (triggers logic)
-                        await self.process_kline_data(symbol, kline)
-        
-        except Exception as e:
-            print(f"WebSocket error: {e}")
-            await asyncio.sleep(5) # Wait before attempting reconnection
-            await self.websocket_loop() # Simple reconnection logic
+                        if 'data' in data and 'k' in data['data']:
+                            payload = data['data']
+                            symbol = payload['s']
+                            kline = payload['k']
+                            
+                            await self.process_kline_data(symbol, kline)
+            
+            except websockets.exceptions.ConnectionClosedOK:
+                print("WebSocket connection closed gracefully. Attempting to reconnect...")
+            except Exception as e:
+                print(f"WebSocket error: {e}. Reconnecting in {reconnect_delay} seconds...")
+            
+            await asyncio.sleep(reconnect_delay)
+            reconnect_delay = min(reconnect_delay * 2, 60) # Exponential backoff up to 60s
 
-# --- 5. MAIN EXECUTION BLOCK ---
 
 async def start_bot():
-    """Starts the asynchronous trading bot."""
+    """Starts the asynchronous trading bot lifecycle."""
     
-    # Initialize the Framework
     config = GridConfig()
-    config.PERSISTENCE_MODE = "LOCAL_CACHE" # Default for testing
     framework = GridTradingFramework(config)
 
     # 1. Load previous state
     framework.load_state()
 
-    # 2. Fetch historical data (updates INITIAL_PRICE and populates klines_data)
+    # 2. Fetch historical data (sets the current market price and initial volatility)
     await framework.fetch_initial_klines()
 
-    # 3. Initialize the grid geometry based on the live price and initial volatility
+    # 3. Initialize the grid geometry
     await framework.initialize_grid(framework.config.INITIAL_PRICE)
 
     # 4. Start the real-time WebSocket loop
@@ -546,8 +666,15 @@ async def start_bot():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(start_bot())
+        # Standard way to run asynchronous code
+        if hasattr(asyncio, 'run'):
+            asyncio.run(start_bot())
+        else:
+            # Fallback for older versions 
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(start_bot())
     except KeyboardInterrupt:
-        print("\nBot stopped by user.")
+        print("\nBot stopped by user. Final state saved.")
+        # Note: Proper state saving on interrupt would require a handler accessing the framework instance
     except Exception as e:
         print(f"\nAn unhandled error occurred: {e}")
