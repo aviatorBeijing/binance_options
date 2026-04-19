@@ -1,4 +1,4 @@
-import datetime,os
+import datetime, os
 import pandas as pd
 import requests 
 import click
@@ -9,59 +9,69 @@ import click
 @click.option('--low', help="low price bound of strike")
 @click.option('--high', help="high price bound of strike")
 @click.option('--contract', help="call or put")
-def main(underlying,price,low,high,contract):
-    endpoint='https://eapi.binance.com/eapi/v1/exchangeInfo'
-    resp = requests.get(endpoint)
-    if resp:
-        resp  = resp.json()
-        ts = resp['serverTime']
-        print('-- server time:', pd.Timestamp( datetime.datetime.fromtimestamp( int(float(ts)/1000)) ) )
-        rics = resp['optionSymbols']
-        df = pd.DataFrame.from_records( rics )
+def main(underlying, price, low, high, contract):
+    endpoint = 'https://eapi.binance.com/eapi/v1/exchangeInfo'
+    
+    # Adding a User-Agent header is now recommended for eapi requests
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    resp = requests.get(endpoint, headers=headers)
+    
+    if resp.status_code == 200:
+        data = resp.json()
+        ts = data['serverTime']
+        print(f'-- server time: {pd.to_datetime(ts, unit="ms")}')
         
-        df.expiryDate = df.expiryDate.apply(float).apply(lambda v:v/1000).apply(datetime.datetime.fromtimestamp).apply(pd.Timestamp)
-        df.strikePrice = df.strikePrice.apply(float)
-        df['tickSize'] = df['filters'].apply(lambda v: v[0]['tickSize'] )
-        #df['minQty'] = df['filters'].apply(lambda v: v[1]['minQty'])
-
-        df.drop(['filters','contractId','unit','id'], axis=1, inplace=True)
-        df = df.sort_values(['expiryDate','symbol','strikePrice'], ascending=True)
-        #print(df)
-
-        fn = os.getenv('USER_HOME','/Users/junma')
-        fn += '/tmp/options_symbols.csv'
-        df.to_csv( fn , index=False)
+        rics = data['optionSymbols']
+        df = pd.DataFrame.from_records(rics)
         
-        symbols = df[df.symbol.str.contains(underlying.upper())].symbol.values
-        # print(','.join(symbols))
+        # Robust conversion for expiry and strike
+        df['expiryDate'] = pd.to_datetime(df['expiryDate'].astype(float), unit='ms')
+        df['strikePrice'] = df['strikePrice'].astype(float)
 
-        print('-- saved: ', fn)
+        # Robust filter extraction (searches for the correct filter type)
+        def get_tick_size(filters):
+            for f in filters:
+                if f.get('filterType') == 'PRICE_FILTER':
+                    return f.get('tickSize')
+            return None
+        
+        df['tickSize'] = df['filters'].apply(get_tick_size)
 
+        # Clean up dataframe
+        cols_to_drop = ['filters', 'contractId', 'unit', 'id']
+        df.drop([c for c in cols_to_drop if c in df.columns], axis=1, inplace=True)
+        df = df.sort_values(['expiryDate', 'symbol', 'strikePrice'], ascending=True)
+
+        # Dynamic Pathing (Works on macOS and Ubuntu)
+        home = os.path.expanduser("~")
+        tmp_dir = os.path.join(home, "tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        fn = os.path.join(tmp_dir, 'options_symbols.csv')
+        df.to_csv(fn, index=False)
+
+        # Filtering logic
         rcs = df.copy()
         if underlying:
-            rcs = rcs[ rcs.symbol.str.contains(underlying.upper()) ]
+            rcs = rcs[rcs.symbol.str.contains(underlying.upper())]
         if price:
-            rcs = rcs[ rcs.symbol.str.contains(price) ]
+            rcs = rcs[rcs.symbol.str.contains(str(price))]
         if contract:
-            rcs = rcs[ rcs.symbol.str.endswith( f"-{contract[0].upper()}" ) ]
-        rcs = rcs.symbol.values 
+            # Matches -C or -P specifically
+            suffix = f"-{contract[0].upper()}"
+            rcs = rcs[rcs.symbol.str.endswith(suffix)]
+
+        symbols = rcs.symbol.values 
+        
         if low:
-            rcs = list(
-                filter(
-                    lambda c: float(c.split('-')[2]) >= float(low), rcs
-                )
-            )
+            symbols = [s for s in symbols if float(s.split('-')[2]) >= float(low)]
         if high:
-            rcs = list(
-                filter(
-                    lambda c: float(c.split('-')[2]) <= float(high), rcs
-                )
-            )
+            symbols = [s for s in symbols if float(s.split('-')[2]) <= float(high)]
 
-        print(','.join( rcs ))
-        print(len(rcs), ' contracts')
-        print('saved: ',fn)
-
+        print(','.join(symbols))
+        print(f'{len(symbols)} contracts')
+        print('-- saved: ', fn)
+    else:
+        print(f"Error: API returned status {resp.status_code}")
 
 if __name__ == '__main__':
     main()
