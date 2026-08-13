@@ -1,9 +1,9 @@
-import datetime,click
-import time,os
-import rel,json
+import datetime, click
+import time, os
+import rel, json
 import pandas as pd
 
-from butil.butils import DATADIR,DEBUG
+from butil.butils import DATADIR, DEBUG
 from butil.bsql import (bidask_table_exists, 
 init_bidask_tbl,
 update_bidask_tbl,
@@ -32,6 +32,11 @@ max_volatility = None
 def on_message(ws, message):
     global max_volatility
     msg = json.loads( message )
+    
+    # Unwrap payload when received from a combined stream
+    if isinstance(msg, dict) and 'data' in msg:
+        msg = msg['data']
+
     df = pd.DataFrame.from_records([ msg ] )
     
     if df.empty:
@@ -117,8 +122,8 @@ def on_open(ws):
     if DEBUG:
         print("Opened connection")
 
-#endpoint = 'wss://nbstream.binance.com/eoptions/ws/{symbol}@{channel}' #trade|ticker
-endpoint = 'wss://nbstream.binance.com/eoptions/ws/'
+endpoint_ws = 'wss://fstream.binance.com/public/ws/'
+endpoint_stream = 'wss://fstream.binance.com/public/stream?streams='
 
 def sync_fetch_ticker( contract:str, handler=None ):
     try:
@@ -144,23 +149,24 @@ def sync_fetch_ticker( contract:str, handler=None ):
 
 def _main(ric:str, channel=''):
     import websocket
-    rics = [ric] # FIXME only support single ric for now. How to support more?
-    #uris = list(map(lambda ric: endpoint.format( symbol=ric, channel=channel), rics) )
-    if len(rics) == 1: rics = rics[0].split(',')
+    rics = [r.strip() for r in ric.split(',') if r.strip()]
 
-    uris = [ f'{ric}@{channel}' for ric in rics ]
-    uris = [ endpoint + '/'.join( uris ) ]
+    # Single stream vs multi-contract combined stream routing (symbols in URL must be lowercase)
+    if len(rics) == 1:
+        uri = f"{endpoint_ws}{rics[0].lower()}@{channel}"
+    else:
+        streams = '/'.join([f"{r.lower()}@{channel}" for r in rics])
+        uri = f"{endpoint_stream}{streams}"
     
     websocket.enableTrace(False) #True)
-    for uri in uris:
-        print( 'connecting:',  uri )
-        ws = websocket.WebSocketApp(uri, #wss://api.gemini.com/v1/marketdata/BTCUSD",
-                              on_open=on_open,
-                              on_message=on_message,
-                              on_error=on_error,
-                              on_close=on_close)
+    print( 'connecting:',  uri )
+    ws = websocket.WebSocketApp(uri, #wss://api.gemini.com/v1/marketdata/BTCUSD",
+                          on_open=on_open,
+                          on_message=on_message,
+                          on_error=on_error,
+                          on_close=on_close)
 
-        ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
+    ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
     rel.signal(2, rel.abort)  # Keyboard Interrupt
     rel.dispatch()
 
