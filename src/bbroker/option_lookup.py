@@ -146,6 +146,7 @@ def main(date: str, target_price: float, crypto: str, n_strikes: int, update: bo
             combo_type = "Straddle" if k_call == k_put else "Strangle"
 
             is_target_row = (k_call == closest_single_strike and k_put == closest_single_strike)
+            is_straddle_row = k_call == k_put
 
             c_strike_str = f"${k_call:,.0f}"
             p_strike_str = f"${k_put:,.0f}"
@@ -159,7 +160,7 @@ def main(date: str, target_price: float, crypto: str, n_strikes: int, update: bo
             c_sym_str = str(c_sym)
             p_sym_str = str(p_sym)
 
-            if is_target_row:
+            if is_target_row or is_straddle_row:
                 c_strike_str = click.style(c_strike_str, fg='bright_green', bold=True)
                 p_strike_str = click.style(p_strike_str, fg='bright_green', bold=True)
                 combo_str = click.style(combo_str, fg='bright_green', bold=True)
