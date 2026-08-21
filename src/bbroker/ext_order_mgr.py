@@ -6,10 +6,32 @@ from bbroker.settings import ex, ensure_markets
 from bbroker.check_status import orders_status, position_status
 from butil.bsql import fetch_bidask
 
+
+def extract_price(quote_dict: dict, side: str) -> float:
+    """Safely extracts bid/ask price across varying fetch_bidask dictionary schemas."""
+    if not isinstance(quote_dict, dict):
+        return 0.0
+    
+    if side == 'buy':
+        # Buying -> Chase passive liquidity at Best Bid (or Best Ask if aggressive cross requested)
+        keys = ['best_bid', 'bid', 'bestBid', 'bids']
+    else:
+        # Selling -> Chase passive liquidity at Best Ask (or Best Bid if aggressive cross requested)
+        keys = ['best_ask', 'ask', 'bestAsk', 'asks']
+
+    for k in keys:
+        if k in quote_dict and quote_dict[k] is not None:
+            val = quote_dict[k]
+            if isinstance(val, list) and len(val) > 0:
+                return float(val[0][0])
+            return float(val)
+    return 0.0
+
+
 def validate_sell_quantity(symbol: str, qty: float):
     df = position_status()
     if df.empty:
-        raise click.ClickException(f"No existing positions found.")
+        raise click.ClickException("No existing positions found.")
     
     df = df[df.symbol == symbol]
     if df.empty:
@@ -27,14 +49,16 @@ def validate_sell_quantity(symbol: str, qty: float):
                     f"existing_sells={existing_sell_qty}, requested={qty}"
                 )
 
+
 @click.group()
 def cli():
     """Order Management Tool for Binance Options"""
     pass
 
+
 @cli.command()
 @click.option('--action', type=click.Choice(['buy', 'sell'], case_sensitive=False), required=True)
-@click.option('--contract', required=True, help="Contract symbol, e.g., BTC-240329-70000-C")
+@click.option('--contract', required=True, help="Contract symbol, e.g., BTC-260828-75000-C")
 @click.option('--qty', type=float, required=True, help="Order quantity")
 @click.option('--limit', 'order_type', flag_value='limit', default=True, help="Limit order")
 @click.option('--market', 'order_type', flag_value='market', help="Market order")
@@ -43,7 +67,7 @@ def cli():
 @click.option('--t_bps', type=float, default=10.0, help="Price shift threshold in bps for --chase mode")
 @click.option('--execute', is_flag=True, default=False, help="Execute order on exchange")
 def order(action, contract, qty, order_type, order_price, t_bps, execute):
-    """Place a buy or sell order."""
+    """Place a buy or sell order with optional passive Chase mode."""
     action = action.lower()
     contract = contract.upper()
 
@@ -74,57 +98,94 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
     elif order_type == 'chase':
         click.secho(f"--> Starting CHASE mode for {action.upper()} (Max shift tolerance: {t_bps} bps)", fg='magenta')
         
-        # Initial quote anchor
+        # 1. Anchor Initial Best Bid/Ask Price
         init_quote = fetch_bidask(contract)
-        target_side = 'ask' if action == 'buy' else 'bid'
-        base_price = float(init_quote[target_side])
+        
+        # In chase mode: Buy chases Best Ask (aggressive fill) or Best Bid (passive fill).
+        # Standard chase anchors to the prevailing executable price.
+        target_price_key = 'buy' if action == 'buy' else 'sell'
+        base_price = extract_price(init_quote, target_price_key)
 
         if base_price <= 0:
-            raise click.ClickException(f"Invalid initial quote price: {base_price}")
+            # Fallback to direct exchange orderbook if bsql lookup fails
+            ob = ex.fetch_order_book(contract)
+            base_price = float(ob['asks'][0][0]) if action == 'buy' else float(ob['bids'][0][0])
 
-        click.secho(f"Initial {target_side.upper()} price: ${base_price:.2f}", fg='blue')
+        if base_price <= 0:
+            raise click.ClickException(f"Invalid initial price quote: ${base_price:.2f}")
+
+        click.secho(f"Initial Chase Price Target ({action.upper()}): ${base_price:.2f}", fg='blue')
         
-        # Place initial order at best quote
+        # 2. Place Initial Order at Inside Market Price
         current_order = ex.create_order(contract, 'limit', action, qty, base_price)
-        order_id = current_order['id']
-        click.secho(f"Placed initial chase order ID: {order_id} at ${base_price:.2f}", fg='green')
+        order_id = str(current_order['id'])
+        current_posted_price = base_price
+        click.secho(f"Placed initial chase limit order ID: {order_id} at ${base_price:.2f}", fg='green')
 
+        # 3. Active Chase Loop
         while True:
-            time.sleep(2)
-            quote = fetch_bidask(contract)
-            curr_best = float(quote[target_side])
+            time.sleep(1.5)
 
-            # Check market drift in bps relative to starting quote
+            # 1. Fetch exact order status directly from Binance
+            try:
+                order_info = ex.eapiPrivateGetOrder({'symbol': contract, 'orderId': order_id})
+                order_status = order_info.get('status', '')
+
+                if order_status == 'FILLED':
+                    click.secho(f"\n[SUCCESS] Chase order {order_id} FULLY FILLED!", fg='green', bold=True)
+                    break
+                elif order_status in ['CANCELED', 'REJECTED', 'EXPIRED']:
+                    click.secho(f"\n[TERMINATED] Order {order_id} ended with status: {order_status}", fg='yellow')
+                    break
+            except Exception as e:
+                # Fallback check on open orders if single query fails
+                open_orders = ex.eapiPrivateGetOpenOrders({'symbol': contract})
+                active_ids = [str(o['orderId']) for o in open_orders] if open_orders else []
+                if str(order_id) not in active_ids:
+                    click.secho(f"\n[SUCCESS] Order {order_id} no longer active on book.", fg='green', bold=True)
+                    break
+
+            # 2. Extract current market quote
+            quote = fetch_bidask(contract)
+            curr_best = extract_price(quote, target_price_key)
+
+            if curr_best <= 0:
+                continue
+
+            # Check if order was filled or canceled externally
+            open_orders = ex.eapiPrivateGetOpenOrders()
+            active_ids = [str(o['orderId']) for o in open_orders] if open_orders else []
+            
+            if order_id not in active_ids:
+                click.secho(f"\n[SUCCESS] Chase order {order_id} fully filled!", fg='green', bold=True)
+                break
+
+            # Calculate shift in bps relative to the initial anchor price
             price_shift_bps = abs(curr_best - base_price) / base_price * 10000.0
 
             if price_shift_bps > t_bps:
                 click.secho(
                     f"\n[WARNING] Market shifted {price_shift_bps:.1f} bps (Threshold: {t_bps} bps). "
-                    f"Initial: ${base_price:.2f} -> Current: ${curr_best:.2f}. Halting chase process.",
+                    f"Anchor: ${base_price:.2f} -> Current: ${curr_best:.2f}. Halting chase.",
                     fg='red', bold=True
                 )
-                click.secho(f"Leaving active order {order_id} open on book.", fg='yellow')
+                click.secho(f"Leaving active limit order {order_id} open on orderbook at ${current_posted_price:.2f}.", fg='yellow')
                 break
 
-            # Check open orders to confirm status
-            open_orders = ex.eapiPrivateGetOpenOrders()
-            active_ids = [str(o['orderId']) for o in open_orders] if open_orders else []
-            
-            if str(order_id) not in active_ids:
-                click.secho(f"\n[SUCCESS] Chase order {order_id} filled or closed!", fg='green', bold=True)
-                break
+            # Only re-price if the market quote actually shifted away from our posted limit price
+            if abs(curr_best - current_posted_price) > 1e-4:
+                click.secho(f"Quote moved! Repricing chase order to ${curr_best:.2f}...", fg='cyan')
+                try:
+                    ex.cancel_order(order_id, contract)
+                    time.sleep(0.2)
+                    new_order = ex.create_order(contract, 'limit', action, qty, curr_best)
+                    order_id = str(new_order['id'])
+                    current_posted_price = curr_best
+                    click.secho(f"Replaced order ID: {order_id} at ${curr_best:.2f}", fg='green')
+                except Exception as e:
+                    click.secho(f"Failed to cancel/replace order during chase: {e}", fg='red')
+                    break
 
-            # Re-price order if best bid/ask moved within tolerance
-            click.secho(f"Updating chase price to current best {target_side.upper()}: ${curr_best:.2f}...", fg='cyan')
-            try:
-                ex.cancel_order(order_id, contract)
-                time.sleep(0.5)
-                new_order = ex.create_order(contract, 'limit', action, qty, curr_best)
-                order_id = new_order['id']
-                click.secho(f"Replaced order ID: {order_id} at ${curr_best:.2f}", fg='green')
-            except Exception as e:
-                click.secho(f"Failed to replace order during chase: {e}", fg='red')
-                break
 
 @cli.command()
 @click.option('--contract', required=True, help="Contract symbol")
@@ -144,6 +205,7 @@ def cancel(contract, order_id):
     time.sleep(1)
     orders_status()
 
+
 @cli.command()
 def status():
     """Show current open orders and positions."""
@@ -151,6 +213,7 @@ def status():
     orders_status()
     click.secho("\n" + "=" * 30 + " Positions " + "=" * 30, fg='blue', bold=True)
     position_status()
+
 
 if __name__ == '__main__':
     cli()
