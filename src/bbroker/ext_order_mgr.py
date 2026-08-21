@@ -206,14 +206,98 @@ def cancel(contract, order_id):
     orders_status()
 
 
+def get_avg_entry_price(symbol: str) -> float:
+    """Fetches user trade history to compute exact fill-weighted entry price."""
+    try:
+        # Try standard CCXT fetch_my_trades first
+        trades = ex.fetch_my_trades(symbol)
+    except Exception:
+        try:
+            # Fallback to direct Binance Options EAPI trade history
+            trades = ex.eapiPrivateGetUserTrades({'symbol': symbol})
+        except Exception:
+            return 0.0
+
+    if not trades:
+        return 0.0
+
+    total_qty = 0.0
+    total_cost = 0.0
+
+    for t in trades:
+        # Handle both CCXT unified trade dict and raw Binance response dict
+        price = float(t.get('price', t.get('price', 0.0)))
+        qty = float(t.get('amount', t.get('qty', 0.0)))
+        
+        # Only account for BUY trades if checking entry cost of a LONG position
+        side = t.get('side', '').lower()
+        if side in ['buy', '']:
+            total_qty += qty
+            total_cost += price * qty
+
+    return total_cost / total_qty if total_qty > 0 else 0.0
+
 @cli.command()
 def status():
-    """Show current open orders and positions."""
-    click.secho("=" * 30 + " Open Orders " + "=" * 30, fg='blue', bold=True)
+    """Show current open orders, positions with mark values, and calculated PnL."""
+    click.secho("=" * 35 + " Open Orders " + "=" * 35, fg='blue', bold=True)
     orders_status()
-    click.secho("\n" + "=" * 30 + " Positions " + "=" * 30, fg='blue', bold=True)
-    position_status()
 
+    click.secho("\n" + "=" * 35 + " Positions & PnL " + "=" * 35, fg='blue', bold=True)
+    df = position_status()
+
+    if df is None or df.empty:
+        click.secho("No open positions found.", fg='yellow')
+        return
+
+    df_active = df[df['quantity'].astype(float) != 0].copy()
+
+    if df_active.empty:
+        click.secho("No active non-zero positions found.", fg='yellow')
+        return
+
+    formatted_rows = []
+    total_unrealized_pnl = 0.0
+    total_mark_value = 0.0
+
+    for _, row in df_active.iterrows():
+        symbol = row['symbol']
+        qty = float(row['quantity'])
+        mark_val = float(row['markValue'])
+        mark_price = mark_val / qty if qty != 0 else 0.0
+        
+        # 1. Try positionCost column if Binance provided it
+        pos_cost = row.get('positionCost')
+        if pos_cost is not None and not np.isnan(float(pos_cost)) and float(pos_cost) > 0:
+            entry_cost_total = float(pos_cost)
+            entry_price = entry_cost_total / qty
+        else:
+            # 2. Dynamic lookup via Binance execution history endpoint
+            entry_price = get_avg_entry_price(symbol)
+            entry_cost_total = entry_price * qty
+
+        pnl = mark_val - entry_cost_total if entry_price > 0 else 0.0
+        total_unrealized_pnl += pnl
+        total_mark_value += mark_val
+
+        pnl_str = f"${pnl:^+10.2f}" if entry_price > 0 else "N/A"
+
+        formatted_rows.append([
+            symbol,
+            row['side'],
+            f"{qty:+.4f}",
+            f"${entry_price:,.2f}" if entry_price > 0 else "N/A",
+            f"${mark_price:,.2f}",
+            f"${mark_val:,.2f}",
+            pnl_str
+        ])
+
+    headers = ["Symbol", "Side", "Quantity", "Avg Entry Price", "Mark Price", "Mark Value", "Unrealized PnL"]
+    click.echo(tabulate(formatted_rows, headers=headers, tablefmt="grid"))
+
+    pnl_color = 'green' if total_unrealized_pnl >= 0 else 'red'
+    click.secho(f"\nTotal Position Mark Value    : ${total_mark_value:,.2f}", fg='cyan', bold=True)
+    click.secho(f">>> Total Portfolio Unrealized PnL: ${total_unrealized_pnl:+,.2f} <<<", fg=pnl_color, bold=True)
 
 if __name__ == '__main__':
     cli()
