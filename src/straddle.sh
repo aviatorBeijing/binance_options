@@ -12,8 +12,12 @@ while [[ $# -gt 0 ]]; do
       DATE="$2"
       shift 2
       ;;
-    --strike)
-      STRIKE="$2"
+    --strike-call)
+      STRIKE_CALL="$2"
+      shift 2
+      ;;
+    --strike-put)
+      STRIKE_PUT="$2"
       shift 2
       ;;
     --exec)
@@ -28,17 +32,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate required arguments
-if [[ -z "$DATE" || -z "$STRIKE" ]]; then
+if [[ -z "$DATE" || -z "$STRIKE_PUT" || -z "$STRIKE_CALL" ]]; then
   echo "Error: --date and --strike are required."
-  echo "Usage: $0 --date <DATE> --strike <STRIKE> [--exec]"
+  echo "Usage: $0 --date <DATE> --strike-call <STRIKE_CALL> --strike-put <STRIKE_PUT> [--exec]"
   exit 1
 fi
 
 # Build common arguments
 ARGS=(
   "bbroker/straddle_calc.py"
-  "--call" "BTC-${DATE}-${STRIKE}-C"
-  "--put" "BTC-${DATE}-${STRIKE}-P"
+  "--call" "BTC-${DATE}-${STRIKE_CALL}-C"
+  "--put" "BTC-${DATE}-${STRIKE_PUT}-P"
   "--size" "$SZ"
   "--action" "buy"
   "--iv" "$IV"
