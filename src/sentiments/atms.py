@@ -9,6 +9,64 @@ from tabulate import tabulate
 from butil.butils import binance_spot
 from strategy.price_disparity import extract_specs
 
+import asyncio
+import json
+import websockets
+
+async def stream_options_spreads(contracts):
+    if not contracts:
+        print("-- No contracts provided for WSS subscription.")
+        return
+
+    # Ensure option contract symbols are lowercase for stream parameters
+    streams = [f"{c.lower()}@bookTicker" for c in contracts]
+    stream_str = "/".join(streams)
+    
+    # Correct Options WebSocket endpoint using fstream with public routing
+    uri = f"wss://fstream.binance.com/public/stream?streams={stream_str}"
+    
+    print(f"-- Connecting to Binance Options WSS for {len(contracts)} contracts...")
+    market_data = {}
+
+    async with websockets.connect(uri) as websocket:
+        print("-- Connected! Receiving live book tickers. Press Ctrl+C to exit.\n")
+        try:
+            while True:
+                message = await websocket.recv()
+                parsed = json.loads(message)
+                
+                payload = parsed.get('data', parsed)
+                if 's' in payload and 'b' in payload and 'a' in payload:
+                    symbol = payload['s'].upper()
+                    bid = float(payload['b'])
+                    ask = float(payload['a'])
+                    
+                    spread = ask - bid
+                    mid = (ask + bid) / 2.0
+                    spread_pct = (spread / mid * 100) if mid > 0 else 0.0
+                    
+                    market_data[symbol] = {
+                        "Contract": symbol,
+                        "Bid": bid,
+                        "Ask": ask,
+                        "Spread": spread,
+                        "Spread (%)": spread_pct
+                    }
+                    
+                    df_live = pd.DataFrame(list(market_data.values()))
+                    df_live = df_live.sort_values("Spread (%)", ascending=True)
+                    
+                    print("\033[H\033[J", end="") 
+                    print(f"-- Binance Options Live Spreads ({pd.Timestamp.now()}) --")
+                    print(tabulate(df_live, headers="keys", floatfmt=(".0f", ".4f", ".4f", ".4f", ".2f"), tablefmt="psql"))
+                    
+                    await asyncio.sleep(0.5)
+                    
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"-- WSS Error encountered: {e}")
+
 def fetch_oi( expiry, underlying='BTC'):
     try:
         recs = requests.get(url='https://eapi.binance.com/eapi/v1/openInterest',
@@ -154,8 +212,9 @@ def _wrapper_price_range(underlying, show_atm_contracts=False, update=False):
 @click.option('--underlying', default="BTC")
 @click.option('--update', is_flag=True, default=False, help='update contracts list')
 @click.option('--refresh_oi', is_flag=True, default=False, help='update OI of contracts')
-@click.option('--check_price_ranges', is_flag=True, default=False)
-def main(underlying,update,refresh_oi, check_price_ranges):
+@click.option('--check-price-ranges', is_flag=True, default=False )
+@click.option('--stream_wss', is_flag=True, default=False, help='subscribe to wss for live spread calculation')
+def main(underlying, update, refresh_oi, check_price_ranges, stream_wss):
     assert underlying and len(underlying)>0, "Must provide --underlying=<BTC|ETH|etc.>"
 
     df = refresh_contracts( underlying,update=update )
@@ -199,6 +258,14 @@ def main(underlying,update,refresh_oi, check_price_ranges):
         fh.write(','.join(contracts))
     print('-- written:', f"{_dir()}/_all_binance_contracts_{underlying.lower()}.csv")
     print('-- written:', fn )
+
+    if stream_wss:
+        print(f"-- Launching Asyncio WebSocket Stream for {len(contracts)} ATM contracts...")
+        asyncio.run(stream_options_spreads(contracts))
+    else:
+        # Existing static print logic
+        print(tabulate(df_atms, headers="keys"))
+
 
 if __name__ == '__main__':
     main()
