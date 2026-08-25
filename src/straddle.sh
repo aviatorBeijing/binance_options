@@ -21,11 +21,18 @@ while [[ $# -gt 0 ]]; do
       shift 1
       ;;
     *)
-      echo "Unknown option: $1"
+      echo "Error: Unknown option $1"
       exit 1
       ;;
   esac
 done
+
+# Validate required arguments
+if [[ -z "$DATE" || -z "$STRIKE" ]]; then
+  echo "Error: --date and --strike are required."
+  echo "Usage: $0 --date <DATE> --strike <STRIKE> [--exec]"
+  exit 1
+fi
 
 # Build common arguments
 ARGS=(
