@@ -28,11 +28,17 @@ async def stream_options_spreads(contracts):
     print(f"-- Connecting to Binance Options WSS for {len(contracts)} contracts...")
     market_data = {}
 
-    async with websockets.connect(uri) as websocket:
+    async with websockets.connect(uri, ping_interval=None) as websocket:
         print("-- Connected! Receiving live book tickers. Press Ctrl+C to exit.\n")
         try:
             while True:
-                message = await websocket.recv()
+                # Use wait_for with a timeout or handle messages cleanly
+                try:
+                    message = await asyncio.wait_for(websocket.recv(), timeout=30.0)
+                except asyncio.TimeoutError:
+                    # Send a manual ping or continue if no message arrives within 30s
+                    continue
+                
                 parsed = json.loads(message)
                 
                 payload = parsed.get('data', parsed)
@@ -54,13 +60,14 @@ async def stream_options_spreads(contracts):
                     }
                     
                     df_live = pd.DataFrame(list(market_data.values()))
-                    df_live = df_live.sort_values("Spread (%)", ascending=True)
+                    df_live = df_live.sort_values("Spread (%)",ascending=True).reset_index(drop=True)
                     
                     print("\033[H\033[J", end="") 
                     print(f"-- Binance Options Live Spreads ({pd.Timestamp.now()}) --")
                     print(tabulate(df_live, headers="keys", floatfmt=(".0f", ".4f", ".4f", ".4f", ".2f"), tablefmt="psql"))
                     
-                    await asyncio.sleep(0.5)
+                    # Increased sleep throttle to prevent blocking the async loop
+                    await asyncio.sleep(0.1)
                     
         except asyncio.CancelledError:
             pass
