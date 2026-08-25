@@ -2,6 +2,7 @@ from __future__ import annotations
 import time
 import math
 import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import click
 from scipy.stats import norm
 from scipy.optimize import brentq
@@ -315,10 +316,26 @@ def main(ctx, call, put, size, action, iv, t_bps, execute):
         click.secho("[INFO] Dry run completed. Add '--execute' flag to send live chase orders.", fg='yellow')
         return
 
-    click.secho("Initiating Live Straddle Execution via Chase Orders...", fg='magenta', bold=True)
-    execute_straddle_leg(ctx, action, call, size, t_bps)
-    execute_straddle_leg(ctx, action, put, size, t_bps)
-    click.secho("\n[COMPLETED] Both straddle legs sent for execution.", fg='green', bold=True)
+    click.secho("Initiating Live Straddle Execution via Parallel Chase Orders...", fg='magenta', bold=True)
+
+    legs = [
+        (action, call, size, t_bps),
+        (action, put, size, t_bps)
+    ]
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = {
+            executor.submit(execute_straddle_leg, ctx, act, sym, sz, tb): sym 
+            for act, sym, sz, tb in legs
+        }
+        for future in as_completed(futures):
+            sym = futures[future]
+            try:
+                future.result()
+            except Exception as exc:
+                click.secho(f"[{sym}] Exception during parallel execution: {exc}", fg='red', bold=True)
+
+    click.secho("\n[COMPLETED] Both straddle legs finished execution.", fg='green', bold=True)
 
 
 if __name__ == '__main__':
