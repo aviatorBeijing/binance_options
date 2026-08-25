@@ -1,3 +1,4 @@
+from __future__ import annotations
 import time
 import click
 import numpy as np
@@ -7,17 +8,18 @@ from bbroker.check_status import orders_status, position_status
 from butil.bsql import fetch_bidask
 
 
-def extract_price(quote_dict: dict, side: str) -> float:
-    """Safely extracts bid/ask price across varying fetch_bidask dictionary schemas."""
+def extract_passive_price(quote_dict: dict, action: str) -> float:
+    """Safely extracts Best Bid for BUY (Maker) and Best Ask for SELL (Maker)."""
     if not isinstance(quote_dict, dict):
         return 0.0
     
-    if side == 'buy':
-        # Buying -> Chase passive liquidity at Best Bid (or Best Ask if aggressive cross requested)
-        keys = ['best_bid', 'bid', 'bestBid', 'bids']
+    # Passive order placement:
+    # BUY  -> Join Best Bid
+    # SELL -> Join Best Ask
+    if action == 'buy':
+        keys = ['best_bid', 'bid', 'bestBid']
     else:
-        # Selling -> Chase passive liquidity at Best Ask (or Best Bid if aggressive cross requested)
-        keys = ['best_ask', 'ask', 'bestAsk', 'asks']
+        keys = ['best_ask', 'ask', 'bestAsk']
 
     for k in keys:
         if k in quote_dict and quote_dict[k] is not None:
@@ -25,6 +27,13 @@ def extract_price(quote_dict: dict, side: str) -> float:
             if isinstance(val, list) and len(val) > 0:
                 return float(val[0][0])
             return float(val)
+
+    # Fallback checking nested bids/asks lists if dictionary uses raw depth structure
+    if action == 'buy' and 'bids' in quote_dict and quote_dict['bids']:
+        return float(quote_dict['bids'][0][0])
+    elif action == 'sell' and 'asks' in quote_dict and quote_dict['asks']:
+        return float(quote_dict['asks'][0][0])
+
     return 0.0
 
 
@@ -67,7 +76,7 @@ def cli():
 @click.option('--t_bps', type=float, default=10.0, help="Price shift threshold in bps for --chase mode")
 @click.option('--execute', is_flag=True, default=False, help="Execute order on exchange")
 def order(action, contract, qty, order_type, order_price, t_bps, execute):
-    """Place a buy or sell order with optional passive Chase mode."""
+    """Place a buy or sell order with passive Chase mode."""
     action = action.lower()
     contract = contract.upper()
 
@@ -96,37 +105,36 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
         click.secho(f"Market Order Executed ID: {res.get('id')}", fg='green', bold=True)
 
     elif order_type == 'chase':
-        click.secho(f"--> Starting CHASE mode for {action.upper()} (Max shift tolerance: {t_bps} bps)", fg='magenta')
+        click.secho(f"--> Starting PASSIVE CHASE mode for {action.upper()} (Max shift tolerance: {t_bps} bps)", fg='magenta')
         
-        # 1. Anchor Initial Best Bid/Ask Price
+        # 1. Anchor Initial Passive Price (BUY -> Best Bid, SELL -> Best Ask)
         init_quote = fetch_bidask(contract)
-        
-        # In chase mode: Buy chases Best Ask (aggressive fill) or Best Bid (passive fill).
-        # Standard chase anchors to the prevailing executable price.
-        target_price_key = 'buy' if action == 'buy' else 'sell'
-        base_price = extract_price(init_quote, target_price_key)
+        base_price = extract_passive_price(init_quote, action)
 
         if base_price <= 0:
-            # Fallback to direct exchange orderbook if bsql lookup fails
+            # Fallback to direct exchange orderbook (BUY -> bids[0], SELL -> asks[0])
             ob = ex.fetch_order_book(contract)
-            base_price = float(ob['asks'][0][0]) if action == 'buy' else float(ob['bids'][0][0])
+            if action == 'buy':
+                base_price = float(ob['bids'][0][0]) if ob.get('bids') else 0.0
+            else:
+                base_price = float(ob['asks'][0][0]) if ob.get('asks') else 0.0
 
         if base_price <= 0:
-            raise click.ClickException(f"Invalid initial price quote: ${base_price:.2f}")
+            raise click.ClickException(f"Invalid initial passive price quote: ${base_price:.2f}")
 
-        click.secho(f"Initial Chase Price Target ({action.upper()}): ${base_price:.2f}", fg='blue')
+        click.secho(f"Initial Passive Chase Target ({action.upper()}): ${base_price:.2f}", fg='blue')
         
-        # 2. Place Initial Order at Inside Market Price
+        # 2. Place Initial Order on Inside Market
         current_order = ex.create_order(contract, 'limit', action, qty, base_price)
         order_id = str(current_order['id'])
         current_posted_price = base_price
-        click.secho(f"Placed initial chase limit order ID: {order_id} at ${base_price:.2f}", fg='green')
+        click.secho(f"Placed initial passive limit order ID: {order_id} at ${base_price:.2f}", fg='green')
 
-        # 3. Active Chase Loop
+        # 3. Active Passive Chase Loop
         while True:
             time.sleep(1.5)
 
-            # 1. Fetch exact order status directly from Binance
+            # Check order status directly from Binance
             try:
                 order_info = ex.eapiPrivateGetOrder({'symbol': contract, 'orderId': order_id})
                 order_status = order_info.get('status', '')
@@ -137,51 +145,55 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
                 elif order_status in ['CANCELED', 'REJECTED', 'EXPIRED']:
                     click.secho(f"\n[TERMINATED] Order {order_id} ended with status: {order_status}", fg='yellow')
                     break
-            except Exception as e:
-                # Fallback check on open orders if single query fails
+            except Exception:
                 open_orders = ex.eapiPrivateGetOpenOrders({'symbol': contract})
                 active_ids = [str(o['orderId']) for o in open_orders] if open_orders else []
                 if str(order_id) not in active_ids:
                     click.secho(f"\n[SUCCESS] Order {order_id} no longer active on book.", fg='green', bold=True)
                     break
 
-            # 2. Extract current market quote
+            # Poll current live passive quote
             quote = fetch_bidask(contract)
-            curr_best = extract_price(quote, target_price_key)
+            curr_passive = extract_passive_price(quote, action)
 
-            if curr_best <= 0:
+            if curr_passive <= 0:
+                try:
+                    ob = ex.fetch_order_book(contract)
+                    curr_passive = float(ob['bids'][0][0]) if action == 'buy' else float(ob['asks'][0][0])
+                except Exception:
+                    continue
+
+            if curr_passive <= 0:
                 continue
 
-            # Check if order was filled or canceled externally
-            open_orders = ex.eapiPrivateGetOpenOrders()
-            active_ids = [str(o['orderId']) for o in open_orders] if open_orders else []
-            
-            if order_id not in active_ids:
-                click.secho(f"\n[SUCCESS] Chase order {order_id} fully filled!", fg='green', bold=True)
-                break
+            # Determine if market moved in a direction that warrants re-pricing
+            # BUY:  Best Bid increased (curr_passive > current_posted_price)
+            # SELL: Best Ask decreased (curr_passive < current_posted_price)
+            should_reprice = (
+                (action == 'buy' and curr_passive > current_posted_price) or
+                (action == 'sell' and curr_passive < current_posted_price)
+            )
 
-            # Calculate shift in bps relative to the initial anchor price
-            price_shift_bps = abs(curr_best - base_price) / base_price * 10000.0
+            if should_reprice:
+                price_shift_bps = abs(curr_passive - base_price) / base_price * 10000.0
 
-            if price_shift_bps > t_bps:
-                click.secho(
-                    f"\n[WARNING] Market shifted {price_shift_bps:.1f} bps (Threshold: {t_bps} bps). "
-                    f"Anchor: ${base_price:.2f} -> Current: ${curr_best:.2f}. Halting chase.",
-                    fg='red', bold=True
-                )
-                click.secho(f"Leaving active limit order {order_id} open on orderbook at ${current_posted_price:.2f}.", fg='yellow')
-                break
+                if price_shift_bps > t_bps:
+                    click.secho(
+                        f"\n[WARNING] Market shifted {price_shift_bps:.1f} bps (Threshold: {t_bps} bps). "
+                        f"Anchor: ${base_price:.2f} -> Current: ${curr_passive:.2f}. Halting chase.",
+                        fg='red', bold=True
+                    )
+                    click.secho(f"Leaving active limit order {order_id} open on orderbook at ${current_posted_price:.2f}.", fg='yellow')
+                    break
 
-            # Only re-price if the market quote actually shifted away from our posted limit price
-            if abs(curr_best - current_posted_price) > 1e-4:
-                click.secho(f"Quote moved! Repricing chase order to ${curr_best:.2f}...", fg='cyan')
+                click.secho(f"Passive quote improved! Repricing {action.upper()} to ${curr_passive:.2f}...", fg='cyan')
                 try:
                     ex.cancel_order(order_id, contract)
-                    time.sleep(0.2)
-                    new_order = ex.create_order(contract, 'limit', action, qty, curr_best)
+                    time.sleep(0.1)
+                    new_order = ex.create_order(contract, 'limit', action, qty, curr_passive)
                     order_id = str(new_order['id'])
-                    current_posted_price = curr_best
-                    click.secho(f"Replaced order ID: {order_id} at ${curr_best:.2f}", fg='green')
+                    current_posted_price = curr_passive
+                    click.secho(f"Replaced order ID: {order_id} at ${curr_passive:.2f}", fg='green')
                 except Exception as e:
                     click.secho(f"Failed to cancel/replace order during chase: {e}", fg='red')
                     break
@@ -209,11 +221,9 @@ def cancel(contract, order_id):
 def get_avg_entry_price(symbol: str) -> float:
     """Fetches user trade history to compute exact fill-weighted entry price."""
     try:
-        # Try standard CCXT fetch_my_trades first
         trades = ex.fetch_my_trades(symbol)
     except Exception:
         try:
-            # Fallback to direct Binance Options EAPI trade history
             trades = ex.eapiPrivateGetUserTrades({'symbol': symbol})
         except Exception:
             return 0.0
@@ -225,17 +235,15 @@ def get_avg_entry_price(symbol: str) -> float:
     total_cost = 0.0
 
     for t in trades:
-        # Handle both CCXT unified trade dict and raw Binance response dict
-        price = float(t.get('price', t.get('price', 0.0)))
+        price = float(t.get('price', 0.0))
         qty = float(t.get('amount', t.get('qty', 0.0)))
-        
-        # Only account for BUY trades if checking entry cost of a LONG position
-        side = t.get('side', '').lower()
+        side = str(t.get('side', '')).lower()
         if side in ['buy', '']:
             total_qty += qty
             total_cost += price * qty
 
     return total_cost / total_qty if total_qty > 0 else 0.0
+
 
 @cli.command()
 def status():
@@ -266,13 +274,11 @@ def status():
         mark_val = float(row['markValue'])
         mark_price = mark_val / qty if qty != 0 else 0.0
         
-        # 1. Try positionCost column if Binance provided it
         pos_cost = row.get('positionCost')
         if pos_cost is not None and not np.isnan(float(pos_cost)) and float(pos_cost) > 0:
             entry_cost_total = float(pos_cost)
             entry_price = entry_cost_total / qty
         else:
-            # 2. Dynamic lookup via Binance execution history endpoint
             entry_price = get_avg_entry_price(symbol)
             entry_cost_total = entry_price * qty
 
@@ -299,29 +305,39 @@ def status():
     click.secho(f"\nTotal Position Mark Value    : ${total_mark_value:,.2f}", fg='cyan', bold=True)
     click.secho(f">>> Total Portfolio Unrealized PnL: ${total_unrealized_pnl:+,.2f} <<<", fg=pnl_color, bold=True)
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def execute_chase_close(contract: str, action: str, qty: float, execute: bool, t_bps: float = 50.0):
-    """Internal helper to chase-close an open position via directional quote updates."""
-    click.secho(f"\n[CHASE CLOSE] Closing {qty} of {contract} via {action.upper()}...", fg='magenta', bold=True)
+def execute_chase_close(contract: str, action: str, qty: float, execute: bool, t_bps: float = 50.0, entry_price: float = 0.0):
+    """Internal helper to chase-close an open position via passive quote updates."""
+    click.secho(f"[{contract}] [PASSIVE CHASE CLOSE] Closing {qty} via {action.upper()}...", fg='magenta', bold=True)
     
     if not execute:
-        click.secho("-- Dry run mode: Tracking live orderbook quotes without placing real exchange orders.", fg='yellow')
+        click.secho(f"[{contract}] -- Dry run mode: Tracking live orderbook quotes.", fg='yellow')
 
-    # Target price key: selling -> chase Best Ask (drop); buying -> chase Best Bid (rise)
-    target_price_key = 'buy' if action == 'buy' else 'sell'
-    
-    # 1. Fetch initial price anchor
+    # 1. Fetch initial passive price anchor
     init_quote = fetch_bidask(contract)
-    base_price = extract_price(init_quote, target_price_key)
+    base_price = extract_passive_price(init_quote, action)
 
     if base_price <= 0:
         ensure_markets(ex)
         ob = ex.fetch_order_book(contract)
-        base_price = float(ob['asks'][0][0]) if action == 'buy' else float(ob['bids'][0][0])
+        if action == 'buy':
+            base_price = float(ob['bids'][0][0]) if ob.get('bids') else 0.0
+        else:
+            base_price = float(ob['asks'][0][0]) if ob.get('asks') else 0.0
 
     if base_price <= 0:
-        click.secho(f"[-] Could not resolve valid live price quote for {contract}. Skipping.", fg='red')
+        click.secho(f"[{contract}] [-] Could not resolve valid live passive quote. Skipping.", fg='red')
         return
+
+    # Calculate estimated trade PnL against entry price
+    # Long position (action == 'sell'): PnL = (base_price - entry_price) * qty
+    # Short position (action == 'buy'):  PnL = (entry_price - base_price) * qty
+    if entry_price > 0:
+        pnl_val = (base_price - entry_price) * qty if action == 'sell' else (entry_price - base_price) * qty
+        pnl_str = f" | PnL: ${pnl_val:+,.2f}"
+    else:
+        pnl_str = " | PnL: N/A"
 
     # 2. Initial order anchor
     current_posted_price = base_price
@@ -329,94 +345,93 @@ def execute_chase_close(contract: str, action: str, qty: float, execute: bool, t
         ensure_markets(ex)
         current_order = ex.create_order(contract, 'limit', action, qty, base_price)
         order_id = str(current_order['id'])
-        click.secho(f"--> [LIVE] Placed initial close order ID: {order_id} at ${base_price:.2f}", fg='green')
+        click.secho(f"[{contract}] --> [LIVE] Placed initial close order ID: {order_id} at ${base_price:.2f}{pnl_str}", fg='green')
     else:
         order_id = "DRY_RUN_SIM_001"
-        click.secho(f"--> [DRY-RUN] Initial live market target price: ${base_price:.2f} (Simulated Order ID: {order_id})", fg='cyan')
+        click.secho(f"[{contract}] --> [DRY-RUN] Initial target price: ${base_price:.2f}{pnl_str}", fg='cyan')
 
-    # 3. Directional Chase Loop
+    # 3. Passive Chase Loop
     while True:
         time.sleep(1.5)
 
-        # Check execution status (Live exchange only)
         if execute:
             try:
                 order_info = ex.eapiPrivateGetOrder({'symbol': contract, 'orderId': order_id})
                 order_status = order_info.get('status', '')
 
                 if order_status == 'FILLED':
-                    click.secho(f"[SUCCESS] Position {contract} fully closed! Order ID: {order_id}", fg='green', bold=True)
+                    click.secho(f"[{contract}] [SUCCESS] Position fully closed! Order ID: {order_id}", fg='green', bold=True)
                     break
                 elif order_status in ['CANCELED', 'REJECTED', 'EXPIRED']:
-                    click.secho(f"[TERMINATED] Order {order_id} ended with status: {order_status}", fg='yellow')
+                    click.secho(f"[{contract}] [TERMINATED] Order ended with status: {order_status}", fg='yellow')
                     break
             except Exception:
                 open_orders = ex.eapiPrivateGetOpenOrders({'symbol': contract})
                 active_ids = [str(o['orderId']) for o in open_orders] if open_orders else []
                 if str(order_id) not in active_ids:
-                    click.secho(f"[SUCCESS] Position {contract} closed!", fg='green', bold=True)
+                    click.secho(f"[{contract}] [SUCCESS] Position closed!", fg='green', bold=True)
                     break
 
-        # Poll current live market quote
         quote = fetch_bidask(contract)
-        curr_best = extract_price(quote, target_price_key)
+        curr_passive = extract_passive_price(quote, action)
 
-        if curr_best <= 0:
+        if curr_passive <= 0:
             try:
                 ob = ex.fetch_order_book(contract)
-                curr_best = float(ob['asks'][0][0]) if action == 'buy' else float(ob['bids'][0][0])
+                curr_passive = float(ob['bids'][0][0]) if action == 'buy' else float(ob['asks'][0][0])
             except Exception:
                 continue
 
-        if curr_best <= 0:
+        if curr_passive <= 0:
             continue
 
-        # Check max price shift threshold against initial anchor
-        price_shift_bps = abs(curr_best - base_price) / base_price * 10000.0
+        price_shift_bps = abs(curr_passive - base_price) / base_price * 10000.0
         if price_shift_bps > t_bps:
             click.secho(
-                f"[WARNING] Live price shifted {price_shift_bps:.1f} bps (Max limit: {t_bps} bps). Stopping chase for {contract}.",
+                f"[{contract}] [WARNING] Price shifted {price_shift_bps:.1f} bps (Max: {t_bps} bps). Stopping chase.",
                 fg='red', bold=True
             )
             break
 
-        # Directional trigger:
-        # - BUY / Close Short:  Only chase down if Best Ask drops (curr_best < current_posted_price)
-        # - SELL / Close Long:  Only chase down/follow if Best Ask drops (curr_best < current_posted_price)
-        #                       OR if Best Bid rises (curr_best > current_posted_price)
-        is_chase_triggered = False
-        if action == 'buy' and curr_best < current_posted_price:
-            is_chase_triggered = True  # Best Ask dropped -> lower buy entry
-        elif action == 'sell' and curr_best < current_posted_price:
-            is_chase_triggered = True  # Best Ask dropped -> adjust sell order down to stay competitive
+        should_reprice = (
+            (action == 'buy' and curr_passive > current_posted_price) or
+            (action == 'sell' and curr_passive < current_posted_price)
+        )
 
-        if is_chase_triggered and abs(curr_best - current_posted_price) > 1e-4:
+        if should_reprice:
+            # Update dynamic PnL on target price shift
+            if entry_price > 0:
+                curr_pnl = (curr_passive - entry_price) * qty if action == 'sell' else (entry_price - curr_passive) * qty
+                curr_pnl_str = f" | PnL: ${curr_pnl:+,.2f}"
+            else:
+                curr_pnl_str = " | PnL: N/A"
+
             if execute:
-                click.secho(f"--> [LIVE] Target price dropped! Updating order for {contract} to ${curr_best:.2f}...", fg='cyan')
+                click.secho(f"[{contract}] --> [LIVE] Market quote shifted! Updating to ${curr_passive:.2f}{curr_pnl_str}...", fg='cyan')
                 try:
                     ex.cancel_order(order_id, contract)
-                    time.sleep(0.2)
-                    new_order = ex.create_order(contract, 'limit', action, qty, curr_best)
+                    time.sleep(0.1)
+                    new_order = ex.create_order(contract, 'limit', action, qty, curr_passive)
                     order_id = str(new_order['id'])
-                    current_posted_price = curr_best
-                    click.secho(f"--> [LIVE] Replaced order ID: {order_id} at ${curr_best:.2f}", fg='green')
+                    current_posted_price = curr_passive
+                    click.secho(f"[{contract}] --> [LIVE] Replaced order ID: {order_id} at ${curr_passive:.2f}", fg='green')
                 except Exception as e:
-                    click.secho(f"[-] Failed to replace close order: {e}", fg='red')
+                    click.secho(f"[{contract}] [-] Failed to replace close order: {e}", fg='red')
                     break
             else:
                 click.secho(
-                    f"--> [DRY-RUN] Target price drop detected! (${current_posted_price:.2f} -> ${curr_best:.2f}) | "
-                    f"Simulated update price: ${curr_best:.2f}", 
+                    f"[{contract}] --> [DRY-RUN] Target price shift! (${current_posted_price:.2f} -> ${curr_passive:.2f}){curr_pnl_str}", 
                     fg='cyan'
                 )
-                current_posted_price = curr_best
+                current_posted_price = curr_passive
+
 
 @cli.command()
 @click.option('--contracts', required=True, help="Comma-separated contract symbols, e.g. BTC-260828-76000-C,BTC-260828-76000-P")
 @click.option('--t_bps', type=float, default=50.0, help="Max price shift tolerance in bps before stopping chase")
 @click.option('--execute', is_flag=True, default=False, help="Execute order on exchange")
 def close(contracts, t_bps, execute):
-    """Find open positions for specified contracts and execute chase orders to close them."""
+    """Find open positions for specified contracts and execute PARALLEL chase orders to close them."""
     target_contracts = [c.strip().upper() for c in contracts.split(',') if c.strip()]
     if not target_contracts:
         raise click.BadParameter("No valid contracts specified.")
@@ -426,25 +441,59 @@ def close(contracts, t_bps, execute):
         click.secho("No open positions found on exchange.", fg='yellow')
         return
 
-    # Filter active positions
     df_active = df[df['quantity'].astype(float) != 0].copy()
     if df_active.empty:
         click.secho("No active non-zero positions found.", fg='yellow')
         return
 
+    tasks = []
     for contract in target_contracts:
         pos_row = df_active[df_active['symbol'] == contract]
         if pos_row.empty:
             click.secho(f"No active open position found for: {contract}", fg='yellow')
             continue
 
-        qty = abs(float(pos_row.iloc[0]['quantity']))
-        side = str(pos_row.iloc[0].get('side', '')).upper()
-        
-        # Long position -> SELL to close; Short position -> BUY to close
-        close_action = 'sell' if side in ['LONG', 'BUY'] or float(pos_row.iloc[0]['quantity']) > 0 else 'buy'
+        row = pos_row.iloc[0]
+        qty = abs(float(row['quantity']))
+        side = str(row.get('side', '')).upper()
+        close_action = 'sell' if side in ['LONG', 'BUY'] or float(row['quantity']) > 0 else 'buy'
 
-        execute_chase_close(contract=contract, action=close_action, qty=qty, execute=execute, t_bps=t_bps)
+        # Resolve entry price for PnL calculation
+        pos_cost = row.get('positionCost')
+        if pos_cost is not None and not np.isnan(float(pos_cost)) and float(pos_cost) > 0:
+            entry_price = float(pos_cost) / qty
+        else:
+            entry_price = get_avg_entry_price(contract)
+
+        tasks.append((contract, close_action, qty, entry_price))
+
+    if not tasks:
+        click.secho("No matching active positions to close.", fg='yellow')
+        return
+
+    click.secho(f"\n[PARALLEL EXECUTION] Launching {len(tasks)} parallel close task(s)...", fg='cyan', bold=True)
+
+    with ThreadPoolExecutor(max_workers=len(tasks)) as executor:
+        futures = {
+            executor.submit(
+                execute_chase_close, 
+                contract=c, 
+                action=a, 
+                qty=q, 
+                execute=execute, 
+                t_bps=t_bps,
+                entry_price=ep
+            ): c for c, a, q, ep in tasks
+        }
+
+        for future in as_completed(futures):
+            contract = futures[future]
+            try:
+                future.result()
+            except Exception as exc:
+                click.secho(f"[{contract}] Generated an exception during parallel close: {exc}", fg='red', bold=True)
+
+    click.secho("\n[COMPLETED] All parallel close tasks finished.", fg='green', bold=True)
 
 if __name__ == '__main__':
     cli()
