@@ -60,7 +60,9 @@ async def stream_options_spreads(contracts):
                     }
                     
                     df_live = pd.DataFrame(list(market_data.values()))
+                    df_live = df_live[ df_live["Spread (%)"]>0 ]
                     df_live = df_live.sort_values("Spread (%)",ascending=True).reset_index(drop=True)
+                    df_live["Spread (%)"] = df_live["Spread (%)"].apply(lambda v: round(v,3))
                     
                     print("\033[H\033[J", end="") 
                     print(f"-- Binance Options Live Spreads ({pd.Timestamp.now()}) --")
@@ -237,8 +239,9 @@ def main(underlying, update, refresh_oi, check_price_ranges, stream_wss):
     recs = []
     for expiry, atms in atm_contracts.items():
         for atm in atms:
-            contracts += [atm]
             spot_ric, T,K,ctype = extract_specs( atm )
+            if T>0:
+                contracts += [atm]
             recs += [ (spot_ric, T,K,ctype, atm,)]
     df = pd.DataFrame.from_records( recs )
     df.columns = 'spot_ric,T,K,ctype,contract'.split(',')
@@ -270,8 +273,7 @@ def main(underlying, update, refresh_oi, check_price_ranges, stream_wss):
         print(f"-- Launching Asyncio WebSocket Stream for {len(contracts)} ATM contracts...")
         asyncio.run(stream_options_spreads(contracts))
     else:
-        # Existing static print logic
-        print(tabulate(df_atms, headers="keys"))
+        print(tabulate(df, headers="keys"))
 
 
 if __name__ == '__main__':
