@@ -106,13 +106,13 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
 
     elif order_type == 'chase':
         click.secho(f"--> Starting PASSIVE CHASE mode for {action.upper()} (Max shift tolerance: {t_bps} bps)", fg='magenta')
-        
+
         # 1. Anchor Initial Passive Price (BUY -> Best Bid, SELL -> Best Ask)
         init_quote = fetch_bidask(contract)
         base_price = extract_passive_price(init_quote, action)
 
         if base_price <= 0:
-            # Fallback to direct exchange orderbook (BUY -> bids[0], SELL -> asks[0])
+            # Fallback to direct exchange orderbook
             ob = ex.fetch_order_book(contract)
             if action == 'buy':
                 base_price = float(ob['bids'][0][0]) if ob.get('bids') else 0.0
@@ -123,7 +123,7 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
             raise click.ClickException(f"Invalid initial passive price quote: ${base_price:.2f}")
 
         click.secho(f"Initial Passive Chase Target ({action.upper()}): ${base_price:.2f}", fg='blue')
-        
+
         # 2. Place Initial Order on Inside Market
         current_order = ex.create_order(contract, 'limit', action, qty, base_price)
         order_id = str(current_order['id'])
@@ -134,7 +134,7 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
         while True:
             time.sleep(1.5)
 
-            # Check order status directly from Binance
+            # Check order status directly from exchange
             try:
                 order_info = ex.eapiPrivateGetOrder({'symbol': contract, 'orderId': order_id})
                 order_status = order_info.get('status', '')
@@ -166,26 +166,29 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
             if curr_passive <= 0:
                 continue
 
+            price_shift_bps = abs(curr_passive - base_price) / base_price * 10000.0
+
+            # --- CANCELLATION ON THRESHOLD BREACH ---
+            if price_shift_bps > t_bps:
+                click.secho(
+                    f"\n[WARNING] Market shifted {price_shift_bps:.1f} bps (Threshold: {t_bps} bps). "
+                    f"Anchor: ${base_price:.2f} -> Current: ${curr_passive:.2f}. Halting chase.",
+                    fg='red', bold=True
+                )
+                try:
+                    ex.cancel_order(order_id, contract)
+                    click.secho(f"[CANCELED] Active limit order {order_id} successfully canceled.", fg='yellow', bold=True)
+                except Exception as e:
+                    click.secho(f"[ERROR] Failed to cancel order {order_id} on halt: {e}", fg='red')
+                break
+
             # Determine if market moved in a direction that warrants re-pricing
-            # BUY:  Best Bid increased (curr_passive > current_posted_price)
-            # SELL: Best Ask decreased (curr_passive < current_posted_price)
             should_reprice = (
                 (action == 'buy' and curr_passive > current_posted_price) or
                 (action == 'sell' and curr_passive < current_posted_price)
             )
 
             if should_reprice:
-                price_shift_bps = abs(curr_passive - base_price) / base_price * 10000.0
-
-                if price_shift_bps > t_bps:
-                    click.secho(
-                        f"\n[WARNING] Market shifted {price_shift_bps:.1f} bps (Threshold: {t_bps} bps). "
-                        f"Anchor: ${base_price:.2f} -> Current: ${curr_passive:.2f}. Halting chase.",
-                        fg='red', bold=True
-                    )
-                    click.secho(f"Leaving active limit order {order_id} open on orderbook at ${current_posted_price:.2f}.", fg='yellow')
-                    break
-
                 click.secho(f"Passive quote improved! Repricing {action.upper()} to ${curr_passive:.2f}...", fg='cyan')
                 try:
                     ex.cancel_order(order_id, contract)
@@ -197,7 +200,6 @@ def order(action, contract, qty, order_type, order_price, t_bps, execute):
                 except Exception as e:
                     click.secho(f"Failed to cancel/replace order during chase: {e}", fg='red')
                     break
-
 
 @cli.command()
 @click.option('--contract', required=True, help="Contract symbol")
