@@ -209,7 +209,7 @@ def execute_straddle_leg(ctx, action: str, symbol: str, size: float, t_bps: floa
 @click.option('--size', type=float, default=0.01, show_default=True, help="Order size per leg")
 @click.option('--action', type=click.Choice(['buy', 'sell'], case_sensitive=False), default='buy', show_default=True)
 @click.option('--iv', type=float, default=None, help="Model IV for evaluation (e.g., 0.55 for 55%)")
-@click.option('--t_bps', type=float, default=10.0, show_default=True, help="Max price shift threshold in bps")
+@click.option('--t_bps', type=float, default=50.0, show_default=True, help="Max price shift threshold in bps")
 @click.option('--execute', is_flag=True, default=False, help="Execute live orders using chase mode")
 @click.pass_context
 def main(ctx, call, put, size, action, iv, t_bps, execute):
